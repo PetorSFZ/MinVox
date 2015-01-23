@@ -4,6 +4,8 @@
 #include "sfz/GL.hpp"
 #undef main
 
+#include "VoxModel.hpp"
+
 // Helper functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

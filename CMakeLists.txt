@@ -59,6 +59,10 @@ add_executable(
 
 	${SRC_DIR}/Main.cpp
 
+	${SRC_DIR}/VoxModel.hpp
+	${SRC_DIR}/model/Voxel.hpp
+	${SRC_DIR}/model/Voxel.inl
+
 	${SRC_DIR}/sfz/SDL.hpp
 	${SRC_DIR}/sfz/sdl/Session.hpp
 	${SRC_DIR}/sfz/sdl/Session.cpp
