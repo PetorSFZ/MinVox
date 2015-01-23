@@ -55,28 +55,27 @@ public:
 	// No copy constructor.
 	Window(const Window&) = delete;
 
-	Window(const char* title, int width, int height,
-	       std::initializer_list<WindowFlags> flags) noexcept;
+	Window(const char* title, int width, int height, std::initializer_list<WindowFlags> flags);
 
-	~Window() noexcept;
+	~Window();
 
 	// Getters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	int width() const noexcept;
+	int width() const;
 
-	int height() const noexcept;
+	int height() const;
 
-	int drawableWidth() const noexcept;
+	int drawableWidth() const;
 
-	int drawableHeight() const noexcept;
+	int drawableHeight() const;
 
-	SDL_Surface* surfacePtr() const noexcept;
+	SDL_Surface* surfacePtr() const;
 
 	// Setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void setSize(int width, int height) noexcept;
+	void setSize(int width, int height);
 
 	// Operators
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

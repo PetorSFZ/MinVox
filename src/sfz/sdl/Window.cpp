@@ -4,7 +4,7 @@ namespace sdl {
 
 namespace {
 
-Uint32 processFlags(const std::initializer_list<WindowFlags>& flags) noexcept
+Uint32 processFlags(const std::initializer_list<WindowFlags>& flags)
 {
 	Uint32 flag = 0;
 	for (WindowFlags tempFlag : flags) {
@@ -13,7 +13,7 @@ Uint32 processFlags(const std::initializer_list<WindowFlags>& flags) noexcept
 	return flag;
 }
 
-SDL_Window* createWindow(const char* title, int width, int height, Uint32 flags) noexcept
+SDL_Window* createWindow(const char* title, int width, int height, Uint32 flags)
 {
 	SDL_Window* window = NULL;
 	window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -31,15 +31,14 @@ SDL_Window* createWindow(const char* title, int width, int height, Uint32 flags)
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 
-Window::Window(const char* title, int width, int height,
-               std::initializer_list<WindowFlags> flags) noexcept
+Window::Window(const char* title, int width, int height, std::initializer_list<WindowFlags> flags)
 :
 	mPtr{createWindow(title, width, height, processFlags(flags))}
 {
 	// Initialization complete.
 }
 
-Window::~Window() noexcept
+Window::~Window()
 {
 	SDL_DestroyWindow(mPtr);
 }
@@ -47,35 +46,35 @@ Window::~Window() noexcept
 // Getters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-int Window::width() const noexcept
+int Window::width() const
 {
 	int width;
 	SDL_GetWindowSize(mPtr, &width, nullptr);
 	return width;
 }
 
-int Window::height() const noexcept
+int Window::height() const
 {
 	int height;
 	SDL_GetWindowSize(mPtr, nullptr, &height);
 	return height;
 }
 
-int Window::drawableWidth() const noexcept
+int Window::drawableWidth() const
 {
 	int width;
 	SDL_GL_GetDrawableSize(mPtr, &width, nullptr);
 	return width;
 }
 
-int Window::drawableHeight() const noexcept
+int Window::drawableHeight() const
 {
 	int height;
 	SDL_GL_GetDrawableSize(mPtr, nullptr, &height);
 	return height;
 }
 
-SDL_Surface* Window::surfacePtr() const noexcept
+SDL_Surface* Window::surfacePtr() const
 {
 	return SDL_GetWindowSurface(mPtr);
 }
@@ -83,7 +82,7 @@ SDL_Surface* Window::surfacePtr() const noexcept
 // Setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void Window::setSize(int width, int height) noexcept
+void Window::setSize(int width, int height)
 {
 	if(width <= 0 || height <= 0) {
 		return;

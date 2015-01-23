@@ -3,7 +3,7 @@
 namespace sdl {
 		
 Session::Session(std::initializer_list<InitFlags> initFlags,
-                 std::initializer_list<ImgInitFlags> imgFlags) noexcept
+                 std::initializer_list<ImgInitFlags> imgFlags)
 {
 	// Initializes SDL
 	Uint32 initFlag = 0;
@@ -27,7 +27,7 @@ Session::Session(std::initializer_list<InitFlags> initFlags,
 	}
 }
 	
-Session::~Session() noexcept
+Session::~Session()
 {
 	IMG_Quit();
 	SDL_Quit();

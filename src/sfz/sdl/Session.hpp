@@ -61,9 +61,9 @@ public:
 	 * @param imgFlags the ImgInitFlags to pass upon initialization
 	 */
 	Session(std::initializer_list<InitFlags> initFlags,
-	        std::initializer_list<ImgInitFlags> imgFlags) noexcept;
+	        std::initializer_list<ImgInitFlags> imgFlags);
 	
-	~Session() noexcept;
+	~Session();
 
 	// No assignment.
 	Session& operator= (const Session&) = delete;

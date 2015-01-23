@@ -18,7 +18,7 @@ float calculateDelta()
 	return std::chrono::duration_cast<FloatSecondDuration>(currentTime - previousTime).count();
 }
 
-void checkGLErrorsMessage(const std::string& msg) noexcept
+void checkGLErrorsMessage(const std::string& msg)
 {
 	if (gl::checkAllGLErrors()) std::cerr << msg << std::endl;
 }
@@ -37,6 +37,7 @@ bool handleInput(const SDL_Event& event)
 			//float w = static_cast<float>(event.window.data1);
 			//float h = static_cast<float>(event.window.data2);
 			//projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 50.0f);
+			break;
 		}
 		break;
 	case SDL_KEYDOWN:
