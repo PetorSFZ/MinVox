@@ -60,6 +60,8 @@ add_executable(
 	${SRC_DIR}/Main.cpp
 
 	${SRC_DIR}/VoxModel.hpp
+	${SRC_DIR}/model/Chunk.hpp
+	${SRC_DIR}/model/Chunk.cpp
 	${SRC_DIR}/model/Voxel.hpp
 	${SRC_DIR}/model/Voxel.inl
 

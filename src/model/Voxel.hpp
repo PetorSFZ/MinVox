@@ -1,6 +1,6 @@
 #pragma once
-#ifndef VOX_VOXELTYPE_HPP
-#define VOX_VOXELTYPE_HPP
+#ifndef VOX_MODEL_VOXELTYPE_HPP
+#define VOX_MODEL_VOXELTYPE_HPP
 
 #include <cstdint> // uint8_t
 
@@ -17,7 +17,7 @@ enum class VoxelType : uint8_t {
 	STONE = 4,
 	METAL = 5,
 	SAND = 6,
-	WATER = 7
+	GLASS = 7
 };
 
 struct Voxel final {
