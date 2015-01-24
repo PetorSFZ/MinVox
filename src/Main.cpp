@@ -64,7 +64,7 @@ bool update(float delta)
 }
 
 // Called once every frame
-void render(sdl::Window& window, float)
+void render(sdl::Window& window, vox::Assets& assets, float)
 {
 
 }
@@ -74,6 +74,9 @@ void render(sdl::Window& window, float)
 
 int main()
 {
+	// Initialization
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 	sdl::Session sdlSession{{sdl::InitFlags::EVERYTHING}, {sdl::ImgInitFlags::PNG}};
 
 	sdl::Window window{"snakium³", 800, 600,
@@ -90,6 +93,12 @@ int main()
 	}
 	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
 
+
+	// Variables
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	vox::Assets assets;
+
 	// Game loop
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -104,7 +113,7 @@ int main()
 
 		while (SDL_PollEvent(&event) != 0) if (handleInput(event)) running = false;
 		if (update(delta)) running = false;
-		render(window, delta);
+		render(window, assets, delta);
 
 		SDL_GL_SwapWindow(window.mPtr);
 
