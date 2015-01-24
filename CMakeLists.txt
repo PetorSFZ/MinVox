@@ -67,6 +67,16 @@ add_executable(
 	${SRC_DIR}/model/World.hpp
 	${SRC_DIR}/model/World.cpp
 
+	${SRC_DIR}/Rendering.hpp
+	${SRC_DIR}/rendering/Assets.hpp
+	${SRC_DIR}/rendering/Assets.cpp
+	${SRC_DIR}/rendering/Camera.hpp
+	${SRC_DIR}/rendering/Camera.cpp
+	${SRC_DIR}/rendering/CubeObject.hpp
+	${SRC_DIR}/rendering/CubeObject.cpp
+	${SRC_DIR}/rendering/Shaders.hpp
+	${SRC_DIR}/rendering/Shaders.cpp
+
 	${SRC_DIR}/sfz/SDL.hpp
 	${SRC_DIR}/sfz/sdl/Session.hpp
 	${SRC_DIR}/sfz/sdl/Session.cpp

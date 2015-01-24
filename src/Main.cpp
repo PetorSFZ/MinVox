@@ -5,6 +5,7 @@
 #undef main
 
 #include "VoxModel.hpp"
+#include "Rendering.hpp"
 
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
