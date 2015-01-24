@@ -64,6 +64,8 @@ add_executable(
 	${SRC_DIR}/model/Chunk.cpp
 	${SRC_DIR}/model/Voxel.hpp
 	${SRC_DIR}/model/Voxel.inl
+	${SRC_DIR}/model/World.hpp
+	${SRC_DIR}/model/World.cpp
 
 	${SRC_DIR}/sfz/SDL.hpp
 	${SRC_DIR}/sfz/sdl/Session.hpp

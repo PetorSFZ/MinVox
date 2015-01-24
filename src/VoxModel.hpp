@@ -4,5 +4,6 @@
 
 #include "model/Chunk.hpp"
 #include "model/Voxel.hpp"
+#include "model/World.hpp"
 
 #endif
