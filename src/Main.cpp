@@ -10,7 +10,10 @@
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+GLuint shaderProgram;
 vox::World world;
+vox::Camera cam;
+sfz::mat4f projMatrix;
 
 // Helper functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -42,15 +45,23 @@ bool handleInput(const SDL_Event& event)
 	case SDL_WINDOWEVENT:
 		switch (event.window.event) {
 		case SDL_WINDOWEVENT_RESIZED:
-			//float w = static_cast<float>(event.window.data1);
-			//float h = static_cast<float>(event.window.data2);
-			//projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 50.0f);
+			float w = static_cast<float>(event.window.data1);
+			float h = static_cast<float>(event.window.data2);
+			projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 1000.0f);
 			break;
 		}
 		break;
 	case SDL_KEYDOWN:
 		switch (event.key.keysym.sym) {
 		case SDLK_ESCAPE: return true;
+		case 'w':
+		case 'W':
+			cam.mPos += cam.mDir*0.1f;
+			break;
+		case 's':
+		case 'S':
+			cam.mPos -= cam.mDir*0.1f;
+			break;
 		}
 	}
 	return false;
@@ -59,14 +70,59 @@ bool handleInput(const SDL_Event& event)
 // Called once every frame
 bool update(float delta)
 {
-
+	cam.update();
 	return false;
 }
 
 // Called once every frame
-void render(sdl::Window& window, float)
+void render(sdl::Window& window, vox::Assets& assets, float)
 {
+	static vox::CubeObject cubeObj;
 
+	// Clearing screen
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Enable blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Enable culling
+	glEnable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+
+	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
+
+	glUseProgram(shaderProgram);
+
+	const sfz::mat4f viewProj = projMatrix * cam.mViewMatrix;
+
+	// Only one texture is used when rendering SnakeTiles
+	gl::setUniform(shaderProgram, "tex", 0);
+	glActiveTexture(GL_TEXTURE0);
+
+
+
+	gl::setUniform(shaderProgram, "modelViewProj", viewProj);
+
+	glBindTexture(GL_TEXTURE_2D, assets.GRASS_FACE.mHandle);
+	cubeObj.render();
+
+	/*const vox::Chunk* chunkPtr = world.chunkPtr(0, 0, 0);
+
+	for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
+		if (chunkPtr->isEmptyLayer(y)) continue;
+		for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
+			if (chunkPtr->isEmptyRow(y, z)) continue;
+			for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
+
+				vox::Voxel v = chunkPtr->getVoxel(y, z, x);
+				if (v.type() == vox::VoxelType::AIR) continue;
+
+				// TODO: Render voxel
+			}
+		}
+	}*/
 }
 
 // Main
@@ -74,8 +130,10 @@ void render(sdl::Window& window, float)
 
 int main()
 {
-	sdl::Session sdlSession{{sdl::InitFlags::EVERYTHING}, {sdl::ImgInitFlags::PNG}};
+	// Initialization
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	sdl::Session sdlSession{{sdl::InitFlags::EVERYTHING}, {sdl::ImgInitFlags::PNG}};
 	sdl::Window window{"snakium³", 800, 600,
 	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
 
@@ -89,6 +147,19 @@ int main()
 		std::terminate();
 	}
 	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
+
+
+	// Variables
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	shaderProgram = vox::compileStandardShaderProgram();
+
+	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
+	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
+
+	vox::Assets assets;
+
+	checkGLErrorsMessage("^^^ Above errors caused by initing variables and loading assets.");
 
 	// Game loop
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -104,7 +175,7 @@ int main()
 
 		while (SDL_PollEvent(&event) != 0) if (handleInput(event)) running = false;
 		if (update(delta)) running = false;
-		render(window, delta);
+		render(window, assets, delta);
 
 		SDL_GL_SwapWindow(window.mPtr);
 
