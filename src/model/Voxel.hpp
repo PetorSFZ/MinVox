@@ -8,16 +8,13 @@ namespace vox {
 
 using std::uint8_t;
 
-/** Type of a voxel, takes up 3 bits. */
+/** Type of a voxel, takes up 4 bits. */
 enum class VoxelType : uint8_t {
 	AIR = 0,
 	LIGHT = 1,
-	MIRROR = 2,
+	EARTH = 2,
 	GRASS = 3,
-	STONE = 4,
-	METAL = 5,
-	SAND = 6,
-	GLASS = 7
+	STONE = 4
 };
 
 struct Voxel final {

@@ -13,7 +13,8 @@ namespace vox {
 
 struct Assets final {
 
-	gl::Texture GRASS_FACE,
+	gl::Texture EARTH_FACE,
+	            GRASS_FACE,
 	            STONE_FACE;
 
 	Assets();

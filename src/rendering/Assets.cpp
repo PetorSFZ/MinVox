@@ -32,6 +32,7 @@ const std::string& cubeFacePath()
 
 Assets::Assets()
 :
+	EARTH_FACE{cubeFacePath() + "earth.png"},
 	GRASS_FACE{cubeFacePath() + "grass.png"},
 	STONE_FACE{cubeFacePath() + "stone.png"}
 {
@@ -47,15 +48,9 @@ GLuint Assets::getCubeFaceTexture(Voxel voxel) const
 	case VoxelType::AIR:
 		std::cerr << "AIR shouldn't be rendered." << std::endl;
 		std::terminate();
-	case VoxelType::LIGHT:
-	case VoxelType::MIRROR:
-		std::cerr << "Texture not created." << std::endl;
-		std::terminate();
 	case VoxelType::GRASS: return GRASS_FACE.mHandle;
 	case VoxelType::STONE: return STONE_FACE.mHandle;
-	case VoxelType::METAL:
-	case VoxelType::SAND:
-	case VoxelType::GLASS:
+	default:
 		std::cerr << "Texture not created." << std::endl;
 		std::terminate();
 	}
