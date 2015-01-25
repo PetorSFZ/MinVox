@@ -6,7 +6,7 @@
 
 namespace vox {
 
-struct Camera {
+struct Camera final {
 
 	sfz::vec3f mPos, mDir, mUp;
 	float mFov;
