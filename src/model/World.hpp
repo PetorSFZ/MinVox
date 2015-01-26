@@ -5,6 +5,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 #include <vector>
+#include <string>
 
 #include <sfz/Math.hpp>
 
@@ -22,7 +23,7 @@ const size_t NUM_CHUNK_RANGE = 2;
 
 class World final {
 public:
-	World();
+	World(const std::string& name);
 
 	const Chunk* chunkPtr(int offsetY, int offsetZ, int offsetX) const;
 
@@ -30,6 +31,7 @@ private:
 	size_t mCurrentChunkRange;
 	int mBaseOffsetY, mBaseOffsetZ, mBaseOffsetX;
 	vector<Chunk> mChunks;
+	std::string name;
 };
 
 } // namespace vox

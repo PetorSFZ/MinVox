@@ -18,13 +18,14 @@ size_t numChunks(size_t numChunkRange)
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-World::World()
+World::World(const std::string& name)
 :
 	mCurrentChunkRange{NUM_CHUNK_RANGE},
 	mBaseOffsetY{0},
 	mBaseOffsetZ{0},
 	mBaseOffsetX{0},
-	mChunks{numChunks(NUM_CHUNK_RANGE)}
+	mChunks{numChunks(NUM_CHUNK_RANGE)},
+	name{name}
 {
 	for (size_t i = 0; i < numChunks(NUM_CHUNK_RANGE); i++) {
 		mChunks.emplace_back();

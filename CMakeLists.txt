@@ -67,6 +67,12 @@ add_executable(
 	${SRC_DIR}/model/World.hpp
 	${SRC_DIR}/model/World.cpp
 
+	${SRC_DIR}/IO.hpp
+	${SRC_DIR}/io/ChunkIO.hpp
+	${SRC_DIR}/io/ChunkIO.cpp
+	${SRC_DIR}/io/IOUtils.hpp
+	${SRC_DIR}/io/IOUtils.cpp
+
 	${SRC_DIR}/Rendering.hpp
 	${SRC_DIR}/rendering/Assets.hpp
 	${SRC_DIR}/rendering/Assets.cpp

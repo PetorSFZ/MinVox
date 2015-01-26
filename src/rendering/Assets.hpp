@@ -8,6 +8,7 @@
 #include "sfz/GL.hpp"
 
 #include "model/Voxel.hpp"
+#include "io/IOUtils.hpp"
 
 namespace vox {
 

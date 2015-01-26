@@ -7,18 +7,6 @@ namespace vox {
 
 namespace {
 
-const std::string& basePath()
-{
-	static const std::string BASE_PATH{SDL_GetBasePath()};
-	return BASE_PATH;
-}
-
-const std::string& assetsPath()
-{
-	static const std::string ASSETS_PATH{basePath() + "assets/"};
-	return ASSETS_PATH;
-}
-
 const std::string& cubeFacePath()
 {
 	static const std::string CUBE_FACE_128_PATH{assetsPath() + "cube_faces_128pix/"};

@@ -11,7 +11,7 @@
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 GLuint shaderProgram;
-vox::World world;
+vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
 
