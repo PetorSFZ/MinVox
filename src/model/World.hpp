@@ -11,6 +11,7 @@
 
 #include "model/Voxel.hpp"
 #include "model/Chunk.hpp"
+#include "io/ChunkIO.hpp"
 
 namespace vox {
 

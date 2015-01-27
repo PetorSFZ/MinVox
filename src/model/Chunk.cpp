@@ -54,7 +54,7 @@ bool Chunk::isEmptyLayer(size_t y) const
 	return (layerBits == std::numeric_limits<bitset_t>::max());
 }
 
-// Private functions
+// Helper functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 void Chunk::setEmptyRowFlag(size_t y, size_t z)

@@ -15,8 +15,13 @@ using std::size_t;
 
 const size_t CHUNK_SIZE = 16;
 
-class Chunk final {
-public:
+struct Chunk final {
+	using bitset_t = std::uint16_t;
+
+	Voxel mVoxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+	bitset_t mEmptyRowFlags[CHUNK_SIZE];
+
+
 	Chunk();
 
 	Voxel getVoxel(size_t y, size_t z, size_t x) const;
@@ -26,14 +31,8 @@ public:
 	bool isEmptyRow(size_t y, size_t z) const;
 	bool isEmptyLayer(size_t y) const;
 
-private:
-	using bitset_t = std::uint16_t;
-
 	void setEmptyRowFlag(size_t y, size_t z);
 	void clearEmptyRowFlag(size_t y, size_t z);
-
-	Voxel mVoxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-	bitset_t mEmptyRowFlags[CHUNK_SIZE];
 };
 
 } // namespace vox
