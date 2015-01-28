@@ -36,6 +36,7 @@ GLuint Assets::getCubeFaceTexture(Voxel voxel) const
 	case VoxelType::AIR:
 		std::cerr << "AIR shouldn't be rendered." << std::endl;
 		std::terminate();
+	case VoxelType::EARTH: return EARTH_FACE.mHandle;
 	case VoxelType::GRASS: return GRASS_FACE.mHandle;
 	case VoxelType::STONE: return STONE_FACE.mHandle;
 	default:

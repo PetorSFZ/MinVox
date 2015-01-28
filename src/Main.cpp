@@ -87,6 +87,9 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// Enable depth test
+	glEnable(GL_DEPTH_TEST);
+
 	// Enable culling
 	glEnable(GL_CULL_FACE);
 	//glDisable(GL_CULL_FACE);
@@ -102,13 +105,8 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glActiveTexture(GL_TEXTURE0);
 
 
-
-	gl::setUniform(shaderProgram, "modelViewProj", viewProj);
-
-	glBindTexture(GL_TEXTURE_2D, assets.GRASS_FACE.mHandle);
-	cubeObj.render();
-
-	/*const vox::Chunk* chunkPtr = world.chunkPtr(0, 0, 0);
+	const vox::Chunk* chunkPtr = world.chunkPtr(0, 0, 0);
+	sfz::mat4f transform;
 
 	for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
 		if (chunkPtr->isEmptyLayer(y)) continue;
@@ -119,10 +117,15 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 				vox::Voxel v = chunkPtr->getVoxel(y, z, x);
 				if (v.type() == vox::VoxelType::AIR) continue;
 
-				// TODO: Render voxel
+				transform = viewProj
+						  * sfz::translationMatrix((float)x, (float)y, (float)z);
+				gl::setUniform(shaderProgram, "modelViewProj", transform);
+
+				glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
+				cubeObj.render();
 			}
 		}
-	}*/
+	}
 }
 
 // Main

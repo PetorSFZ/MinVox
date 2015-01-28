@@ -20,10 +20,11 @@ size_t numChunks(size_t numChunkRange)
 
 World::World(const std::string& name)
 :
-	mCurrentChunkRange{NUM_CHUNK_RANGE},
-	mBaseOffsetY{0},
-	mBaseOffsetZ{0},
-	mBaseOffsetX{0},
+	mHorizontalChunkRange{NUM_CHUNK_RANGE},
+	mVerticalChunkRange{NUM_CHUNK_RANGE},
+	mCurrentOffsetY{0},
+	mCurrentOffsetZ{0},
+	mCurrentOffsetX{0},
 	mChunks{numChunks(NUM_CHUNK_RANGE)},
 	name{name}
 {

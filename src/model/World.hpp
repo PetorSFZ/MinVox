@@ -29,8 +29,9 @@ public:
 	const Chunk* chunkPtr(int offsetY, int offsetZ, int offsetX) const;
 
 private:
-	size_t mCurrentChunkRange;
-	int mBaseOffsetY, mBaseOffsetZ, mBaseOffsetX;
+	size_t mHorizontalChunkRange;
+	size_t mVerticalChunkRange;
+	int mCurrentOffsetY, mCurrentOffsetZ, mCurrentOffsetX;
 	vector<Chunk> mChunks;
 	std::string name;
 };
