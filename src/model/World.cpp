@@ -22,25 +22,42 @@ World::World(const std::string& name)
 :
 	mHorizontalChunkRange{NUM_CHUNK_RANGE},
 	mVerticalChunkRange{NUM_CHUNK_RANGE},
-	mCurrentOffsetY{0},
-	mCurrentOffsetZ{0},
-	mCurrentOffsetX{0},
-	mChunks{numChunks(NUM_CHUNK_RANGE)},
-	name{name}
+	mCurrentOffset{0 ,0, 0},
+	mChunks{new Chunk[numChunks(NUM_CHUNK_RANGE)]},
+	mName{name}
 {
 	for (size_t i = 0; i < numChunks(NUM_CHUNK_RANGE); i++) {
-		mChunks.emplace_back();
+		mChunks[i] = Chunk{};
 	}
 }
 
-// Public functions
+// Public member functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-const Chunk* World::chunkPtr(int offsetY, int offsetZ, int offsetX) const
+void World::update(const vec3f& basePos)
+{
+	// TODO: Check if new chunks needs to be streamed in and maybe do so.
+}
+
+const Chunk* World::chunkPtr(ChunkOffset offset) const
 {
 	// TODO: Proper implementation
 	return &mChunks[0];
 }
 
+const ChunkOffset World::chunkOffset(const Chunk* chunkPtr) const
+{
+	// TODO: Proper implementation
+	return ChunkOffset{0, 0, 0};
+}
+
+// Private member functions
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+ChunkOffset World::offsetFromPosition(const vec3f& pos) const
+{
+	// TODO: Proper implementation.
+	return ChunkOffset{0,0,0};
+}
 
 } // namespace vox

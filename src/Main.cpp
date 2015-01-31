@@ -71,6 +71,7 @@ bool handleInput(const SDL_Event& event)
 bool update(float delta)
 {
 	cam.update();
+	world.update(cam.mPos);
 	return false;
 }
 
@@ -105,7 +106,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glActiveTexture(GL_TEXTURE0);
 
 
-	const vox::Chunk* chunkPtr = world.chunkPtr(0, 0, 0);
+	const vox::Chunk* chunkPtr = world.chunkPtr(vox::ChunkOffset{0, 0, 0});
 	sfz::mat4f transform;
 
 	for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
