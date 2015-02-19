@@ -1,22 +1,24 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project("MinVox")
 
+# Sets build type to release if no build type is specified in a single-configuration generator.
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+
 # Compiler flags
 if(MSVC)
 	# MSVC flags
-	#set(cpp_compiler_flags "/Wall /EHsc /O2")
-	set(cpp_compiler_flags "/O2")
-else() # Assume we're compiling with CLANG or GCC if not MSVC.
-	# GCC and Clang flags
-	set(cpp_compiler_flags "-Wall -Wextra -Wno-c++11-extensions -std=c++11 -O3 -pthread")
-endif()
-
-# Sets the specified compiler flags, will only set the first time cmake configures project.
-if(NOT MINVOX_CONFIGURED_ONCE)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cpp_compiler_flags}" 
-	    CACHE STRING "Flags used by the compiler during all build types." FORCE)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${c_compiler_flags}"
-	    CACHE STRING "Flags used by the compiler during all build types." FORCE)
+	set(CMAKE_CXX_FLAGS "/Wall")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_DEBUG  "/Od")
+else()
+	# GCC / Clang flags
+	set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c++11-extensions -std=c++11 -pthread")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
 endif()
 
 # Directories
@@ -139,6 +141,3 @@ if(MSVC)
 	file(COPY RuntimeDLLs/msvc12_x64_release/zlib1.dll DESTINATION ${CMAKE_BINARY_DIR})
 
 endif()
-
-# Sets flag that ensures some variables are only set once.
-set(MINVOX_CONFIGURED_ONCE TRUE CACHE INTERNAL "A flag showing that CMake has configured at least once.")
