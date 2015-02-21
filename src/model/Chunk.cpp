@@ -13,14 +13,6 @@ Chunk::Chunk()
 	for (bitset_t& flags : mEmptyRowFlags) {
 		flags = std::numeric_limits<bitset_t>::max();
 	}
-
-	setVoxel(0, 0, 0, Voxel{Voxel(VoxelType::EARTH, 0)});
-	setVoxel(0, 1, 2, Voxel{Voxel(VoxelType::EARTH, 0)});
-	setVoxel(0, 2, 4, Voxel{Voxel(VoxelType::EARTH, 0)});
-
-	setVoxel(1, 2, 0, Voxel{Voxel(VoxelType::GRASS, 0)});
-	setVoxel(2, 1, 2, Voxel{Voxel(VoxelType::GRASS, 0)});
-	setVoxel(1, 0, 4, Voxel{Voxel(VoxelType::GRASS, 0)});
 }
 
 // Public functions

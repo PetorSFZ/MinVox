@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 
+#include <sfz/Assert.hpp>
 #include <sfz/Math.hpp>
 
 #include "model/Voxel.hpp"
@@ -30,6 +31,10 @@ class World final {
 public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	World() = delete;
+	World(const World&) = delete;
+	World& operator= (const World&) = delete;
 
 	World(const std::string& name);
 

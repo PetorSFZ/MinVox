@@ -4,11 +4,13 @@
 
 #include "model/Chunk.hpp"
 #include "model/ChunkOffset.hpp"
+#include "model/Voxel.hpp"
 
 namespace vox {
 
-Chunk generateChunk();
+inline Chunk generateChunk(const ChunkOffset& offset);
 
 } // namespace vox
 
+#include "model/TerrainGeneration.inl"
 #endif

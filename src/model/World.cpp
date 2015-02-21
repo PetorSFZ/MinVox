@@ -28,8 +28,18 @@ World::World(const std::string& name)
 	mChunks{new Chunk[numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE)]},
 	mName{name}
 {
-	for (size_t i = 0; i < numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE); i++) {
-		mChunks[i] = Chunk{};
+	size_t count = 0;
+	ChunkOffset offset;
+	for(int y = -VERTICAL_CHUNK_RANGE; y <= VERTICAL_CHUNK_RANGE; y++) {
+		for (int z = -HORIZONTAL_CHUNK_RANGE; z <= HORIZONTAL_CHUNK_RANGE; z++) {
+			for (int x = -HORIZONTAL_CHUNK_RANGE; x <= HORIZONTAL_CHUNK_RANGE; x++) {
+			
+				offset.set(y, z, x);
+				mChunks[count] = generateChunk(offset);
+				count++;
+				sfz_assert_debug(count <= numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE));
+			}
+		}
 	}
 }
 

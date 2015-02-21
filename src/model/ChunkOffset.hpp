@@ -8,6 +8,8 @@ namespace vox {
 struct ChunkOffset final {
 	int mY, mZ, mX;
 
+	inline ChunkOffset() = default;
+
 	inline ChunkOffset(int y, int z, int x)
 	:
 		mY{y},
@@ -15,6 +17,13 @@ struct ChunkOffset final {
 		mX{x}
 	{
 		// Initialization done.
+	}
+
+	inline void set(int y, int z, int x)
+	{
+		mY = y;
+		mZ = z;
+		mX = x;
 	}
 };
 
