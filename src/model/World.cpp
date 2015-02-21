@@ -22,22 +22,23 @@ size_t numChunks(size_t horizontalChunkRange, size_t verticalChunkRange)
 
 World::World(const std::string& name)
 :
-	mHorizontalChunkRange{HORIZONTAL_CHUNK_RANGE},
-	mVerticalChunkRange{VERTICAL_CHUNK_RANGE},
+	mHorizontalChunkRange{2},
+	mVerticalChunkRange{2},
+	mNumElements{numChunks(mHorizontalChunkRange, mVerticalChunkRange)},
+	mChunks{new Chunk[mNumElements]},
+	mOffsets{new ChunkOffset[mNumElements]},
 	mCurrentOffset{0 ,0, 0},
-	mChunks{new Chunk[numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE)]},
 	mName{name}
 {
 	size_t count = 0;
-	ChunkOffset offset;
-	for(int y = -VERTICAL_CHUNK_RANGE; y <= VERTICAL_CHUNK_RANGE; y++) {
-		for (int z = -HORIZONTAL_CHUNK_RANGE; z <= HORIZONTAL_CHUNK_RANGE; z++) {
-			for (int x = -HORIZONTAL_CHUNK_RANGE; x <= HORIZONTAL_CHUNK_RANGE; x++) {
-			
-				offset.set(y, z, x);
-				mChunks[count] = generateChunk(offset);
+	for(int y = -mVerticalChunkRange; y <= mVerticalChunkRange; y++) {
+		for (int z = -mHorizontalChunkRange; z <= mHorizontalChunkRange; z++) {
+			for (int x = -mHorizontalChunkRange; x <= mHorizontalChunkRange; x++) {
+
+				sfz_assert_debug(count < mNumElements);
+				mOffsets[count] = ChunkOffset{y, z, x};
+				mChunks[count] = generateChunk(mOffsets[count]);
 				count++;
-				sfz_assert_debug(count <= numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE));
 			}
 		}
 	}
@@ -53,14 +54,20 @@ void World::update(const vec3f& basePos)
 
 const Chunk* World::chunkPtr(ChunkOffset offset) const
 {
-	// TODO: Proper implementation
-	return &mChunks[0];
+	for (size_t i = 0; i < mNumElements; i++) {
+		if (mOffsets[i] == offset) return &mChunks[i];
+	}
+	sfz_assert_debug(false, "Invalid chunk offset.");
+	return nullptr;
 }
 
 const ChunkOffset World::chunkOffset(const Chunk* chunkPtr) const
 {
-	// TODO: Proper implementation
-	return ChunkOffset{0, 0, 0};
+	for (size_t i = 0; i < mNumElements; i++) {
+		if ((&mChunks[i]) == chunkPtr) return mOffsets[i];
+	}
+	sfz_assert_debug(false, "Invalid chunk pointer.");
+	return ChunkOffset{0,0,0};
 }
 
 // Private member functions
