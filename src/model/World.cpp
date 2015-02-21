@@ -7,10 +7,12 @@ namespace vox {
 
 namespace {
 
-size_t numChunks(size_t numChunkRange)
+size_t numChunks(size_t horizontalChunkRange, size_t verticalChunkRange)
 {
-	size_t numSide = (numChunkRange*2) + 1;
-	return numSide*numSide*numSide;
+	size_t horizontalSide = (horizontalChunkRange*2)+1;
+	size_t slab = horizontalSide*horizontalSide;
+	size_t verticalSide = (verticalChunkRange*2)+1;
+	return slab * verticalSide;
 }
 
 } // namespace
@@ -20,13 +22,13 @@ size_t numChunks(size_t numChunkRange)
 
 World::World(const std::string& name)
 :
-	mHorizontalChunkRange{NUM_CHUNK_RANGE},
-	mVerticalChunkRange{NUM_CHUNK_RANGE},
+	mHorizontalChunkRange{HORIZONTAL_CHUNK_RANGE},
+	mVerticalChunkRange{VERTICAL_CHUNK_RANGE},
 	mCurrentOffset{0 ,0, 0},
-	mChunks{new Chunk[numChunks(NUM_CHUNK_RANGE)]},
+	mChunks{new Chunk[numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE)]},
 	mName{name}
 {
-	for (size_t i = 0; i < numChunks(NUM_CHUNK_RANGE); i++) {
+	for (size_t i = 0; i < numChunks(HORIZONTAL_CHUNK_RANGE, VERTICAL_CHUNK_RANGE); i++) {
 		mChunks[i] = Chunk{};
 	}
 }

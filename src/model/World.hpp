@@ -11,6 +11,7 @@
 
 #include "model/Voxel.hpp"
 #include "model/Chunk.hpp"
+#include "model/ChunkOffset.hpp"
 #include "io/ChunkIO.hpp"
 
 namespace vox {
@@ -19,23 +20,11 @@ using std::size_t;
 using std::unique_ptr;
 using sfz::vec3f;
 
-/** The numbers of chunk loaded in any given direction from the current chunk.
-    I.e. a value of 2 would mean that 5x5x5 chunks are loaded at the same time. */
-const size_t NUM_CHUNK_RANGE = 2;
+/** The numbers of chunks loaded in horizontal direction from the current chunk. */
+const size_t HORIZONTAL_CHUNK_RANGE = 2;
 
-/** Struct used to specify the offset of a chunk from the middle (0,0,0) of the World. */
-struct ChunkOffset final {
-	int mY, mZ, mX;
-
-	inline ChunkOffset(int y, int z, int x)
-	:
-		mY{y},
-		mZ{z},
-		mX{x}
-	{
-		// Initialization done.
-	}
-};
+/** The number of chunks loaded in vertical direction from the current chunk. */
+const size_t VERTICAL_CHUNK_RANGE = 2;
 
 class World final {
 public:
