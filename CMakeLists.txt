@@ -122,6 +122,8 @@ if(MSVC)
 	
 	# Assets folder
 	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
+	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Debug)
+	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Release)
 
 	# Runtime DLLs
 	file(COPY RuntimeDLLs/msvc12_x64_debug/libjpeg-9.dll DESTINATION ${CMAKE_BINARY_DIR})
