@@ -21,12 +21,6 @@ using std::size_t;
 using std::unique_ptr;
 using sfz::vec3f;
 
-/** The numbers of chunks loaded in horizontal direction from the current chunk. */
-const size_t HORIZONTAL_CHUNK_RANGE = 2;
-
-/** The number of chunks loaded in vertical direction from the current chunk. */
-const size_t VERTICAL_CHUNK_RANGE = 2;
-
 class World final {
 public:
 	// Constructors & destructors
@@ -54,10 +48,13 @@ private:
 	// Private Members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	size_t mHorizontalChunkRange;
-	size_t mVerticalChunkRange;
-	ChunkOffset mCurrentOffset;
+	int mHorizontalChunkRange;
+	int mVerticalChunkRange;
+	size_t mNumElements;
 	unique_ptr<Chunk[]> mChunks;
+	unique_ptr<ChunkOffset[]> mOffsets;
+	ChunkOffset mCurrentOffset;
+	
 	std::string mName;
 };
 
