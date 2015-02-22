@@ -65,6 +65,7 @@ add_executable(
 	${SRC_DIR}/model/Chunk.hpp
 	${SRC_DIR}/model/Chunk.cpp
 	${SRC_DIR}/model/ChunkOffset.hpp
+	${SRC_DIR}/model/ChunkOffset.inl
 	${SRC_DIR}/model/TerrainGeneration.hpp
 	${SRC_DIR}/model/TerrainGeneration.inl
 	${SRC_DIR}/model/Voxel.hpp

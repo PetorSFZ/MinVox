@@ -4,6 +4,10 @@
 
 #include <string>
 
+#include <sfz/math/Vector.hpp>
+
+#include "model/Chunk.hpp"
+
 namespace vox {
 
 /** Struct used to specify the offset of a chunk from the middle (0,0,0) of the World. */
@@ -15,6 +19,7 @@ struct ChunkOffset final {
 	inline ChunkOffset(int y, int z, int x);
 
 	inline void set(int y, int z, int x);
+	inline sfz::vec3f worldOffset() const;
 	inline std::string to_string() const;
 
 	inline bool operator== (const ChunkOffset& other);

@@ -105,25 +105,34 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	gl::setUniform(shaderProgram, "tex", 0);
 	glActiveTexture(GL_TEXTURE0);
 
+	const vox::Chunk* chunkPtr;
+	vox::ChunkOffset offset;
+	sfz::vec3f offsetVec;
+	sfz::mat4f transform = sfz::identityMatrix4<float>();
 
-	const vox::Chunk* chunkPtr = world.chunkPtr(vox::ChunkOffset{0, 0, 0});
-	sfz::mat4f transform;
+	for (size_t i = 0; i < world.numChunks(); i++) {
+		chunkPtr = world.chunkPtr(i);
+		if (chunkPtr == nullptr) continue;
+		offset = world.chunkOffset(chunkPtr);
+		offsetVec = offset.worldOffset();
 
-	for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
-		if (chunkPtr->isEmptyLayer(y)) continue;
-		for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
-			if (chunkPtr->isEmptyRow(y, z)) continue;
-			for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
+		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
+			if (chunkPtr->isEmptyLayer(y)) continue;
+			for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
+				if (chunkPtr->isEmptyRow(y, z)) continue;
+				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
 
-				vox::Voxel v = chunkPtr->getVoxel(y, z, x);
-				if (v.type() == vox::VoxelType::AIR) continue;
+					vox::Voxel v = chunkPtr->getVoxel(y, z, x);
+					if (v.type() == vox::VoxelType::AIR) continue;
 
-				transform = viewProj
-						  * sfz::translationMatrix((float)x, (float)y, (float)z);
-				gl::setUniform(shaderProgram, "modelViewProj", transform);
+					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
+					                                                   static_cast<float>(y),
+					                                                   static_cast<float>(z)});
+					gl::setUniform(shaderProgram, "modelViewProj", viewProj * transform);
 
-				glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
-				cubeObj.render();
+					glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
+					cubeObj.render();
+				}
 			}
 		}
 	}
@@ -138,7 +147,7 @@ int main()
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	sdl::Session sdlSession{{sdl::InitFlags::EVERYTHING}, {sdl::ImgInitFlags::PNG}};
-	sdl::Window window{"snakium³", 800, 600,
+	sdl::Window window{"MinVox", 800, 600,
 	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
 
 	gl::Context glContext{window.mPtr, 3, 3, gl::GLContextProfile::CORE};

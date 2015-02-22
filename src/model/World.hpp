@@ -39,6 +39,9 @@ public:
 	const Chunk* chunkPtr(ChunkOffset offset) const;
 	const ChunkOffset chunkOffset(const Chunk* chunkPtr) const;
 
+	const Chunk* chunkPtr(size_t index);
+	inline size_t numChunks() { return mNumElements; }
+
 private:
 	// Private member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

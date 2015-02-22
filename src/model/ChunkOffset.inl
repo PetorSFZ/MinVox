@@ -14,6 +14,14 @@ inline void ChunkOffset::set(int y, int z, int x)
 	mX = x;
 }
 
+inline sfz::vec3f ChunkOffset::worldOffset() const
+{
+	static const float chunkSize = static_cast<float>(CHUNK_SIZE);
+	return sfz::vec3f{static_cast<float>(mX*chunkSize),
+	                  static_cast<float>(mY*chunkSize),
+	                  static_cast<float>(mZ*chunkSize)};
+}
+
 inline std::string ChunkOffset::to_string() const
 {
 	std::string str;

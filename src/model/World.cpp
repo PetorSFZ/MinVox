@@ -7,7 +7,7 @@ namespace vox {
 
 namespace {
 
-size_t numChunks(size_t horizontalChunkRange, size_t verticalChunkRange)
+size_t calculateNumChunks(size_t horizontalChunkRange, size_t verticalChunkRange)
 {
 	size_t horizontalSide = (horizontalChunkRange*2)+1;
 	size_t slab = horizontalSide*horizontalSide;
@@ -24,7 +24,7 @@ World::World(const std::string& name)
 :
 	mHorizontalChunkRange{2},
 	mVerticalChunkRange{2},
-	mNumElements{numChunks(mHorizontalChunkRange, mVerticalChunkRange)},
+	mNumElements{calculateNumChunks(mHorizontalChunkRange, mVerticalChunkRange)},
 	mChunks{new Chunk[mNumElements]},
 	mOffsets{new ChunkOffset[mNumElements]},
 	mCurrentOffset{0 ,0, 0},
@@ -68,6 +68,12 @@ const ChunkOffset World::chunkOffset(const Chunk* chunkPtr) const
 	}
 	sfz_assert_debug(false, "Invalid chunk pointer.");
 	return ChunkOffset{0,0,0};
+}
+
+const Chunk* World::chunkPtr(size_t index)
+{
+	sfz_assert_debug(index < mNumElements);
+	return &mChunks[index];
 }
 
 // Private member functions
