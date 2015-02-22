@@ -18,6 +18,8 @@ inline Chunk generateChunk(const Offset& offset)
 		worldOffset.mY += 1;
 	}
 
+	chunk.updateAllFlags();
+
 	return chunk;
 }
 
@@ -25,7 +27,8 @@ inline Voxel generateVoxel(const Offset& worldOffset)
 {
 	if (worldOffset.mY == 0) return Voxel{VoxelType::GRASS, 0};
 	else if (worldOffset.mY < 0) return Voxel{VoxelType::EARTH, 0};
-	return Voxel{VoxelType::AIR, 0};
+	else if (worldOffset.mY > 0) return Voxel{VoxelType::AIR, 0};
+	sfz_assert_debug(false);
 }
 
 } // namespace vox

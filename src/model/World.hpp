@@ -35,7 +35,7 @@ public:
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void update(const vec3f& basePos);
+	void update(const vec3f& camPos);
 	const Chunk* chunkPtr(const Offset& offset) const;
 	const Offset chunkOffset(const Chunk* chunkPtr) const;
 
@@ -44,6 +44,8 @@ public:
 
 	vec3f positionFromChunkOffset(const Offset& offset) const;
 	Offset chunkOffsetFromPosition(const vec3f& position) const;
+
+	inline Offset currentChunkOffset() const { return mCurrentChunkOffset; }
 
 private:
 	// Private Members

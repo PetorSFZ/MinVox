@@ -109,18 +109,33 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	vox::Offset offset;
 	sfz::vec3f offsetVec;
 	sfz::mat4f transform = sfz::identityMatrix4<float>();
+	bool fullChunk;
 
 	for (size_t i = 0; i < world.numChunks(); i++) {
 		chunkPtr = world.chunkPtr(i);
 		if (chunkPtr == nullptr) continue;
+		if (chunkPtr->isEmptyChunk()) continue;
+
 		offset = world.chunkOffset(chunkPtr);
 		offsetVec = world.positionFromChunkOffset(offset);
+		fullChunk = chunkPtr->isFullChunk();
+
 
 		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
 			if (chunkPtr->isEmptyLayer(y)) continue;
 			for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
 				if (chunkPtr->isEmptyXRow(y, z)) continue;
 				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
+
+					// Only renders outside of full chunks.
+					if (fullChunk && offset != world.currentChunkOffset()) {
+						const size_t max = vox::CHUNK_SIZE-1;
+						bool yMid = (y != 0 && y != max);
+						bool zMid = (z != 0 && z != max);
+						bool xMid = (x != 0 && x != max);
+
+						if (yMid && zMid && xMid) continue;
+					}
 
 					vox::Voxel v = chunkPtr->getVoxel(y, z, x);
 					if (v.type() == vox::VoxelType::AIR) continue;

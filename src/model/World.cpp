@@ -47,9 +47,14 @@ World::World(const std::string& name)
 // Public member functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void World::update(const vec3f& basePos)
+void World::update(const vec3f& camPos)
 {
-	// TODO: Check if new chunks needs to be streamed in and maybe do so.
+	Offset oldChunkOffset = mCurrentChunkOffset;
+	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
+
+	if (oldChunkOffset != mCurrentChunkOffset) {
+		// TODO: Streaming should happen here.
+	}
 }
 
 const Chunk* World::chunkPtr(const Offset& offset) const
@@ -83,8 +88,10 @@ vec3f World::positionFromChunkOffset(const Offset& offset) const
 
 Offset World::chunkOffsetFromPosition(const vec3f& position) const
 {
-	// TODO: Proper implementation.
-	return Offset{0,0,0};
+	int x = static_cast<int>(position[0]);
+	int y = static_cast<int>(position[1]);
+	int z = static_cast<int>(position[2]);
+	return Offset{y, z, x};
 }
 
 } // namespace vox

@@ -48,15 +48,27 @@ struct Chunk final {
 
 	bool isEmptyXRow(size_t y, size_t z) const;
 	bool isEmptyLayer(size_t y) const;
+	bool isEmptyChunk() const;
+
+	bool isFullLayer(size_t y) const;
+	bool isFullChunk() const;
 
 	// Helper functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	void updateAllFlags();
+
 	void setEmptyXRowFlag(size_t y, size_t z);
 	void clearEmptyXRowFlag(size_t y, size_t z);
+	bool checkEmptyXRowFlag(size_t y, size_t z) const;
 
 	void setFullXRowFlag(size_t y, size_t z);
+	void clearFullXRowFlag(size_t y, size_t z);
+	bool checkFullXRowFlag(size_t y, size_t z) const;
 
+	void setFullZRowFlag(size_t y, size_t x);
+	void clearFullZRowFlag(size_t y, size_t x);
+	bool checkFullZRowFlag(size_t y, size_t z) const;
 };
 
 } // namespace vox
