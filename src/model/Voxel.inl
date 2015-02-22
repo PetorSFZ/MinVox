@@ -20,7 +20,7 @@ inline VoxelType Voxel::type() const
 
 inline uint8_t Voxel::extraData() const
 {
-	return ((mData >> 4) & 0x0F);
+	return static_cast<uint8_t>(((mData >> 4) & 0x0F));
 }
 
 inline void Voxel::setType(VoxelType type)

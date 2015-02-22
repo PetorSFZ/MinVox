@@ -17,7 +17,7 @@ struct Offset final {
 	int mY, mZ, mX;
 
 	inline Offset() = default;
-	inline Offset(Offset&) = default;
+	inline Offset(const Offset&) = default;
 	inline Offset& operator= (const Offset&) = default;
 	inline ~Offset() = default;
 

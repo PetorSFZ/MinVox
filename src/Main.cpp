@@ -68,7 +68,7 @@ bool handleInput(const SDL_Event& event)
 }
 
 // Called once every frame
-bool update(float delta)
+bool update(float)
 {
 	cam.update();
 	world.update(cam.mPos);
@@ -119,7 +119,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
 			if (chunkPtr->isEmptyLayer(y)) continue;
 			for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
-				if (chunkPtr->isEmptyRow(y, z)) continue;
+				if (chunkPtr->isEmptyXRow(y, z)) continue;
 				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
 
 					vox::Voxel v = chunkPtr->getVoxel(y, z, x);

@@ -9,7 +9,7 @@ inline Chunk generateChunk(const Offset& offset)
 		for (int z = 0; z < (int)CHUNK_SIZE; z++) {
 			for (int x = 0; x < (int)CHUNK_SIZE; x++) {
 
-				chunk.setVoxel(y,z,x, generateVoxel(worldOffset));
+				chunk.setVoxel((size_t)y,(size_t)z,(size_t)x, generateVoxel(worldOffset));
 				
 				worldOffset.mX += 1;
 			}

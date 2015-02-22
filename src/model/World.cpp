@@ -7,11 +7,11 @@ namespace vox {
 
 namespace {
 
-size_t calculateNumChunks(size_t horizontalChunkRange, size_t verticalChunkRange)
+size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange)
 {
-	size_t horizontalSide = (horizontalChunkRange*2)+1;
-	size_t slab = horizontalSide*horizontalSide;
-	size_t verticalSide = (verticalChunkRange*2)+1;
+	size_t horizontalSide = (static_cast<size_t>(horizontalChunkRange)*2)+1;
+	size_t slab = static_cast<size_t>(horizontalSide*horizontalSide);
+	size_t verticalSide = (static_cast<size_t>(verticalChunkRange)*2)+1;
 	return slab * verticalSide;
 }
 
@@ -57,7 +57,7 @@ const Chunk* World::chunkPtr(const Offset& offset) const
 	for (size_t i = 0; i < mNumElements; i++) {
 		if (mOffsets[i] == offset) return &mChunks[i];
 	}
-	sfz_assert_debug(false, "Invalid chunk offset.");
+	sfz_assert_debug_m(false, "Invalid chunk offset.");
 	return nullptr;
 }
 
@@ -66,7 +66,7 @@ const Offset World::chunkOffset(const Chunk* chunkPtr) const
 	for (size_t i = 0; i < mNumElements; i++) {
 		if ((&mChunks[i]) == chunkPtr) return mOffsets[i];
 	}
-	sfz_assert_debug(false, "Invalid chunk pointer.");
+	sfz_assert_debug_m(false, "Invalid chunk pointer.");
 	return Offset{0,0,0};
 }
 

@@ -10,12 +10,12 @@ Chunk::Chunk()
 	static_assert(sizeof(Voxel) == 1, "Voxel should be 1 byte large");
 
 	// Since default chunk is only air all rows are empty.
-	for (bitset_t& flags : mEmptyRowFlags) {
+	for (bitset_t& flags : mEmptyXRowFlags) {
 		flags = std::numeric_limits<bitset_t>::max();
 	}
 }
 
-// Public functions
+// Getters / setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 Voxel Chunk::getVoxel(const Offset& offset) const
@@ -57,40 +57,43 @@ void Chunk::setVoxel(size_t y, size_t z, size_t x, Voxel voxel)
 	mVoxels[y][z][x] = voxel;
 	for (Voxel v : mVoxels[y][z]) {
 		if (v.type() != VoxelType::AIR) {
-			clearEmptyRowFlag(y, z);
+			clearEmptyXRowFlag(y, z);
 			return;
 		}
 	}
-	setEmptyRowFlag(y, z);
+	setEmptyXRowFlag(y, z);
 }
 
-bool Chunk::isEmptyRow(size_t y, size_t z) const
+// Query functions
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+bool Chunk::isEmptyXRow(size_t y, size_t z) const
 {
-	bitset_t layerBits = mEmptyRowFlags[y];
+	bitset_t layerBits = mEmptyXRowFlags[y];
 	layerBits >>= z;
 	layerBits &= 1;
-	return layerBits;
+	return layerBits != 0;
 }
 
 bool Chunk::isEmptyLayer(size_t y) const
 {
-	bitset_t layerBits = mEmptyRowFlags[y];
+	bitset_t layerBits = mEmptyXRowFlags[y];
 	return (layerBits == std::numeric_limits<bitset_t>::max());
 }
 
 // Helper functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void Chunk::setEmptyRowFlag(size_t y, size_t z)
+void Chunk::setEmptyXRowFlag(size_t y, size_t z)
 {
-	bitset_t flag = (1 << z);
-	mEmptyRowFlags[y] |= flag;
+	bitset_t flag = static_cast<bitset_t>(1 << z);
+	mEmptyXRowFlags[y] |= flag;
 }
 
-void Chunk::clearEmptyRowFlag(size_t y, size_t z)
+void Chunk::clearEmptyXRowFlag(size_t y, size_t z)
 {
-	bitset_t flag = ~(1 << z);
-	mEmptyRowFlags[y] &= flag;
+	bitset_t flag = (~static_cast<bitset_t>(1 << z));
+	mEmptyXRowFlags[y] &= flag;
 }
 
 } // namespace vox

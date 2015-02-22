@@ -19,10 +19,21 @@ const size_t CHUNK_SIZE = 16;
 struct Chunk final {
 	using bitset_t = std::uint16_t;
 
-	Voxel mVoxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-	bitset_t mEmptyRowFlags[CHUNK_SIZE];
+	// Public members
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	Chunk();
+	Voxel mVoxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+	bitset_t mEmptyXRowFlags[CHUNK_SIZE];
+	bitset_t mFullXRowFlags[CHUNK_SIZE];
+	bitset_t mFullZRowFlags[CHUNK_SIZE];
+
+	// Constructor & destructors
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	Chunk(); 
+
+	// Getters / Setters
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	Voxel getVoxel(const Offset& offset) const;
 	const Voxel* getVoxelPtr(const Offset& offset) const;
@@ -32,11 +43,20 @@ struct Chunk final {
 	const Voxel* getVoxelPtr(size_t y, size_t z, size_t x) const;
 	void setVoxel(size_t y, size_t z, size_t x, Voxel voxel);
 
-	bool isEmptyRow(size_t y, size_t z) const;
+	// Query functions
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	bool isEmptyXRow(size_t y, size_t z) const;
 	bool isEmptyLayer(size_t y) const;
 
-	void setEmptyRowFlag(size_t y, size_t z);
-	void clearEmptyRowFlag(size_t y, size_t z);
+	// Helper functions
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	void setEmptyXRowFlag(size_t y, size_t z);
+	void clearEmptyXRowFlag(size_t y, size_t z);
+
+	void setFullXRowFlag(size_t y, size_t z);
+
 };
 
 } // namespace vox

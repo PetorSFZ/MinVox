@@ -39,10 +39,10 @@ bool readChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::s
 	// Set empty row flags.
 	for (size_t y = 0; y < CHUNK_SIZE; y++) {
 		for (size_t z = 0; z < CHUNK_SIZE; z++) {
-			chunk.setEmptyRowFlag(y, z);
+			chunk.setEmptyXRowFlag(y, z);
 			for (size_t x = 0; x < CHUNK_SIZE; x++) {
 				if (chunk.getVoxel(y, z, x).type() != VoxelType::AIR) {
-					chunk.clearEmptyRowFlag(y, z);
+					chunk.clearEmptyXRowFlag(y, z);
 					continue;
 				}
 			}
