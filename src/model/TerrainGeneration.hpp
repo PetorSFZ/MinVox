@@ -10,6 +10,8 @@ namespace vox {
 
 inline Chunk generateChunk(const Offset& offset);
 
+inline Voxel generateVoxel(const Offset& worldOffset);
+
 } // namespace vox
 
 #include "model/TerrainGeneration.inl"

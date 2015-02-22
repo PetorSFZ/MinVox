@@ -8,10 +8,9 @@ inline Chunk generateChunk(const Offset& offset)
 	for (int y = 0; y < (int)CHUNK_SIZE; y++) {
 		for (int z = 0; z < (int)CHUNK_SIZE; z++) {
 			for (int x = 0; x < (int)CHUNK_SIZE; x++) {
-				
-				if (worldOffset.mY == 0) chunk.setVoxel(y,z,x, Voxel{VoxelType::GRASS, 0});
-				else if (worldOffset.mY < 0) chunk.setVoxel(y,z,x, Voxel{VoxelType::EARTH, 0});
 
+				chunk.setVoxel(y,z,x, generateVoxel(worldOffset));
+				
 				worldOffset.mX += 1;
 			}
 			worldOffset.mZ += 1;
@@ -20,6 +19,13 @@ inline Chunk generateChunk(const Offset& offset)
 	}
 
 	return chunk;
+}
+
+inline Voxel generateVoxel(const Offset& worldOffset)
+{
+	if (worldOffset.mY == 0) return Voxel{VoxelType::GRASS, 0};
+	else if (worldOffset.mY < 0) return Voxel{VoxelType::EARTH, 0};
+	return Voxel{VoxelType::AIR, 0};
 }
 
 } // namespace vox
