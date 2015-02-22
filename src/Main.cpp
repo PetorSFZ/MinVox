@@ -14,6 +14,8 @@ GLuint shaderProgram;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
+SDL_GameController* controllers[4];
+int currentController = 0;
 
 // Helper functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -32,6 +34,51 @@ float calculateDelta()
 void checkGLErrorsMessage(const std::string& msg)
 {
 	if (gl::checkAllGLErrors()) std::cerr << msg << std::endl;
+}
+
+void addControllers()
+{
+	for (SDL_GameController*& c : controllers) {
+		if (c != NULL) {
+			SDL_GameControllerClose(c);
+		}
+		c = NULL;
+	}
+
+	int numJoysticks = SDL_NumJoysticks();
+	if (numJoysticks <= 0) {
+		std::cerr << "No joystics connected." << std::endl;
+		return;
+	}
+	if (numJoysticks > 4) numJoysticks = 4;
+	
+	for (int i = 0; i < 4 && i < numJoysticks; i++) {
+		if (!SDL_IsGameController(i)) {
+			std::cerr << "Joystick id " << i << " is not a Game Controller." << std::endl;
+			continue;
+		}
+
+		controllers[i] = SDL_GameControllerOpen(i);
+		if (controllers[i] == NULL) {
+			std::cerr << "Couldn't open Game Controller at id " << i << std::endl;
+			continue;
+		}
+
+		std::cout << "Added Game Controller (id " << i << "): "
+		          << SDL_GameControllerName(controllers[i]) << std::endl;
+	}
+
+	currentController = 0;
+	for (int i = 0; i < 4; i++) {
+		if (controllers[i] == NULL) break;
+		if (strcmp("X360 Controller", SDL_GameControllerName(controllers[i])) == 0) {
+			currentController = i;
+			break;
+		}
+	}
+
+	std::cout << "Current active controller: " << currentController << ", type: "
+	          << SDL_GameControllerName(controllers[currentController]) << std::endl;
 }
 
 // Game loop functions
@@ -63,6 +110,33 @@ bool handleInput(const SDL_Event& event)
 			cam.mPos -= cam.mDir*0.1f;
 			break;
 		}
+	case SDL_CONTROLLERDEVICEADDED:
+	case SDL_CONTROLLERDEVICEREMOVED:
+	case SDL_CONTROLLERDEVICEREMAPPED:
+		addControllers();
+		break;
+	case SDL_CONTROLLERBUTTONDOWN:
+		if (event.cbutton.which != currentController) break;
+		std::cout << "Button down (" << event.cbutton.which << "): " << (int)event.cbutton.button << ", name: "
+		          << SDL_GameControllerGetStringForButton((SDL_GameControllerButton)event.cbutton.button)
+		          << std::endl;
+		break;
+	case SDL_CONTROLLERBUTTONUP:
+		if (event.cbutton.which != currentController) break;
+		std::cout << "Button up (" << event.cbutton.which << "): " << (int)event.cbutton.button << ", name: "
+		          << SDL_GameControllerGetStringForButton((SDL_GameControllerButton)event.cbutton.button)
+		          << std::endl;
+		break;
+	case SDL_CONTROLLERAXISMOTION:
+		if (event.caxis.which != currentController) break;
+		if (-1200 < event.caxis.value && event.caxis.value < 1200) break;
+		std::cout << "Axis " << (int)event.caxis.axis << ", name: "
+		          << SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)event.caxis.axis)
+		          << ", value: " << event.caxis.value << std::endl;
+
+
+		//std::cout << "Controller used!\n";
+		break;
 	}
 	return false;
 }
@@ -161,9 +235,14 @@ int main()
 	// Initialization
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	sdl::Session sdlSession{{sdl::InitFlags::EVERYTHING}, {sdl::ImgInitFlags::PNG}};
+	sdl::Session sdlSession{{sdl::InitFlags::EVENTS, sdl::InitFlags::VIDEO,
+	                         sdl::InitFlags::GAMECONTROLLER}, {sdl::ImgInitFlags::PNG}};
 	sdl::Window window{"MinVox", 800, 600,
 	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
+
+	// Enable SDL Events for controllers
+	SDL_GameControllerEventState(SDL_ENABLE);
+	addControllers();
 
 	gl::Context glContext{window.mPtr, 3, 3, gl::GLContextProfile::CORE};
 
