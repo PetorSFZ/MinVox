@@ -19,7 +19,6 @@ Camera::Camera()
 
 void Camera::update()
 {
-
 	mViewMatrix = sfz::lookAt(mPos, mPos + mDir, mUp);
 }
 

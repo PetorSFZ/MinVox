@@ -106,7 +106,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glActiveTexture(GL_TEXTURE0);
 
 	const vox::Chunk* chunkPtr;
-	vox::ChunkOffset offset;
+	vox::Offset offset;
 	sfz::vec3f offsetVec;
 	sfz::mat4f transform = sfz::identityMatrix4<float>();
 
@@ -114,7 +114,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 		chunkPtr = world.chunkPtr(i);
 		if (chunkPtr == nullptr) continue;
 		offset = world.chunkOffset(chunkPtr);
-		offsetVec = offset.worldOffset();
+		offsetVec = world.positionFromChunkOffset(offset);
 
 		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
 			if (chunkPtr->isEmptyLayer(y)) continue;

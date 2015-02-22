@@ -12,7 +12,7 @@
 
 #include "model/Voxel.hpp"
 #include "model/Chunk.hpp"
-#include "model/ChunkOffset.hpp"
+#include "model/Offset.hpp"
 #include "io/ChunkIO.hpp"
 
 namespace vox {
@@ -36,18 +36,16 @@ public:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void update(const vec3f& basePos);
-	const Chunk* chunkPtr(ChunkOffset offset) const;
-	const ChunkOffset chunkOffset(const Chunk* chunkPtr) const;
+	const Chunk* chunkPtr(const Offset& offset) const;
+	const Offset chunkOffset(const Chunk* chunkPtr) const;
 
 	const Chunk* chunkPtr(size_t index);
 	inline size_t numChunks() { return mNumElements; }
 
+	vec3f positionFromChunkOffset(const Offset& offset) const;
+	Offset chunkOffsetFromPosition(const vec3f& position) const;
+
 private:
-	// Private member functions
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	ChunkOffset offsetFromPosition(const vec3f& pos) const;
-
 	// Private Members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -55,8 +53,8 @@ private:
 	int mVerticalChunkRange;
 	size_t mNumElements;
 	unique_ptr<Chunk[]> mChunks;
-	unique_ptr<ChunkOffset[]> mOffsets;
-	ChunkOffset mCurrentOffset;
+	unique_ptr<Offset[]> mOffsets;
+	Offset mCurrentChunkOffset;
 	
 	std::string mName;
 };

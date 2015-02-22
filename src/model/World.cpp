@@ -26,8 +26,8 @@ World::World(const std::string& name)
 	mVerticalChunkRange{2},
 	mNumElements{calculateNumChunks(mHorizontalChunkRange, mVerticalChunkRange)},
 	mChunks{new Chunk[mNumElements]},
-	mOffsets{new ChunkOffset[mNumElements]},
-	mCurrentOffset{0 ,0, 0},
+	mOffsets{new Offset[mNumElements]},
+	mCurrentChunkOffset{0 ,0, 0},
 	mName{name}
 {
 	size_t count = 0;
@@ -36,7 +36,7 @@ World::World(const std::string& name)
 			for (int x = -mHorizontalChunkRange; x <= mHorizontalChunkRange; x++) {
 
 				sfz_assert_debug(count < mNumElements);
-				mOffsets[count] = ChunkOffset{y, z, x};
+				mOffsets[count] = Offset{y, z, x};
 				mChunks[count] = generateChunk(mOffsets[count]);
 				count++;
 			}
@@ -52,7 +52,7 @@ void World::update(const vec3f& basePos)
 	// TODO: Check if new chunks needs to be streamed in and maybe do so.
 }
 
-const Chunk* World::chunkPtr(ChunkOffset offset) const
+const Chunk* World::chunkPtr(const Offset& offset) const
 {
 	for (size_t i = 0; i < mNumElements; i++) {
 		if (mOffsets[i] == offset) return &mChunks[i];
@@ -61,13 +61,13 @@ const Chunk* World::chunkPtr(ChunkOffset offset) const
 	return nullptr;
 }
 
-const ChunkOffset World::chunkOffset(const Chunk* chunkPtr) const
+const Offset World::chunkOffset(const Chunk* chunkPtr) const
 {
 	for (size_t i = 0; i < mNumElements; i++) {
 		if ((&mChunks[i]) == chunkPtr) return mOffsets[i];
 	}
 	sfz_assert_debug(false, "Invalid chunk pointer.");
-	return ChunkOffset{0,0,0};
+	return Offset{0,0,0};
 }
 
 const Chunk* World::chunkPtr(size_t index)
@@ -76,13 +76,15 @@ const Chunk* World::chunkPtr(size_t index)
 	return &mChunks[index];
 }
 
-// Private member functions
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+vec3f World::positionFromChunkOffset(const Offset& offset) const
+{
+	return chunkToVoxelOffset(offset, static_cast<int>(CHUNK_SIZE)).toVector();
+}
 
-ChunkOffset World::offsetFromPosition(const vec3f& pos) const
+Offset World::chunkOffsetFromPosition(const vec3f& position) const
 {
 	// TODO: Proper implementation.
-	return ChunkOffset{0,0,0};
+	return Offset{0,0,0};
 }
 
 } // namespace vox

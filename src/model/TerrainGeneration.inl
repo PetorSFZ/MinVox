@@ -1,6 +1,6 @@
 namespace vox {
 
-inline Chunk generateChunk(const ChunkOffset& offset)
+inline Chunk generateChunk(const Offset& offset)
 {
 	Chunk chunk;
 
