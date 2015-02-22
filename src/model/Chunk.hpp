@@ -7,6 +7,7 @@
 #include <limits> //std::numeric_limits
 
 #include "model/Voxel.hpp"
+#include "model/Offset.hpp"
 
 namespace vox {
 
@@ -21,8 +22,11 @@ struct Chunk final {
 	Voxel mVoxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 	bitset_t mEmptyRowFlags[CHUNK_SIZE];
 
-
 	Chunk();
+
+	Voxel getVoxel(const Offset& offset) const;
+	const Voxel* getVoxelPtr(const Offset& offset) const;
+	void setVoxel(const Offset& offset, Voxel voxel);
 
 	Voxel getVoxel(size_t y, size_t z, size_t x) const;
 	const Voxel* getVoxelPtr(size_t y, size_t z, size_t x) const;

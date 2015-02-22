@@ -18,6 +18,30 @@ Chunk::Chunk()
 // Public functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+Voxel Chunk::getVoxel(const Offset& offset) const
+{
+	sfz_assert_debug(offset.mY >= 0);
+	sfz_assert_debug(offset.mZ >= 0);
+	sfz_assert_debug(offset.mX >= 0);
+	return getVoxel((size_t)offset.mY, (size_t)offset.mZ, (size_t)offset.mX);
+}
+
+const Voxel* Chunk::getVoxelPtr(const Offset& offset) const
+{
+	sfz_assert_debug(offset.mY >= 0);
+	sfz_assert_debug(offset.mZ >= 0);
+	sfz_assert_debug(offset.mX >= 0);
+	return getVoxelPtr((size_t)offset.mY, (size_t)offset.mZ, (size_t)offset.mX);
+}
+
+void Chunk::setVoxel(const Offset& offset, Voxel voxel)
+{
+	sfz_assert_debug(offset.mY >= 0);
+	sfz_assert_debug(offset.mZ >= 0);
+	sfz_assert_debug(offset.mX >= 0);
+	setVoxel((size_t)offset.mY, (size_t)offset.mZ, (size_t)offset.mX, voxel);
+}
+
 Voxel Chunk::getVoxel(size_t y, size_t z, size_t x) const
 {
 	return mVoxels[y][z][x];
