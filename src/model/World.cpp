@@ -22,7 +22,7 @@ size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange)
 
 World::World(const std::string& name)
 :
-	mHorizontalChunkRange{2},
+	mHorizontalChunkRange{0},
 	mVerticalChunkRange{1},
 	mNumElements{calculateNumChunks(mHorizontalChunkRange, mVerticalChunkRange)},
 	mChunks{new Chunk[mNumElements]},

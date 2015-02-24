@@ -159,8 +159,7 @@ bool handleInputs(float delta)
 		sfz::mat3f xTurn = sfz::rotationMatrix3(-cam.mUp, ctrl.mRightStick[0]*turningSpeed*delta);
 		sfz::mat3f yTurn = sfz::rotationMatrix3(right, ctrl.mRightStick[1]*turningSpeed*delta);
 		cam.mDir = (xTurn * yTurn * cam.mDir);
-		cam.mUp = (yTurn * cam.mUp);
-
+		cam.mUp = (xTurn * yTurn * cam.mUp);
 	}
 	if (ctrl.mLeftStick.norm() > ctrl.mLeftStickDeadzone) {
 		sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
@@ -189,7 +188,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	static vox::CubeObject cubeObj;
 
 	// Clearing screen
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	glClearColor(0.98f, 0.98f, 0.94f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Enable blending
@@ -236,14 +235,14 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
 
 					// Only renders outside of full chunks.
-					if (fullChunk && offset != world.currentChunkOffset()) {
+					/*if (fullChunk && offset != world.currentChunkOffset()) {
 						const size_t max = vox::CHUNK_SIZE-1;
 						bool yMid = (y != 0 && y != max);
 						bool zMid = (z != 0 && z != max);
 						bool xMid = (x != 0 && x != max);
 
 						if (yMid && zMid && xMid) continue;
-					}
+					}*/
 
 					vox::Voxel v = chunkPtr->getVoxel(y, z, x);
 					if (v.type() == vox::VoxelType::AIR) continue;

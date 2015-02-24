@@ -12,9 +12,11 @@ using std::uint8_t;
 enum class VoxelType : uint8_t {
 	AIR = 0,
 	LIGHT = 1,
-	EARTH = 2,
-	GRASS = 3,
-	STONE = 4
+	BLUE = 2,
+	GREEN = 3,
+	ORANGE = 4,
+	VANILLA = 5,
+	YELLOW = 6
 };
 
 struct Voxel final {

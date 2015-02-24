@@ -25,8 +25,8 @@ inline Chunk generateChunk(const Offset& offset)
 
 inline Voxel generateVoxel(const Offset& worldOffset)
 {
-	if (worldOffset.mY == 0) return Voxel{VoxelType::GRASS, 0};
-	else if (worldOffset.mY < 0) return Voxel{VoxelType::EARTH, 0};
+	if (worldOffset.mY == 0) return Voxel{VoxelType::VANILLA, 0};
+	else if (worldOffset.mY < 0) return Voxel{VoxelType::ORANGE, 0};
 	else if (worldOffset.mY > 0) return Voxel{VoxelType::AIR, 0};
 	sfz_assert_debug(false);
 }

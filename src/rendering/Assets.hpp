@@ -14,9 +14,11 @@ namespace vox {
 
 struct Assets final {
 
-	gl::Texture EARTH_FACE,
-	            GRASS_FACE,
-	            STONE_FACE;
+	gl::Texture BLUE,
+	            GREEN,
+	            ORANGE,
+	            VANILLA,
+	            YELLOW;
 
 	Assets();
 	Assets(const Assets&) = delete;

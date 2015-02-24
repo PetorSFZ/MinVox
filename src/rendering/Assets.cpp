@@ -20,9 +20,11 @@ const std::string& cubeFacePath()
 
 Assets::Assets()
 :
-	EARTH_FACE{cubeFacePath() + "earth.png"},
-	GRASS_FACE{cubeFacePath() + "grass.png"},
-	STONE_FACE{cubeFacePath() + "stone.png"}
+	BLUE{cubeFacePath() + "blue_b.png"},
+	GREEN{cubeFacePath() + "green_b.png"},
+	ORANGE{cubeFacePath() + "orange_b.png"},
+	VANILLA{cubeFacePath() + "vanilla_b.png"},
+	YELLOW{cubeFacePath() + "yellow_b.png"}
 {
 	// Textures loaded and initialized.
 }
@@ -36,9 +38,11 @@ GLuint Assets::getCubeFaceTexture(Voxel voxel) const
 	case VoxelType::AIR:
 		std::cerr << "AIR shouldn't be rendered." << std::endl;
 		std::terminate();
-	case VoxelType::EARTH: return EARTH_FACE.mHandle;
-	case VoxelType::GRASS: return GRASS_FACE.mHandle;
-	case VoxelType::STONE: return STONE_FACE.mHandle;
+	case VoxelType::BLUE: return BLUE.mHandle;
+	case VoxelType::GREEN: return GREEN.mHandle;
+	case VoxelType::ORANGE: return ORANGE.mHandle;
+	case VoxelType::VANILLA: return VANILLA.mHandle;
+	case VoxelType::YELLOW: return YELLOW.mHandle;
 	default:
 		std::cerr << "Texture not created." << std::endl;
 		std::terminate();
