@@ -221,7 +221,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	for (size_t i = 0; i < world.numChunks(); i++) {
 		chunkPtr = world.chunkPtr(i);
 		if (chunkPtr == nullptr) continue;
-		if (chunkPtr->isEmptyChunk()) continue;
+		//if (chunkPtr->isEmptyChunk()) continue;
 
 		offset = world.chunkOffset(chunkPtr);
 		offsetVec = world.positionFromChunkOffset(offset);
@@ -229,9 +229,9 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 
 		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
-			if (chunkPtr->isEmptyLayer(y)) continue;
+			//if (chunkPtr->isEmptyLayer(y)) continue;
 			for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
-				if (chunkPtr->isEmptyXRow(y, z)) continue;
+				//if (chunkPtr->isEmptyXRow(y, z)) continue;
 				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
 
 					// Only renders outside of full chunks.
@@ -311,6 +311,7 @@ int main()
 		delta = calculateDelta();
 
 		//std::cout << "Delta = " << delta << ", fps = " << (1.0f / delta) << "\n";
+		std::cout << cam.mPos << std::endl;
 
 		if (handleInputs(delta)) running = false;
 		if (update(delta)) running = false;
