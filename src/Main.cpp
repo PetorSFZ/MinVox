@@ -14,7 +14,8 @@ GLuint shaderProgram;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
-SDL_GameController* controllers[4];
+SDL_GameController* controllerPtrs[4];
+sdl::GameController controllers[4];
 int currentController = 0;
 
 // Helper functions
@@ -38,7 +39,7 @@ void checkGLErrorsMessage(const std::string& msg)
 
 void addControllers()
 {
-	for (SDL_GameController*& c : controllers) {
+	for (SDL_GameController*& c : controllerPtrs) {
 		if (c != NULL) {
 			SDL_GameControllerClose(c);
 		}
@@ -58,86 +59,119 @@ void addControllers()
 			continue;
 		}
 
-		controllers[i] = SDL_GameControllerOpen(i);
-		if (controllers[i] == NULL) {
+		controllerPtrs[i] = SDL_GameControllerOpen(i);
+		if (controllerPtrs[i] == NULL) {
 			std::cerr << "Couldn't open Game Controller at id " << i << std::endl;
 			continue;
 		}
 
 		std::cout << "Added Game Controller (id " << i << "): "
-		          << SDL_GameControllerName(controllers[i]) << std::endl;
+		          << SDL_GameControllerName(controllerPtrs[i]) << std::endl;
 	}
 
 	currentController = 0;
 	for (int i = 0; i < 4; i++) {
-		if (controllers[i] == NULL) break;
-		if (strcmp("X360 Controller", SDL_GameControllerName(controllers[i])) == 0) {
+		if (controllerPtrs[i] == NULL) break;
+		if (strcmp("X360 Controller", SDL_GameControllerName(controllerPtrs[i])) == 0) {
 			currentController = i;
 			break;
 		}
 	}
 
 	std::cout << "Current active controller: " << currentController << ", type: "
-	          << SDL_GameControllerName(controllers[currentController]) << std::endl;
+	          << SDL_GameControllerName(controllerPtrs[currentController]) << std::endl;
 }
 
 // Game loop functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-// Called once for each event every frame.
-bool handleInput(const SDL_Event& event)
+// Called once every frame.
+bool handleInputs(float delta)
 {
-	switch (event.type) {
-	case SDL_QUIT: return true;
-	case SDL_WINDOWEVENT:
-		switch (event.window.event) {
-		case SDL_WINDOWEVENT_RESIZED:
-			float w = static_cast<float>(event.window.data1);
-			float h = static_cast<float>(event.window.data2);
-			projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 1000.0f);
-			break;
-		}
-		break;
-	case SDL_KEYDOWN:
-		switch (event.key.keysym.sym) {
-		case SDLK_ESCAPE: return true;
-		case 'w':
-		case 'W':
-			cam.mPos += cam.mDir*0.1f;
-			break;
-		case 's':
-		case 'S':
-			cam.mPos -= cam.mDir*0.1f;
-			break;
-		}
-	case SDL_CONTROLLERDEVICEADDED:
-	case SDL_CONTROLLERDEVICEREMOVED:
-	case SDL_CONTROLLERDEVICEREMAPPED:
-		addControllers();
-		break;
-	case SDL_CONTROLLERBUTTONDOWN:
-		if (event.cbutton.which != currentController) break;
-		std::cout << "Button down (" << event.cbutton.which << "): " << (int)event.cbutton.button << ", name: "
-		          << SDL_GameControllerGetStringForButton((SDL_GameControllerButton)event.cbutton.button)
-		          << std::endl;
-		break;
-	case SDL_CONTROLLERBUTTONUP:
-		if (event.cbutton.which != currentController) break;
-		std::cout << "Button up (" << event.cbutton.which << "): " << (int)event.cbutton.button << ", name: "
-		          << SDL_GameControllerGetStringForButton((SDL_GameControllerButton)event.cbutton.button)
-		          << std::endl;
-		break;
-	case SDL_CONTROLLERAXISMOTION:
-		if (event.caxis.which != currentController) break;
-		if (-1200 < event.caxis.value && event.caxis.value < 1200) break;
-		std::cout << "Axis " << (int)event.caxis.axis << ", name: "
-		          << SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)event.caxis.axis)
-		          << ", value: " << event.caxis.value << std::endl;
-
-
-		//std::cout << "Controller used!\n";
-		break;
+	// Starts updating controller structs
+	for (size_t i = 0; i < 4; i++) {
+		if (controllerPtrs[i] == NULL) break;
+		sdl::updateStart(controllers[i]);
 	}
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event) != 0) {
+		switch (event.type) {
+		case SDL_QUIT: return true;
+		case SDL_WINDOWEVENT:
+			switch (event.window.event) {
+			case SDL_WINDOWEVENT_RESIZED:
+				float w = static_cast<float>(event.window.data1);
+				float h = static_cast<float>(event.window.data2);
+				projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 1000.0f);
+				break;
+			}
+			break;
+		case SDL_KEYDOWN:
+			switch (event.key.keysym.sym) {
+			case SDLK_ESCAPE: return true;
+			case 'w':
+			case 'W':
+				cam.mPos += cam.mDir*0.1f;
+				break;
+			case 's':
+			case 'S':
+				cam.mPos -= cam.mDir*0.1f;
+				break;
+			}
+		case SDL_CONTROLLERDEVICEADDED:
+		case SDL_CONTROLLERDEVICEREMOVED:
+		case SDL_CONTROLLERDEVICEREMAPPED:
+			addControllers();
+			break;
+		case SDL_CONTROLLERBUTTONDOWN:
+		case SDL_CONTROLLERBUTTONUP:
+			if (event.cbutton.which >= 4) break;
+			sdl::updateProcessEvent(controllers[event.cbutton.which], event);
+			break;
+		case SDL_CONTROLLERAXISMOTION:
+			if (event.caxis.which >= 4) break;
+			sdl::updateProcessEvent(controllers[event.caxis.which], event);
+			break;
+		}
+	}
+
+	// Finish updating controller structs
+	for (size_t i = 0; i < 4; i++) {
+		if (controllerPtrs[i] == NULL) break;
+		sdl::updateFinish(controllers[i]);
+	}
+
+	if (controllerPtrs[currentController] == NULL) return false;
+
+	sdl::GameController& ctrl = controllers[currentController];
+	float currentSpeed = 3.0f;
+	float turningSpeed = sfz::g_PI_FLOAT;
+
+	// Triggers
+	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {
+		currentSpeed += (ctrl.mLeftTrigger * 12.0f);
+	}
+
+	// Analogue Sticks
+	if (ctrl.mRightStick.norm() > ctrl.mRightStickDeadzone) {
+		sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+		sfz::mat3f xTurn = sfz::rotationMatrix3(-cam.mUp, ctrl.mRightStick[0]*turningSpeed*delta);
+		sfz::mat3f yTurn = sfz::rotationMatrix3(right, ctrl.mRightStick[1]*turningSpeed*delta);
+		cam.mDir = (xTurn * yTurn * cam.mDir);
+		cam.mUp = (yTurn * cam.mUp);
+
+	}
+	if (ctrl.mLeftStick.norm() > ctrl.mLeftStickDeadzone) {
+		sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+		cam.mPos += ((cam.mDir * ctrl.mLeftStick[1] + right * ctrl.mLeftStick[0]) * currentSpeed * delta);
+	}
+
+	// Menu buttons
+	if (ctrl.mButtonBack == sdl::Button::UP) {
+		return true;
+	}
+
 	return false;
 }
 
@@ -273,14 +307,13 @@ int main()
 
 	bool running = true;
 	float delta = calculateDelta(); // Call calculateDelta() here to initialize counting.
-	SDL_Event event;
 
 	while (running) {
 		delta = calculateDelta();
 
 		//std::cout << "Delta = " << delta << ", fps = " << (1.0f / delta) << "\n";
 
-		while (SDL_PollEvent(&event) != 0) if (handleInput(event)) running = false;
+		if (handleInputs(delta)) running = false;
 		if (update(delta)) running = false;
 		render(window, assets, delta);
 

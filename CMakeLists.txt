@@ -90,6 +90,8 @@ add_executable(
 	${SRC_DIR}/rendering/Shaders.cpp
 
 	${SRC_DIR}/sfz/SDL.hpp
+	${SRC_DIR}/sfz/sdl/GameController.hpp
+	${SRC_DIR}/sfz/sdl/GameController.cpp
 	${SRC_DIR}/sfz/sdl/Session.hpp
 	${SRC_DIR}/sfz/sdl/Session.cpp
 	${SRC_DIR}/sfz/sdl/Window.hpp
