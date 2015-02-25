@@ -60,7 +60,7 @@ GLuint compileStandardShaderProgram()
 			vec3 diffuseTexture = texture(tex, texCoord.xy).xyz;
 			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseTexture;
 			vec3 materialDiffuse = vec3(1.0, 1.0, 1.0) * diffuseTexture;
-			vec3 materialSpecular = vec3(1, 1, 1) * diffuseTexture;
+			vec3 materialSpecular = vec3(0.35, 0.35, 0.35);
 			vec3 materialEmissive = vec3(0, 0, 0);
 			float materialShininess = 8;
 
