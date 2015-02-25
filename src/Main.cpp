@@ -9,10 +9,67 @@
 #include "VoxModel.hpp"
 #include "Rendering.hpp"
 
+// Structs that really shouldn't be here.
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+struct ShadowMap {
+
+	GLuint mFBO, mDepthTexture;
+
+	enum class DepthRes : GLint {
+		BITS_16 = GL_DEPTH_COMPONENT16,
+		BITS_24 = GL_DEPTH_COMPONENT24,
+		BITS_32 = GL_DEPTH_COMPONENT32
+	};
+
+	ShadowMap() = default;
+
+	ShadowMap(int resolution, DepthRes depthRes, bool pcf)
+	{
+		// Generate framebuffer
+		glGenFramebuffers(1, &mFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+
+		// Generates depth texture
+		glGenTextures(1, &mDepthTexture);
+		glBindTexture(GL_TEXTURE_2D, mDepthTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(depthRes), resolution, resolution, 0,
+		             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+		// Set shadowmap texture min & mag filters (enable/disable pcf)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
+
+		// Set texture wrap mode to CLAMP_TO_BORDER and set border color.
+		sfz::vec4f borderColor{1.0f, 1.0f, 1.0f, 1.0f};
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.glPtr());
+
+		// Magic lines that enable hardware shadowmaps somehow (becomes sampler2Dshadow?)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+
+		// Bind texture to framebuffer
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
+		glDrawBuffer(GL_NONE); // No color buffer
+		glReadBuffer(GL_NONE);
+
+		// Check that framebuffer is okay
+		sfz_assert_release(glCheckFramebufferStatus(mFBO) != GL_FRAMEBUFFER_COMPLETE);
+
+		// Cleanup
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+};
+
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 GLuint shaderProgram, shadowMapShaderProgram;
+ShadowMap shadowMap;
+
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
@@ -336,6 +393,8 @@ int main()
 
 	shaderProgram = vox::compileStandardShaderProgram();
 	shadowMapShaderProgram = vox::compileShadowMapShaderProgram();
+
+	shadowMap = ShadowMap{2048, ShadowMap::DepthRes::BITS_16, true};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
