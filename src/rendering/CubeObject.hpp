@@ -18,7 +18,7 @@ public:
 
 private:
 	GLuint vertexArrayObject;
-	GLuint posBuffer, uvBuffer, indexBuffer;
+	GLuint posBuffer, uvBuffer, normalBuffer, indexBuffer;
 };
 
 } // namespace vox

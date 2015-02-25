@@ -16,7 +16,7 @@ GLuint shaderProgram;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
-sfz::vec3f lightPosSpherical{5.0f, 0.0f, 0.0f}; // [0] = r, [1] = theta, [2] = phi
+sfz::vec3f lightPosSpherical{22.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
 sfz::vec3f lightColor{1.0f, 1.0f, 1.0f};
 
 
@@ -225,6 +225,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS); // Accept fragments closer to camera than former ones
 
 	// Enable culling
 	glEnable(GL_CULL_FACE);
