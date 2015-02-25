@@ -15,6 +15,8 @@ namespace vox {
 
 GLuint compileStandardShaderProgram();
 
+GLuint compileShadowMapShaderProgram();
+
 } // namespace vox
 
 #endif

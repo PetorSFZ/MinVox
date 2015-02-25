@@ -12,7 +12,7 @@
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint shaderProgram;
+GLuint shaderProgram, shadowMapShaderProgram;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
@@ -335,6 +335,7 @@ int main()
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	shaderProgram = vox::compileStandardShaderProgram();
+	shadowMapShaderProgram = vox::compileShadowMapShaderProgram();
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
