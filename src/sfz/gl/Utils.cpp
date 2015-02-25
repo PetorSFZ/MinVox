@@ -103,6 +103,17 @@ void setUniform(GLuint shaderProgram, const std::string& name, const sfz::mat4f&
 	setUniform(loc, matrix);
 }
 
+void setUniform(int location, const sfz::vec3f& vector)
+{
+	glUniform3fv(location, 1, vector.glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const std::string& name, const sfz::vec3f& vector)
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, vector);
+}
+
 void setUniform(int location, int i)
 {
 	glUniform1i(location, i);

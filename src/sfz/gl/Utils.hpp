@@ -54,11 +54,12 @@ void linkProgram(GLuint program);
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 void setUniform(int location, const sfz::mat4f& matrix);
-
 void setUniform(GLuint shaderProgram, const std::string& name, const sfz::mat4f& matrix);
 
-void setUniform(int location, int i);
+void setUniform(int location, const sfz::vec3f& vector);
+void setUniform(GLuint shaderProgram, const std::string& name, const sfz::vec3f& vector);
 
+void setUniform(int location, int i);
 void setUniform(GLuint shaderProgram, const std::string& name, int i);
 
 } // namespace gl

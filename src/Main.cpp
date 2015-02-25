@@ -3,6 +3,8 @@
 
 #include "sfz/GL.hpp"
 #undef main
+#include <sfz/Assert.hpp>
+#include <sfz/Math.hpp>
 
 #include "VoxModel.hpp"
 #include "Rendering.hpp"
@@ -14,6 +16,11 @@ GLuint shaderProgram;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
+sfz::vec3f lightPosSpherical{5.0f, 0.0f, 0.0f}; // [0] = r, [1] = theta, [2] = phi
+sfz::vec3f lightColor{1.0f, 1.0f, 1.0f};
+
+
+// Controllers
 SDL_GameController* controllerPtrs[4];
 sdl::GameController controllers[4];
 int currentController = 0;
@@ -82,6 +89,18 @@ void addControllers()
 	          << SDL_GameControllerName(controllerPtrs[currentController]) << std::endl;
 }
 
+sfz::vec3f sphericalToCartesian(float r, float theta, float phi)
+{
+	using std::sinf;
+	using std::cosf;
+	return sfz::vec3f{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
+}
+
+sfz::vec3f sphericalToCartesian(const sfz::vec3f& spherical)
+{
+	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
+}
+
 // Game loop functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -119,6 +138,7 @@ bool handleInputs(float delta)
 				cam.mPos -= cam.mDir*0.1f;
 				break;
 			}
+			break;
 		case SDL_CONTROLLERDEVICEADDED:
 		case SDL_CONTROLLERDEVICEREMOVED:
 		case SDL_CONTROLLERDEVICEREMAPPED:
@@ -214,7 +234,14 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	glUseProgram(shaderProgram);
 
-	const sfz::mat4f viewProj = projMatrix * cam.mViewMatrix;
+	// Set view and projection matrix uniforms
+	gl::setUniform(shaderProgram, "viewMatrix", cam.mViewMatrix);
+	gl::setUniform(shaderProgram, "projectionMatrix", projMatrix);
+
+	// Set light position uniform
+	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
+	gl::setUniform(shaderProgram, "msLightPos", lightPos);
+	gl::setUniform(shaderProgram, "lightColor", lightColor);
 
 	// Only one texture is used when rendering SnakeTiles
 	gl::setUniform(shaderProgram, "tex", 0);
@@ -258,7 +285,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
 					                                                   static_cast<float>(y),
 					                                                   static_cast<float>(z)});
-					gl::setUniform(shaderProgram, "modelViewProj", viewProj * transform);
+					gl::setUniform(shaderProgram, "modelMatrix", transform);
 
 					glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
 					cubeObj.render();
@@ -266,6 +293,12 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 			}
 		}
 	}
+
+	// Render sun
+	sfz::translation(transform, lightPos);
+	gl::setUniform(shaderProgram, "modelMatrix", transform);
+	glBindTexture(GL_TEXTURE_2D, assets.YELLOW.mHandle);
+	cubeObj.render();
 }
 
 // Main
@@ -319,7 +352,6 @@ int main()
 		delta = calculateDelta();
 
 		//std::cout << "Delta = " << delta << ", fps = " << (1.0f / delta) << "\n";
-		std::cout << cam.mPos << std::endl;
 
 		if (handleInputs(delta)) running = false;
 		if (update(delta)) running = false;

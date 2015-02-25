@@ -11,13 +11,20 @@ GLuint compileStandardShaderProgram()
 		in vec2 texCoordIn;
 
 		out vec2 texCoord;
+		out vec3 vsLightPos;
 
-		uniform mat4 modelViewProj;
+		uniform mat4 modelMatrix;
+		uniform mat4 viewMatrix;
+		uniform mat4 projectionMatrix;
+		uniform vec3 msLightPos;
 
 		void main()
 		{
+			mat4 modelViewProj = projectionMatrix * viewMatrix * modelMatrix;
+
 			gl_Position = modelViewProj * vec4(position, 1);
 			texCoord = texCoordIn;
+			vsLightPos = (viewMatrix * vec4(msLightPos, 1)).xyz;
 		}
 	)");
 
@@ -28,9 +35,12 @@ GLuint compileStandardShaderProgram()
 		precision highp float; // required by GLSL spec Sect 4.5.3
 
 		in vec2 texCoord;
-		uniform sampler2D tex;
-		
+		in vec3 vsLightPos;
+
 		out vec4 fragmentColor;
+
+		uniform sampler2D tex;
+		uniform vec3 lightColor;
 
 		void main()
 		{
