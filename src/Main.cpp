@@ -188,10 +188,10 @@ bool handleInputs(float delta)
 
 	// Shoulder buttons
 	if (ctrl.mButtonLeftShoulder == sdl::Button::DOWN || ctrl.mButtonLeftShoulder == sdl::Button::HELD) {
-		cam.mPos -= (sfz::vec3f{0,1,0} * currentSpeed * 0.5f * delta);
+		cam.mPos -= (sfz::vec3f{0,1,0} * currentSpeed * delta);
 	}
 	else if (ctrl.mButtonRightShoulder == sdl::Button::DOWN || ctrl.mButtonRightShoulder == sdl::Button::HELD) {
-		cam.mPos += (sfz::vec3f{0,1,0} * currentSpeed * 0.5f * delta);
+		cam.mPos += (sfz::vec3f{0,1,0} * currentSpeed * delta);
 	}
 
 	// Menu buttons
@@ -243,7 +243,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	gl::setUniform(shaderProgram, "msLightPos", lightPos);
 	gl::setUniform(shaderProgram, "lightColor", lightColor);
-
+	
 	// Only one texture is used when rendering SnakeTiles
 	gl::setUniform(shaderProgram, "tex", 0);
 	glActiveTexture(GL_TEXTURE0);

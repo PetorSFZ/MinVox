@@ -20,6 +20,7 @@ GLuint compileStandardShaderProgram()
 		uniform mat4 viewMatrix;
 		uniform mat4 projectionMatrix;
 		uniform vec3 msLightPos;
+		uniform vec3 lightColor;
 
 		void main()
 		{
@@ -30,7 +31,7 @@ GLuint compileStandardShaderProgram()
 			// Output
 			gl_Position = modelViewProj * vec4(position, 1);
 			texCoord = texCoordIn;
-			vsNormal = normalize((normalMatrix * vec4(normalIn, 0)).xyz).xyz;
+			vsNormal = normalize((normalMatrix * vec4(normalIn, 0)).xyz);
 			vsLightPos = (viewMatrix * vec4(msLightPos, 1)).xyz;
 			vsPos = vec3(modelView * vec4(position, 1));
 		}
@@ -52,17 +53,35 @@ GLuint compileStandardShaderProgram()
 		uniform sampler2D tex;
 		uniform vec3 lightColor;
 
-		// Constants
-		vec3 ambientLight = vec3(0.05f, 0.05f, 0.05f);
-
 		void main()
 		{
-			vec4 diffuseTexture = texture(tex, texCoord.xy);
+			// Texture and materials
+			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
+			vec3 diffuseTexture = texture(tex, texCoord.xy).xyz;
+			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseTexture;
+			vec3 materialDiffuse = vec3(1.0, 1.0, 1.0) * diffuseTexture;
+			vec3 materialSpecular = vec3(1, 1, 1) * diffuseTexture;
+			vec3 materialEmissive = vec3(0, 0, 0);
+			float materialShininess = 8;
 
+			// Variables used to calculate scaling factors for different components
 			vec3 toLight = normalize(vsLightPos - vsPos);
-			float cosTheta = clamp(dot(vsNormal, toLight), 0, 1);
+			float lightDistance = length(vsLightPos - vsPos);
+			vec3 toCam = normalize(-vsPos);
+			vec3 halfVec = normalize(toLight + toCam);
+			float specularNormalization = ((materialShininess + 2.0) / 8.0);
 
-			fragmentColor = vec4(ambientLight,1)*diffuseTexture + cosTheta*diffuseTexture;
+			// Scaling factors for different components
+			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
+			float specularFactor = specularNormalization * pow(clamp(dot(vsNormal, halfVec), 0, 1), materialShininess);
+
+			// Calculate shading
+			vec3 shading = ambientLight * materialAmbient
+			             + diffuseFactor * materialDiffuse * lightColor
+						 + specularFactor * materialSpecular * lightColor
+						 + materialEmissive;
+
+			fragmentColor = vec4(shading, 1);
 		}
 	)");
 
