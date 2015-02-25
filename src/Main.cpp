@@ -156,14 +156,22 @@ bool handleInputs(float delta)
 	// Analogue Sticks
 	if (ctrl.mRightStick.norm() > ctrl.mRightStickDeadzone) {
 		sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
-		sfz::mat3f xTurn = sfz::rotationMatrix3(-cam.mUp, ctrl.mRightStick[0]*turningSpeed*delta);
+		sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, ctrl.mRightStick[0]*turningSpeed*delta);
 		sfz::mat3f yTurn = sfz::rotationMatrix3(right, ctrl.mRightStick[1]*turningSpeed*delta);
-		cam.mDir = (xTurn * yTurn * cam.mDir);
-		cam.mUp = (xTurn * yTurn * cam.mUp);
+		cam.mDir = (yTurn * xTurn * cam.mDir);
+		cam.mUp = (yTurn * xTurn * cam.mUp);
 	}
 	if (ctrl.mLeftStick.norm() > ctrl.mLeftStickDeadzone) {
 		sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
 		cam.mPos += ((cam.mDir * ctrl.mLeftStick[1] + right * ctrl.mLeftStick[0]) * currentSpeed * delta);
+	}
+
+	// Shoulder buttons
+	if (ctrl.mButtonLeftShoulder == sdl::Button::DOWN || ctrl.mButtonLeftShoulder == sdl::Button::HELD) {
+		cam.mPos -= (sfz::vec3f{0,1,0} * currentSpeed * 0.5f * delta);
+	}
+	else if (ctrl.mButtonRightShoulder == sdl::Button::DOWN || ctrl.mButtonRightShoulder == sdl::Button::HELD) {
+		cam.mPos += (sfz::vec3f{0,1,0} * currentSpeed * 0.5f * delta);
 	}
 
 	// Menu buttons
