@@ -20,29 +20,29 @@ CubeObject::CubeObject()
 		0.0f, 1.0f, 0.0f, // 6, top-top-left
 		0.0f, 1.0f, 1.0f, // 7, top-top-right
 
-		// Front
-		1.0f, 0.0f, 0.0f, // 8, front-bottom-left
-		1.0f, 0.0f, 1.0f, // 9, front-bottom-right
-		1.0f, 1.0f, 0.0f, // 10, front-top-left
-		1.0f, 1.0f, 1.0f, // 11, front-top-right
-
-		// Back
-		0.0f, 0.0f, 0.0f, // 12, back-bottom-left
-		0.0f, 0.0f, 1.0f, // 13, back-bottom-right
-		0.0f, 1.0f, 0.0f, // 14, back-top-left
-		0.0f, 1.0f, 1.0f, // 15, back-top-right
+		// Right
+		1.0f, 0.0f, 0.0f, // 8, right-bottom-back
+		1.0f, 0.0f, 1.0f, // 9, right-bottom-front
+		1.0f, 1.0f, 0.0f, // 10, right-top-back
+		1.0f, 1.0f, 1.0f, // 11, right-top-front
 
 		// Left
-		0.0f, 0.0f, 0.0f, // 16, left-bottom-left
-		1.0f, 0.0f, 0.0f, // 17, left-bottom-right
-		0.0f, 1.0f, 0.0f, // 18, left-top-left
-		1.0f, 1.0f, 0.0f, // 19, left-top-right
+		0.0f, 0.0f, 0.0f, // 12, left-bottom-back
+		0.0f, 0.0f, 1.0f, // 13, left-bottom-front
+		0.0f, 1.0f, 0.0f, // 14, left-top-back
+		0.0f, 1.0f, 1.0f, // 15, left-top-front
 
-		// Right
-		0.0f, 0.0f, 1.0f, // 20, right-bottom-left
-		1.0f, 0.0f, 1.0f, // 21, right-bottom-right
-		0.0f, 1.0f, 1.0f, // 22, right-top-left
-		1.0f, 1.0f, 1.0f  // 23, right-top-right
+		// Back
+		0.0f, 0.0f, 0.0f, // 16, back-left-bottom
+		1.0f, 0.0f, 0.0f, // 17, back-right-bottom
+		0.0f, 1.0f, 0.0f, // 18, back-left-top
+		1.0f, 1.0f, 0.0f, // 19, back-right-top
+
+		// Front
+		0.0f, 0.0f, 1.0f, // 20, front-left-bottom
+		1.0f, 0.0f, 1.0f, // 21, front-right-bottom
+		0.0f, 1.0f, 1.0f, // 22, front-left-top
+		1.0f, 1.0f, 1.0f  // 23, front-right-top
 	};
 	const float uvCoords[] = {
 		// Bottom
@@ -57,29 +57,29 @@ CubeObject::CubeObject()
 		1.0f, 0.0f, // 6, top-top-left
 		1.0f, 1.0f, // 7, top-top-right
 
-		// Front
-		0.0f, 0.0f, // 8, front-bottom-left
-		0.0f, 1.0f, // 9, front-bottom-right
-		1.0f, 0.0f, // 10, front-top-left
-		1.0f, 1.0f, // 11, front-top-right
-
-		// Back
-		0.0f, 0.0f, // 12, back-bottom-left
-		0.0f, 1.0f, // 13, back-bottom-right
-		1.0f, 0.0f, // 14, back-top-left
-		1.0f, 1.0f, // 15, back-top-right
+		// Right
+		0.0f, 0.0f, // 8, right-bottom-back
+		0.0f, 1.0f, // 9, right-bottom-front
+		1.0f, 0.0f, // 10, right-top-back
+		1.0f, 1.0f, // 11, right-top-front
 
 		// Left
-		0.0f, 0.0f, // 16, left-bottom-left
-		0.0f, 1.0f, // 17, left-bottom-right
-		1.0f, 0.0f, // 18, left-top-left
-		1.0f, 1.0f, // 19, left-top-right
+		0.0f, 0.0f, // 12, left-bottom-back
+		0.0f, 1.0f, // 13, left-bottom-front
+		1.0f, 0.0f, // 14, left-top-back
+		1.0f, 1.0f, // 15, left-top-front
 
-		// Right
-		0.0f, 0.0f, // 20, right-bottom-left
-		0.0f, 1.0f, // 21, right-bottom-right
-		1.0f, 0.0f, // 22, right-top-left
-		1.0f, 1.0f  // 23, right-top-right
+		// Back
+		0.0f, 0.0f, // 16, back-left-bottom
+		0.0f, 1.0f, // 17, back-right-bottom
+		1.0f, 0.0f, // 18, back-left-top
+		1.0f, 1.0f, // 19, back-right-top
+
+		// Front
+		0.0f, 0.0f, // 20, front-left-bottom
+		0.0f, 1.0f, // 21, front-right-bottom
+		1.0f, 0.0f, // 22, front-left-top
+		1.0f, 1.0f  // 23, front-right-top
 	};
 	const float normals[] = {
 		// Bottom
@@ -94,17 +94,11 @@ CubeObject::CubeObject()
 		0.0f, 1.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
 
-		// Front
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-
-		// Back
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
+		// Right
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
 
 		// Left
 		-1.0f, 0.0f, 0.0f,
@@ -112,11 +106,17 @@ CubeObject::CubeObject()
 		-1.0f, 0.0f, 0.0f,
 		-1.0f, 0.0f, 0.0f,
 
-		// Right
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f
+		// Back
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+
+		// Front
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f
 	};
 	const unsigned int indices[] = {
 		// Bottom
@@ -127,19 +127,19 @@ CubeObject::CubeObject()
 		6, 5, 4,
 		7, 5, 6,
 
-		// Front
+		// Right
 		10, 9, 8,
 		11, 9, 10,
 
-		// Back
+		// Left
 		12, 13, 14,
 		14, 13, 15,
 
-		// Left
+		// Back
 		18, 17, 16,
 		19, 17, 18,
 
-		// Right
+		// Front
 		20, 21, 22,
 		22, 21, 23
 	};
