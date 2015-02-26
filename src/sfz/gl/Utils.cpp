@@ -114,6 +114,17 @@ void setUniform(GLuint shaderProgram, const std::string& name, const sfz::vec3f&
 	setUniform(loc, vector);
 }
 
+void setUniform(int location, float f)
+{
+	glUniform1f(location, f);
+}
+
+void setUniform(GLuint shaderProgram, const std::string& name, float f)
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, f);
+}
+
 void setUniform(int location, int i)
 {
 	glUniform1i(location, i);

@@ -59,6 +59,9 @@ void setUniform(GLuint shaderProgram, const std::string& name, const sfz::mat4f&
 void setUniform(int location, const sfz::vec3f& vector);
 void setUniform(GLuint shaderProgram, const std::string& name, const sfz::vec3f& vector);
 
+void setUniform(int location, float f);
+void setUniform(GLuint shaderProgram, const std::string& name, float f);
+
 void setUniform(int location, int i);
 void setUniform(GLuint shaderProgram, const std::string& name, int i);
 
