@@ -15,6 +15,8 @@
 struct ShadowMap {
 
 	GLuint mFBO, mDepthTexture;
+	int mResolution;
+	bool mHasPCF;
 
 	enum class DepthRes : GLint {
 		BITS_16 = GL_DEPTH_COMPONENT16,
@@ -25,6 +27,9 @@ struct ShadowMap {
 	ShadowMap() = default;
 
 	ShadowMap(int resolution, DepthRes depthRes, bool pcf)
+	:
+		mResolution{resolution},
+		mHasPCF{pcf}
 	{
 		// Generate framebuffer
 		glGenFramebuffers(1, &mFBO);
@@ -296,15 +301,12 @@ bool update(float)
 	return false;
 }
 
+void drawWorld(const vox::Assets& assets);
+void drawLight(const vox::Assets& assets);
+
 // Called once every frame
 void render(sdl::Window& window, vox::Assets& assets, float)
 {
-	static vox::CubeObject cubeObj;
-
-	// Clearing screen
-	glClearColor(0.98f, 0.98f, 0.94f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -315,25 +317,82 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	// Enable culling
 	glEnable(GL_CULL_FACE);
-	//glDisable(GL_CULL_FACE);
 
-	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
+	// DRAW SHADOW MAP
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	glUseProgram(shadowMapShaderProgram);
+	glViewport(0, 0, shadowMap.mResolution, shadowMap.mResolution);
+
+	// Light position and matrices
+	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
+	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
+	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(30.0f, 1.0f, 2.0f, 1000.0f);
+	
+	gl::setUniform(shadowMapShaderProgram, "viewMatrix", lightViewMatrix);
+	gl::setUniform(shadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
+
+	// Clear shadow map
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Fix surface acne
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(2.4f, 10.0f);
+
+	// Draw shadow casters
+	drawWorld(assets);
+
+	// Cleanup
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// END DRAW SHADOW MAP
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(shaderProgram);
+	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
+
+	// Clearing screen
+	glClearColor(0.98f, 0.98f, 0.94f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set view and projection matrix uniforms
 	gl::setUniform(shaderProgram, "viewMatrix", cam.mViewMatrix);
 	gl::setUniform(shaderProgram, "projectionMatrix", projMatrix);
 
+	// Calculate and set lightMatrix
+	sfz::mat4f inverseViewMatrix = cam.mViewMatrix;
+	// sfz::mat4(sfz::inverse(sfz::mat3(cam.mViewMatrix)));
+	sfz::mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
+	                       * sfz::scalingMatrix4(0.5f)
+	                       * lightProjMatrix
+	                       * lightViewMatrix;
+	//                       * inverseViewMatrix;
+	
+	gl::setUniform(shaderProgram, "lightMatrix", lightMatrix);
+
 	// Set light position uniform
-	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	gl::setUniform(shaderProgram, "msLightPos", lightPos);
 	gl::setUniform(shaderProgram, "lightColor", lightColor);
 	
+	// Set shadow map uniforms and textures
+	gl::setUniform(shaderProgram, "shadowMap", 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, shadowMap.mDepthTexture);
+
 	// Only one texture is used when rendering SnakeTiles
 	gl::setUniform(shaderProgram, "tex", 0);
 	glActiveTexture(GL_TEXTURE0);
 
+	drawWorld(assets);
+	drawLight(assets);
+}
+
+void drawWorld(const vox::Assets& assets)
+{
+	static vox::CubeObject cubeObj;
 	const vox::Chunk* chunkPtr;
 	vox::Offset offset;
 	sfz::vec3f offsetVec;
@@ -380,9 +439,15 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 			}
 		}
 	}
+}
+
+void drawLight(const vox::Assets& assets)
+{
+	static vox::CubeObject cubeObj;
+	sfz::mat4f transform = sfz::identityMatrix4<float>();
 
 	// Render sun
-	sfz::translation(transform, lightPos);
+	sfz::translation(transform, sphericalToCartesian(lightPosSpherical));
 	gl::setUniform(shaderProgram, "modelMatrix", transform);
 	glBindTexture(GL_TEXTURE_2D, assets.YELLOW.mHandle);
 	cubeObj.render();

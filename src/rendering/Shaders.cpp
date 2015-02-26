@@ -15,10 +15,12 @@ GLuint compileStandardShaderProgram()
 		out vec3 vsNormal;
 		out vec3 vsLightPos;
 		out vec3 vsPos;
+		out vec4 shadowMapCoord;
 
 		uniform mat4 modelMatrix;
 		uniform mat4 viewMatrix;
 		uniform mat4 projectionMatrix;
+		uniform mat4 lightMatrix;
 		uniform vec3 msLightPos;
 		uniform vec3 lightColor;
 
@@ -27,6 +29,7 @@ GLuint compileStandardShaderProgram()
 			mat4 modelView = viewMatrix * modelMatrix;
 			mat4 modelViewProj = projectionMatrix * modelView;
 			mat4 normalMatrix = inverse(transpose(modelView)); // Needed for non-uniform scaling.
+			mat4 lightMatrixComplete = lightMatrix * inverse(viewMatrix);
 
 			// Output
 			gl_Position = modelViewProj * vec4(position, 1);
@@ -34,6 +37,7 @@ GLuint compileStandardShaderProgram()
 			vsNormal = normalize((normalMatrix * vec4(normalIn, 0)).xyz);
 			vsLightPos = (viewMatrix * vec4(msLightPos, 1)).xyz;
 			vsPos = vec3(modelView * vec4(position, 1));
+			shadowMapCoord = lightMatrixComplete * vec4(vsPos, 1.0);
 		}
 	)");
 
@@ -47,10 +51,12 @@ GLuint compileStandardShaderProgram()
 		in vec3 vsNormal;
 		in vec3 vsLightPos;
 		in vec3 vsPos;
+		in vec4 shadowMapCoord;
 
 		out vec4 fragmentColor;
 
 		uniform sampler2D tex;
+		uniform sampler2DShadow shadowMap;
 		uniform vec3 lightColor;
 
 		void main()
@@ -59,7 +65,7 @@ GLuint compileStandardShaderProgram()
 			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
 			vec3 diffuseTexture = texture(tex, texCoord.xy).xyz;
 			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseTexture;
-			vec3 materialDiffuse = vec3(1.0, 1.0, 1.0) * diffuseTexture;
+			vec3 materialDiffuse = vec3(0.5, 0.5, 0.5) * diffuseTexture;
 			vec3 materialSpecular = vec3(0.35, 0.35, 0.35);
 			vec3 materialEmissive = vec3(0, 0, 0);
 			float materialShininess = 8;
@@ -70,6 +76,7 @@ GLuint compileStandardShaderProgram()
 			vec3 toCam = normalize(-vsPos);
 			vec3 halfVec = normalize(toLight + toCam);
 			float specularNormalization = ((materialShininess + 2.0) / 8.0);
+			float lightVisibility = textureProj(shadowMap, shadowMapCoord);
 
 			// Scaling factors for different components
 			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
@@ -77,9 +84,9 @@ GLuint compileStandardShaderProgram()
 
 			// Calculate shading
 			vec3 shading = ambientLight * materialAmbient
-			             + diffuseFactor * materialDiffuse * lightColor
-						 + specularFactor * materialSpecular * lightColor
-						 + materialEmissive;
+			             + diffuseFactor * materialDiffuse * lightColor * lightVisibility
+			             + specularFactor * materialSpecular * lightColor * lightVisibility
+			             + materialEmissive;
 
 			fragmentColor = vec4(shading, 1);
 		}
