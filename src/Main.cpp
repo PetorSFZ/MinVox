@@ -73,7 +73,8 @@ ShadowMap shadowMap;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
-sfz::vec3f lightPosSpherical{22.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
+sfz::vec3f lightPosSpherical{50.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
+sfz::vec3f lightTarget{16.0f, 0.0f, 16.0f};
 sfz::vec3f lightColor{1.0f, 1.0f, 1.0f};
 
 
@@ -188,11 +189,39 @@ bool handleInputs(float delta)
 			case SDLK_ESCAPE: return true;
 			case 'w':
 			case 'W':
-				cam.mPos += cam.mDir*0.1f;
+				cam.mPos += (cam.mDir * 25.0f * delta);
 				break;
 			case 's':
 			case 'S':
-				cam.mPos -= cam.mDir*0.1f;
+				cam.mPos -= (cam.mDir * 25.0f * delta);
+				break;
+			case SDLK_UP:
+				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::g_PI_FLOAT*delta);
+				cam.mDir = (yTurn * xTurn * cam.mDir);
+				cam.mUp = (yTurn * xTurn * cam.mUp);}
+				break;
+			case SDLK_DOWN:
+				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::g_PI_FLOAT*delta);
+				cam.mDir = (yTurn * xTurn * cam.mDir);
+				cam.mUp = (yTurn * xTurn * cam.mUp);}
+				break;
+			case SDLK_LEFT:
+				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, -1.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::g_PI_FLOAT*delta);
+				cam.mDir = (yTurn * xTurn * cam.mDir);
+				cam.mUp = (yTurn * xTurn * cam.mUp);}
+				break;
+			case SDLK_RIGHT:
+				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 1.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::g_PI_FLOAT*delta);
+				cam.mDir = (yTurn * xTurn * cam.mDir);
+				cam.mUp = (yTurn * xTurn * cam.mUp);}
 				break;
 			}
 			break;
