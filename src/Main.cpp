@@ -39,14 +39,14 @@ struct ShadowMap {
 		glGenTextures(1, &mDepthTexture);
 		glBindTexture(GL_TEXTURE_2D, mDepthTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(depthRes), resolution, resolution, 0,
-		             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		             GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
 		// Set shadowmap texture min & mag filters (enable/disable pcf)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
 
 		// Set texture wrap mode to CLAMP_TO_BORDER and set border color.
-		sfz::vec4f borderColor{0.0f, 0.0f, 0.0f, 0.0f};
+		sfz::vec4f borderColor{1.0f, 1.0f, 1.0f, 1.0f};
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.glPtr());
@@ -78,7 +78,7 @@ ShadowMap shadowMap;
 vox::World world{"test"};
 vox::Camera cam;
 sfz::mat4f projMatrix;
-sfz::vec3f lightPosSpherical{50.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
+sfz::vec3f lightPosSpherical{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
 sfz::vec3f lightTarget{16.0f, 0.0f, 16.0f};
 sfz::vec3f lightColor{1.0f, 1.0f, 1.0f};
 
@@ -301,8 +301,8 @@ bool update(float)
 	return false;
 }
 
-void drawWorld(const vox::Assets& assets);
-void drawLight(const vox::Assets& assets);
+void drawWorld(const vox::Assets& assets, GLuint shader);
+void drawLight(const vox::Assets& assets, GLuint shader);
 
 // Called once every frame
 void render(sdl::Window& window, vox::Assets& assets, float)
@@ -328,7 +328,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// Light position and matrices
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
-	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(30.0f, 1.0f, 2.0f, 1000.0f);
+	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(80.0f, 1.0f, 2.0f, 1000.0f);
 	
 	gl::setUniform(shadowMapShaderProgram, "viewMatrix", lightViewMatrix);
 	gl::setUniform(shadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
@@ -340,10 +340,10 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	// Fix surface acne
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(2.4f, 10.0f);
+	glPolygonOffset(1.5f, 8.0f);
 
 	// Draw shadow casters
-	drawWorld(assets);
+	drawWorld(assets, shadowMapShaderProgram);
 
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -353,6 +353,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(shaderProgram);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
 
 	// Clearing screen
@@ -364,13 +365,10 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	gl::setUniform(shaderProgram, "projectionMatrix", projMatrix);
 
 	// Calculate and set lightMatrix
-	sfz::mat4f inverseViewMatrix = cam.mViewMatrix;
-	// sfz::mat4(sfz::inverse(sfz::mat3(cam.mViewMatrix)));
 	sfz::mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
 	                       * sfz::scalingMatrix4(0.5f)
 	                       * lightProjMatrix
-	                       * lightViewMatrix;
-	//                       * inverseViewMatrix;
+	                       * lightViewMatrix; // * inverse(viewMatrix), done in vertex shader.
 	
 	gl::setUniform(shaderProgram, "lightMatrix", lightMatrix);
 
@@ -387,11 +385,11 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	gl::setUniform(shaderProgram, "tex", 0);
 	glActiveTexture(GL_TEXTURE0);
 
-	drawWorld(assets);
-	drawLight(assets);
+	drawWorld(assets, shaderProgram);
+	drawLight(assets, shaderProgram);
 }
 
-void drawWorld(const vox::Assets& assets)
+void drawWorld(const vox::Assets& assets, GLuint shader)
 {
 	static vox::CubeObject cubeObj;
 	const vox::Chunk* chunkPtr;
@@ -432,7 +430,7 @@ void drawWorld(const vox::Assets& assets)
 					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
 					                                                   static_cast<float>(y),
 					                                                   static_cast<float>(z)});
-					gl::setUniform(shaderProgram, "modelMatrix", transform);
+					gl::setUniform(shader, "modelMatrix", transform);
 
 					glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
 					cubeObj.render();
@@ -442,14 +440,14 @@ void drawWorld(const vox::Assets& assets)
 	}
 }
 
-void drawLight(const vox::Assets& assets)
+void drawLight(const vox::Assets& assets, GLuint shader)
 {
 	static vox::CubeObject cubeObj;
 	sfz::mat4f transform = sfz::identityMatrix4<float>();
 
 	// Render sun
 	sfz::translation(transform, sphericalToCartesian(lightPosSpherical));
-	gl::setUniform(shaderProgram, "modelMatrix", transform);
+	gl::setUniform(shader, "modelMatrix", transform);
 	glBindTexture(GL_TEXTURE_2D, assets.YELLOW.mHandle);
 	cubeObj.render();
 }
@@ -489,7 +487,7 @@ int main()
 	shaderProgram = vox::compileStandardShaderProgram();
 	shadowMapShaderProgram = vox::compileShadowMapShaderProgram();
 
-	shadowMap = ShadowMap{2048, ShadowMap::DepthRes::BITS_16, true};
+	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);

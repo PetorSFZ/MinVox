@@ -29,6 +29,8 @@ GLuint compileStandardShaderProgram()
 			mat4 modelView = viewMatrix * modelMatrix;
 			mat4 modelViewProj = projectionMatrix * modelView;
 			mat4 normalMatrix = inverse(transpose(modelView)); // Needed for non-uniform scaling.
+
+			// This step needs to be done in shader since I don't have function to inverse 4x4 matrix in SFZ Common yet.
 			mat4 lightMatrixComplete = lightMatrix * inverse(viewMatrix);
 
 			// Output
