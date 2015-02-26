@@ -46,7 +46,7 @@ struct ShadowMap {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
 
 		// Set texture wrap mode to CLAMP_TO_BORDER and set border color.
-		sfz::vec4f borderColor{1.0f, 1.0f, 1.0f, 1.0f};
+		sfz::vec4f borderColor{0.0f, 0.0f, 0.0f, 0.0f};
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.glPtr());
@@ -322,6 +322,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(shadowMapShaderProgram);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMap.mFBO);
 	glViewport(0, 0, shadowMap.mResolution, shadowMap.mResolution);
 
 	// Light position and matrices
