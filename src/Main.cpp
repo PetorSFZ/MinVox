@@ -26,7 +26,7 @@ struct ShadowMap {
 
 	ShadowMap() = default;
 
-	ShadowMap(int resolution, DepthRes depthRes, bool pcf)
+	ShadowMap(int resolution, DepthRes depthRes, bool pcf, const sfz::vec4f& borderColor)
 	:
 		mResolution{resolution},
 		mHasPCF{pcf}
@@ -46,7 +46,6 @@ struct ShadowMap {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
 
 		// Set texture wrap mode to CLAMP_TO_BORDER and set border color.
-		sfz::vec4f borderColor{1.0f, 1.0f, 1.0f, 1.0f};
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.glPtr());
@@ -81,6 +80,10 @@ sfz::mat4f projMatrix;
 sfz::vec3f lightPosSpherical{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
 sfz::vec3f lightTarget{16.0f, 0.0f, 16.0f};
 sfz::vec3f lightColor{1.0f, 1.0f, 1.0f};
+int currentLightAxis = 1;
+float lightCurrentSpeed = 1.0f;
+float lightNormalSpeed = 0.5f;
+float lightMaxSpeed = sfz::g_PI_FLOAT;
 
 
 // Controllers
@@ -263,6 +266,11 @@ bool handleInputs(float delta)
 	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {
 		currentSpeed += (ctrl.mLeftTrigger * 12.0f);
 	}
+	if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
+		lightCurrentSpeed = ctrl.mRightTrigger * lightMaxSpeed;
+	} else {
+		lightCurrentSpeed = lightNormalSpeed;
+	}
 
 	// Analogue Sticks
 	if (ctrl.mRightStick.norm() > ctrl.mRightStickDeadzone) {
@@ -285,6 +293,20 @@ bool handleInputs(float delta)
 		cam.mPos += (sfz::vec3f{0,1,0} * currentSpeed * delta);
 	}
 
+	// Face buttons
+	if (ctrl.mButtonY == sdl::Button::UP) {
+		if (currentLightAxis != -1) currentLightAxis = currentLightAxis == 1 ? 2 : 1;
+	}
+	if (ctrl.mButtonX == sdl::Button::UP) {
+		currentLightAxis = 1;
+	}
+	if (ctrl.mButtonB == sdl::Button::UP) {
+		currentLightAxis = 2;
+	}
+	if (ctrl.mButtonA == sdl::Button::UP) {
+		currentLightAxis = -1;
+	}
+
 	// Menu buttons
 	if (ctrl.mButtonBack == sdl::Button::UP) {
 		return true;
@@ -294,10 +316,17 @@ bool handleInputs(float delta)
 }
 
 // Called once every frame
-bool update(float)
+bool update(float delta)
 {
 	cam.update();
 	world.update(cam.mPos);
+
+	if (currentLightAxis != -1) {
+		lightPosSpherical[currentLightAxis] += delta * lightCurrentSpeed;
+		lightPosSpherical[currentLightAxis] = std::fmod(lightPosSpherical[currentLightAxis],
+		                                                (sfz::g_PI_FLOAT*2.0f));
+	}
+
 	return false;
 }
 
@@ -328,7 +357,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// Light position and matrices
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
-	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(80.0f, 1.0f, 2.0f, 1000.0f);
+	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(70.0f, 1.0f, 2.0f, 250.0f);
 	
 	gl::setUniform(shadowMapShaderProgram, "viewMatrix", lightViewMatrix);
 	gl::setUniform(shadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
@@ -487,7 +516,7 @@ int main()
 	shaderProgram = vox::compileStandardShaderProgram();
 	shadowMapShaderProgram = vox::compileShadowMapShaderProgram();
 
-	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true};
+	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
