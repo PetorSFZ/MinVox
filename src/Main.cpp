@@ -69,7 +69,7 @@ struct ShadowMap {
 };
 
 struct Framebuffer final {
-	GLuint mFBO, mColorTexture, mDepthBuffer;
+	GLuint mFrameBufferObject, mColorTexture, mDepthBuffer;
 	int mWidth, mHeight;
 
 	Framebuffer() = default;
@@ -80,8 +80,8 @@ struct Framebuffer final {
 		mHeight{height}
 	{
 		// Generate framebuffer
-		glGenFramebuffers(1, &mFBO);
-		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+		glGenFramebuffers(1, &mFrameBufferObject);
+		glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferObject);
 
 		// Color texture
 		glGenTextures(1, &mColorTexture);
@@ -109,7 +109,80 @@ struct Framebuffer final {
 	{
 		glDeleteTextures(1, &mColorTexture);
 		glDeleteRenderbuffers(1, &mDepthBuffer);
-		glDeleteFramebuffers(1, &mFBO);
+		glDeleteFramebuffers(1, &mFrameBufferObject);
+	}
+};
+
+struct FullscreenQuadObject final {
+	GLuint vertexArrayObject;
+	GLuint posBuffer, uvBuffer, indexBuffer;
+
+	FullscreenQuadObject()
+	{
+		const float positions[] = {
+			-0.5f, 0.0f, 0.5f, // bottom-left
+			0.5f, 0.0f, 0.5f, // bottom-right
+			-0.5f, 0.0f, -0.5f, // top-left
+			0.5f, 0.0f, -0.5f // top-right
+		};
+		const unsigned int indices[] = {
+			0, 1, 2,
+			1, 3, 2
+		};
+		const float uvCoords[] = {
+			// bottom-left UV
+			0.0f, 0.0f,
+			// bottom-right UV
+			1.0f, 0.0f,
+			// top-left UV
+			0.0f, 1.0f,
+			// top-right UV
+			1.0f, 1.0f
+		};
+
+		// Buffer objects
+		glGenBuffers(1, &posBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+
+		glGenBuffers(1, &indexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, indexBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+		glGenBuffers(1, &uvBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(uvCoords), uvCoords, GL_STATIC_DRAW);
+
+		// Vertex Array Object
+		glGenVertexArrays(1, &vertexArrayObject);
+		glBindVertexArray(vertexArrayObject);
+
+		glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		if (gl::checkAllGLErrors()) {
+			std::cerr << "^^^ Above errors likely caused by FullscreenQuadObject ctor." << std::endl;
+		}
+	}
+
+	~FullscreenQuadObject()
+	{
+		glDeleteBuffers(1, &posBuffer);
+		glDeleteBuffers(1, &uvBuffer);
+		glDeleteBuffers(1, &indexBuffer);
+		glDeleteVertexArrays(1, &vertexArrayObject);
+	}
+
+	void render()
+	{
+		glBindVertexArray(vertexArrayObject);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	}
 };
 
@@ -117,7 +190,7 @@ struct Framebuffer final {
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 GLuint shaderProgram, shadowMapShaderProgram, postProcessShaderProgram;
-Framebuffer internalFramebuffer;
+Framebuffer baseFramebuffer, postProcessedFramebuffer;
 ShadowMap shadowMap;
 
 vox::World world{"test"};
@@ -215,12 +288,14 @@ sfz::vec3f sphericalToCartesian(const sfz::vec3f& spherical)
 
 void cleanUpFramebuffers()
 {
-	internalFramebuffer.cleanUp();
+	baseFramebuffer.cleanUp();
+	postProcessedFramebuffer.cleanUp();
 }
 
 void calculateFramebuffers(int width, int height)
 {
-	internalFramebuffer = Framebuffer(width, height);
+	baseFramebuffer = Framebuffer(width, height);
+	postProcessedFramebuffer = Framebuffer(width, height);
 }
 
 // Game loop functions
@@ -405,7 +480,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// Enable culling
 	glEnable(GL_CULL_FACE);
 
-	// DRAW SHADOW MAP
+	// Draw shadow map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(shadowMapShaderProgram);
@@ -436,14 +511,12 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// END DRAW SHADOW MAP
+	// Draw base framebuffer (before post-processing)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(shaderProgram);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
-	glBindFramebuffer(GL_FRAMEBUFFER, internalFramebuffer.mFBO);
-	glViewport(0, 0, internalFramebuffer.mWidth, internalFramebuffer.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, baseFramebuffer.mFrameBufferObject);
+	glViewport(0, 0, baseFramebuffer.mWidth, baseFramebuffer.mHeight);
 
 	// Clearing screen
 	glClearColor(0.98f, 0.98f, 0.94f, 1.0f);
@@ -474,10 +547,29 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	gl::setUniform(shaderProgram, "tex", 0);
 	glActiveTexture(GL_TEXTURE0);
 
+	// Drawing objects
 	drawWorld(assets, shaderProgram);
 	drawLight(assets, shaderProgram);
 
-	// Drawing internal framebuffer to screen
+	// Applying post-process effects
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	glUseProgram(postProcessShaderProgram);
+	glBindFramebuffer(GL_FRAMEBUFFER, postProcessedFramebuffer.mFrameBufferObject);
+	glViewport(0, 0, postProcessedFramebuffer.mWidth, postProcessedFramebuffer.mHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mColorTexture);
+	gl::setUniform(postProcessShaderProgram, "frameBufferTexture", 0);
+
+	static FullscreenQuadObject fullscreenQuad;
+	fullscreenQuad.render();
+
+	glUseProgram(0);
+
+	// Blitting post-processed framebuffer to screen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -485,11 +577,19 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	///*
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, internalFramebuffer.mFBO);
-	glBlitFramebuffer(0, 0, internalFramebuffer.mWidth, internalFramebuffer.mHeight,
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, baseFramebuffer.mFrameBufferObject);
+	glBlitFramebuffer(0, 0, baseFramebuffer.mWidth, baseFramebuffer.mHeight,
 	                  0, 0, window.drawableWidth(), window.drawableHeight(),
-	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	                  GL_COLOR_BUFFER_BIT, GL_NEAREST); // */
+
+	/*
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, postProcessedFramebuffer.mFrameBufferObject);
+	glBlitFramebuffer(0, 0, postProcessedFramebuffer.mWidth, postProcessedFramebuffer.mHeight,
+	                  0, 0, window.drawableWidth(), window.drawableHeight(),
+	                  GL_COLOR_BUFFER_BIT, GL_NEAREST); // */
 }
 
 void drawWorld(const vox::Assets& assets, GLuint shader)
