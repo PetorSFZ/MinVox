@@ -185,10 +185,18 @@ GLuint compilePostProcessShaderProgram()
 		out vec4 fragmentColor;
 
 		uniform sampler2DRect frameBufferTexture;
+		uniform sampler2DRect depthBufferTexture;
 
 		void main()
 		{
-			fragmentColor = texture(frameBufferTexture, gl_FragCoord.xy);
+			vec2 textureCoord = gl_FragCoord.xy;
+			
+			if (textureCoord.x < 600 ) {
+				fragmentColor = texture(frameBufferTexture, textureCoord);
+			} else {
+				float depth = texture(depthBufferTexture, textureCoord).r;
+				fragmentColor = vec4(depth, depth, depth, 1.0);
+			}
 		}
 	)");
 

@@ -39,7 +39,7 @@ struct ShadowMap {
 		glGenTextures(1, &mDepthTexture);
 		glBindTexture(GL_TEXTURE_2D, mDepthTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(depthRes), resolution, resolution, 0,
-		             GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+		             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 		// Set shadowmap texture min & mag filters (enable/disable pcf)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
@@ -74,7 +74,7 @@ struct Framebuffer final {
 
 	Framebuffer() = default;
 
-	Framebuffer(int width, int height)
+	Framebuffer(int width, int height, bool depthIsTexture)
 	:
 		mWidth{width},
 		mHeight{height}
@@ -92,10 +92,19 @@ struct Framebuffer final {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, mColorTexture, 0);
 
 		// Depth Buffer
-		glGenRenderbuffers(1, &mDepthBuffer);
-		glBindRenderbuffer(GL_RENDERBUFFER, mDepthBuffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mDepthBuffer);
+		if (!depthIsTexture) {
+			glGenRenderbuffers(1, &mDepthBuffer);
+			glBindRenderbuffer(GL_RENDERBUFFER, mDepthBuffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mDepthBuffer);
+		} else {
+			glGenTextures(1, &mDepthBuffer);
+			glBindTexture(GL_TEXTURE_RECTANGLE, mDepthBuffer);
+			glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_RECTANGLE, mDepthBuffer, 0);
+		}
 
 		// Check that framebuffer is okay
 		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
@@ -294,8 +303,8 @@ void cleanUpFramebuffers()
 
 void calculateFramebuffers(int width, int height)
 {
-	baseFramebuffer = Framebuffer(width, height);
-	postProcessedFramebuffer = Framebuffer(width, height);
+	baseFramebuffer = Framebuffer(width, height, true);
+	postProcessedFramebuffer = Framebuffer(width, height, false);
 }
 
 // Game loop functions
@@ -319,7 +328,7 @@ bool handleInputs(float delta)
 			case SDL_WINDOWEVENT_RESIZED:
 				float w = static_cast<float>(event.window.data1);
 				float h = static_cast<float>(event.window.data2);
-				projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 1000.0f);
+				projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 200.0f);
 				cleanUpFramebuffers();
 				calculateFramebuffers(event.window.data1, event.window.data2);
 				break;
@@ -490,7 +499,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// Light position and matrices
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
-	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(70.0f, 1.0f, 2.0f, 250.0f);
+	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(70.0f, 1.0f, 2.0f, 150.0f);
 	
 	gl::setUniform(shadowMapShaderProgram, "viewMatrix", lightViewMatrix);
 	gl::setUniform(shadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
@@ -563,6 +572,10 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mColorTexture);
 	gl::setUniform(postProcessShaderProgram, "frameBufferTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mDepthBuffer);
+	gl::setUniform(postProcessShaderProgram, "depthBufferTexture", 1);
 
 	static FullscreenQuadObject fullscreenQuad;
 	fullscreenQuad.render();
@@ -687,7 +700,7 @@ int main()
 	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
-	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
+	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 200.0f);
 
 	vox::Assets assets;
 
