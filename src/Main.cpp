@@ -75,17 +75,20 @@ struct Framebuffer final {
 	Framebuffer() = default;
 
 	Framebuffer(int width, int height)
+	:
+		mWidth{width},
+		mHeight{height}
 	{
-		// Color texture
-		glGenTextures(1, &mColorTexture);
-		glBindTexture(GL_TEXTURE_RECTANGLE, mColorTexture);
-		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		
 		// Generate framebuffer
 		glGenFramebuffers(1, &mFBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+
+		// Color texture
+		glGenTextures(1, &mColorTexture);
+		glBindTexture(GL_TEXTURE_RECTANGLE, mColorTexture);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, mColorTexture, 0);
 
 		// Depth Buffer
