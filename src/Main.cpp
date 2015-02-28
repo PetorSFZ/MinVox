@@ -94,7 +94,7 @@ struct BigFramebuffer final {
 		// Normal texture
 		glGenTextures(1, &mNormalTexture);
 		glBindTexture(GL_TEXTURE_RECTANGLE, mNormalTexture);
-		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_RECTANGLE, mNormalTexture, 0);
@@ -106,6 +106,9 @@ struct BigFramebuffer final {
 		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_RECTANGLE, mDepthTexture, 0);
+
+		GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+		glDrawBuffers(2, drawBuffers);
 
 		// Check that framebuffer is okay
 		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
@@ -612,11 +615,15 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mColorTexture);
-	gl::setUniform(postProcessShaderProgram, "frameBufferTexture", 0);
+	gl::setUniform(postProcessShaderProgram, "colorTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mNormalTexture);
+	gl::setUniform(postProcessShaderProgram, "normalTexture", 1);
+
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mDepthTexture);
-	gl::setUniform(postProcessShaderProgram, "depthBufferTexture", 1);
+	gl::setUniform(postProcessShaderProgram, "depthTexture", 2);
 
 	static FullscreenQuadObject fullscreenQuad;
 	fullscreenQuad.render();
