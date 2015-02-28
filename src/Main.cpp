@@ -120,10 +120,10 @@ struct FullscreenQuadObject final {
 	FullscreenQuadObject()
 	{
 		const float positions[] = {
-			-0.5f, 0.0f, 0.5f, // bottom-left
-			0.5f, 0.0f, 0.5f, // bottom-right
-			-0.5f, 0.0f, -0.5f, // top-left
-			0.5f, 0.0f, -0.5f // top-right
+			-1.0f, -1.0f, // bottom-left
+			1.0f, -1.0f, // bottom-right
+			-1.0f, 1.0f, // top-left
+			1.0f, 1.0f // top-right
 		};
 		const unsigned int indices[] = {
 			0, 1, 2,
@@ -158,7 +158,7 @@ struct FullscreenQuadObject final {
 		glBindVertexArray(vertexArrayObject);
 
 		glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
 		glEnableVertexAttribArray(0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
@@ -577,19 +577,11 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	///*
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, baseFramebuffer.mFrameBufferObject);
-	glBlitFramebuffer(0, 0, baseFramebuffer.mWidth, baseFramebuffer.mHeight,
-	                  0, 0, window.drawableWidth(), window.drawableHeight(),
-	                  GL_COLOR_BUFFER_BIT, GL_NEAREST); // */
-
-	/*
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, postProcessedFramebuffer.mFrameBufferObject);
 	glBlitFramebuffer(0, 0, postProcessedFramebuffer.mWidth, postProcessedFramebuffer.mHeight,
 	                  0, 0, window.drawableWidth(), window.drawableHeight(),
-	                  GL_COLOR_BUFFER_BIT, GL_NEAREST); // */
+	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void drawWorld(const vox::Assets& assets, GLuint shader)
