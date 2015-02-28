@@ -328,7 +328,7 @@ bool handleInputs(float delta)
 			case SDL_WINDOWEVENT_RESIZED:
 				float w = static_cast<float>(event.window.data1);
 				float h = static_cast<float>(event.window.data2);
-				projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 200.0f);
+				projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.25f, 1000.0f);
 				cleanUpFramebuffers();
 				calculateFramebuffers(event.window.data1, event.window.data2);
 				break;
@@ -499,7 +499,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// Light position and matrices
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
-	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(70.0f, 1.0f, 2.0f, 150.0f);
+	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(70.0f, 5.0f, 2.0f, 150.0f);
 	
 	gl::setUniform(shadowMapShaderProgram, "viewMatrix", lightViewMatrix);
 	gl::setUniform(shadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
@@ -700,7 +700,7 @@ int main()
 	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
-	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 200.0f);
+	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.25f, 1000.0f);
 
 	vox::Assets assets;
 

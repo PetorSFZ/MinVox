@@ -186,16 +186,25 @@ GLuint compilePostProcessShaderProgram()
 
 		uniform sampler2DRect frameBufferTexture;
 		uniform sampler2DRect depthBufferTexture;
+		
+		float linearizeDepth(float depth)
+		{
+			float near = 0.25; // camera z-near
+			float far = 1000.0; // camera z-far
+			return (2.0 * near) / (far + near - (depth*(far-near)));
+		}
 
 		void main()
 		{
 			vec2 textureCoord = gl_FragCoord.xy;
+			vec4 color = texture(frameBufferTexture, textureCoord);
+			float depth = texture(depthBufferTexture, textureCoord).r;
+			float linearDepth = linearizeDepth(depth);
 			
-			if (textureCoord.x < 600 ) {
-				fragmentColor = texture(frameBufferTexture, textureCoord);
+			if (textureCoord.x > 600 && textureCoord.y > 600) {
+				fragmentColor = vec4(vec3(linearDepth), 1.0);
 			} else {
-				float depth = texture(depthBufferTexture, textureCoord).r;
-				fragmentColor = vec4(depth, depth, depth, 1.0);
+				fragmentColor = color;
 			}
 		}
 	)");
