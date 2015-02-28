@@ -163,4 +163,50 @@ GLuint compileShadowMapShaderProgram()
 	return shaderProgram;
 }
 
+GLuint compilePostProcessShaderProgram()
+{
+	GLuint vertexShader = gl::compileVertexShader(R"(
+		#version 330
+
+		in vec2 position;
+
+		void main()
+		{
+			gl_Position = vec4(position, 0.0, 1.0);
+		}
+	)");
+
+
+	GLuint fragmentShader = gl::compileFragmentShader(R"(
+		#version 330
+
+		precision highp float; // required by GLSL spec Sect 4.5.3
+
+		out vec4 fragmentColor;
+
+		uniform sampler2DRect frameBufferTexture;
+
+		void main()
+		{
+			fragmentColor = texture(frameBufferTexture, gl_FragCoord.xy);
+		}
+	)");
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glBindAttribLocation(shaderProgram, 0, "position");
+	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
+
+	gl::linkProgram(shaderProgram);
+
+	if (gl::checkAllGLErrors()) {
+		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
+	}
+	return shaderProgram;
+}
+
 } // namespace vox

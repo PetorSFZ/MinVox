@@ -17,6 +17,8 @@ GLuint compileStandardShaderProgram();
 
 GLuint compileShadowMapShaderProgram();
 
+GLuint compilePostProcessShaderProgram();
+
 } // namespace vox
 
 #endif

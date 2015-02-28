@@ -104,12 +104,19 @@ struct Framebuffer final {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+
+	void cleanUp()
+	{
+		glDeleteTextures(1, &mColorTexture);
+		glDeleteRenderbuffers(1, &mDepthBuffer);
+		glDeleteFramebuffers(1, &mFBO);
+	}
 };
 
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint shaderProgram, shadowMapShaderProgram;
+GLuint shaderProgram, shadowMapShaderProgram, postProcessShaderProgram;
 Framebuffer internalFramebuffer;
 ShadowMap shadowMap;
 
@@ -206,6 +213,16 @@ sfz::vec3f sphericalToCartesian(const sfz::vec3f& spherical)
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
+void cleanUpFramebuffers()
+{
+	internalFramebuffer.cleanUp();
+}
+
+void calculateFramebuffers(int width, int height)
+{
+	internalFramebuffer = Framebuffer(width, height);
+}
+
 // Game loop functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -228,6 +245,8 @@ bool handleInputs(float delta)
 				float w = static_cast<float>(event.window.data1);
 				float h = static_cast<float>(event.window.data2);
 				projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, w/h, 0.1f, 1000.0f);
+				cleanUpFramebuffers();
+				calculateFramebuffers(event.window.data1, event.window.data2);
 				break;
 			}
 			break;
@@ -463,20 +482,14 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
-	//glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, internalFramebuffer.mFBO);
-	/*glBlitFramebuffer(0, 0, internalFramebuffer.mWidth, internalFramebuffer.mHeight,
+	glBlitFramebuffer(0, 0, internalFramebuffer.mWidth, internalFramebuffer.mHeight,
 	                  0, 0, window.drawableWidth(), window.drawableHeight(),
-	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);*/
-	glBlitFramebuffer(0, 0, 800, 800,
-	                  0, 0, 800, 800,
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glUseProgram(0);
 }
 
 void drawWorld(const vox::Assets& assets, GLuint shader)
@@ -576,9 +589,10 @@ int main()
 
 	shaderProgram = vox::compileStandardShaderProgram();
 	shadowMapShaderProgram = vox::compileShadowMapShaderProgram();
+	postProcessShaderProgram = vox::compilePostProcessShaderProgram();
 
-	internalFramebuffer = Framebuffer{1024, 1024};
-	shadowMap = ShadowMap{1024, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
+	calculateFramebuffers(window.drawableWidth(), window.drawableHeight());
+	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
