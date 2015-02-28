@@ -60,7 +60,42 @@ struct ShadowMap {
 		glReadBuffer(GL_NONE);
 
 		// Check that framebuffer is okay
-		sfz_assert_release(glCheckFramebufferStatus(mFBO) != GL_FRAMEBUFFER_COMPLETE);
+		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
+
+		// Cleanup
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+};
+
+struct Framebuffer final {
+	GLuint mFBO, mColorTexture, mDepthBuffer;
+	int mWidth, mHeight;
+
+	Framebuffer() = default;
+
+	Framebuffer(int width, int height)
+	{
+		// Color texture
+		glGenTextures(1, &mColorTexture);
+		glBindTexture(GL_TEXTURE_RECTANGLE, mColorTexture);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		
+		// Generate framebuffer
+		glGenFramebuffers(1, &mFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, mColorTexture, 0);
+
+		// Depth Buffer
+		glGenRenderbuffers(1, &mDepthBuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, mDepthBuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mDepthBuffer);
+
+		// Check that framebuffer is okay
+		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
 
 		// Cleanup
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -72,6 +107,7 @@ struct ShadowMap {
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 GLuint shaderProgram, shadowMapShaderProgram;
+Framebuffer internalFramebuffer;
 ShadowMap shadowMap;
 
 vox::World world{"test"};
@@ -369,7 +405,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	// Fix surface acne
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(1.5f, 8.0f);
+	glPolygonOffset(2.0f, 20.0f);
 
 	// Draw shadow casters
 	drawWorld(assets, shadowMapShaderProgram);
@@ -382,8 +418,10 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(shaderProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
+	glBindFramebuffer(GL_FRAMEBUFFER, internalFramebuffer.mFBO);
+	glViewport(0, 0, internalFramebuffer.mWidth, internalFramebuffer.mHeight);
 
 	// Clearing screen
 	glClearColor(0.98f, 0.98f, 0.94f, 1.0f);
@@ -416,6 +454,26 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 
 	drawWorld(assets, shaderProgram);
 	drawLight(assets, shaderProgram);
+
+	// Drawing internal framebuffer to screen
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, window.drawableWidth(), window.drawableHeight());
+	//glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, internalFramebuffer.mFBO);
+	/*glBlitFramebuffer(0, 0, internalFramebuffer.mWidth, internalFramebuffer.mHeight,
+	                  0, 0, window.drawableWidth(), window.drawableHeight(),
+	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);*/
+	glBlitFramebuffer(0, 0, 800, 800,
+	                  0, 0, 800, 800,
+	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(0);
 }
 
 void drawWorld(const vox::Assets& assets, GLuint shader)
@@ -491,7 +549,7 @@ int main()
 
 	sdl::Session sdlSession{{sdl::InitFlags::EVENTS, sdl::InitFlags::VIDEO,
 	                         sdl::InitFlags::GAMECONTROLLER}, {sdl::ImgInitFlags::PNG}};
-	sdl::Window window{"MinVox", 800, 600,
+	sdl::Window window{"MinVox", 1024, 1024,
 	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
 
 	// Enable SDL Events for controllers
@@ -516,7 +574,8 @@ int main()
 	shaderProgram = vox::compileStandardShaderProgram();
 	shadowMapShaderProgram = vox::compileShadowMapShaderProgram();
 
-	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
+	internalFramebuffer = Framebuffer{1024, 1024};
+	shadowMap = ShadowMap{1024, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.1f, 1000.0f);
