@@ -68,13 +68,13 @@ struct ShadowMap {
 	}
 };
 
-struct Framebuffer final {
-	GLuint mFrameBufferObject, mColorTexture, mDepthBuffer;
+struct BigFramebuffer final {
+	GLuint mFrameBufferObject, mColorTexture, mNormalTexture, mDepthTexture;
 	int mWidth, mHeight;
 
-	Framebuffer() = default;
+	BigFramebuffer() = default;
 
-	Framebuffer(int width, int height, bool depthIsTexture)
+	BigFramebuffer(int width, int height)
 	:
 		mWidth{width},
 		mHeight{height}
@@ -91,20 +91,21 @@ struct Framebuffer final {
 		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, mColorTexture, 0);
 
-		// Depth Buffer
-		if (!depthIsTexture) {
-			glGenRenderbuffers(1, &mDepthBuffer);
-			glBindRenderbuffer(GL_RENDERBUFFER, mDepthBuffer);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mDepthBuffer);
-		} else {
-			glGenTextures(1, &mDepthBuffer);
-			glBindTexture(GL_TEXTURE_RECTANGLE, mDepthBuffer);
-			glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-			glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_RECTANGLE, mDepthBuffer, 0);
-		}
+		// Normal texture
+		glGenTextures(1, &mNormalTexture);
+		glBindTexture(GL_TEXTURE_RECTANGLE, mNormalTexture);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_RECTANGLE, mNormalTexture, 0);
+
+		// Depth texture
+		glGenTextures(1, &mDepthTexture);
+		glBindTexture(GL_TEXTURE_RECTANGLE, mDepthTexture);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_RECTANGLE, mDepthTexture, 0);
 
 		// Check that framebuffer is okay
 		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
@@ -117,7 +118,46 @@ struct Framebuffer final {
 	void cleanUp()
 	{
 		glDeleteTextures(1, &mColorTexture);
-		glDeleteRenderbuffers(1, &mDepthBuffer);
+		glDeleteTextures(1, &mDepthTexture);
+		glDeleteTextures(1, &mNormalTexture);
+		glDeleteFramebuffers(1, &mFrameBufferObject);
+	}
+};
+
+struct Framebuffer final {
+	GLuint mFrameBufferObject, mTexture;
+	int mWidth, mHeight;
+
+	Framebuffer() = default;
+
+	Framebuffer(int width, int height)
+	:
+		mWidth{width},
+		mHeight{height}
+	{
+		// Generate framebuffer
+		glGenFramebuffers(1, &mFrameBufferObject);
+		glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferObject);
+
+		// Color texture
+		glGenTextures(1, &mTexture);
+		glBindTexture(GL_TEXTURE_RECTANGLE, mTexture);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, mTexture, 0);
+
+		// Check that framebuffer is okay
+		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
+
+		// Cleanup
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void cleanUp()
+	{
+		glDeleteTextures(1, &mTexture);
 		glDeleteFramebuffers(1, &mFrameBufferObject);
 	}
 };
@@ -199,7 +239,8 @@ struct FullscreenQuadObject final {
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 GLuint shaderProgram, shadowMapShaderProgram, postProcessShaderProgram;
-Framebuffer baseFramebuffer, postProcessedFramebuffer;
+BigFramebuffer baseFramebuffer;
+Framebuffer postProcessedFramebuffer;
 ShadowMap shadowMap;
 
 vox::World world{"test"};
@@ -303,8 +344,8 @@ void cleanUpFramebuffers()
 
 void calculateFramebuffers(int width, int height)
 {
-	baseFramebuffer = Framebuffer(width, height, true);
-	postProcessedFramebuffer = Framebuffer(width, height, false);
+	baseFramebuffer = BigFramebuffer(width, height);
+	postProcessedFramebuffer = Framebuffer(width, height);
 }
 
 // Game loop functions
@@ -574,7 +615,7 @@ void render(sdl::Window& window, vox::Assets& assets, float)
 	gl::setUniform(postProcessShaderProgram, "frameBufferTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mDepthBuffer);
+	glBindTexture(GL_TEXTURE_RECTANGLE, baseFramebuffer.mDepthTexture);
 	gl::setUniform(postProcessShaderProgram, "depthBufferTexture", 1);
 
 	static FullscreenQuadObject fullscreenQuad;
