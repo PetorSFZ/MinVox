@@ -202,7 +202,7 @@ GLuint compilePostProcessShaderProgram()
 		{
 			vec2 textureCoord = gl_FragCoord.xy;
 			vec4 color = texture(colorTexture, textureCoord);
-			vec3 normal = texture(normalTexture, textureCoord).xyz;
+			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
 			float depth = texture(depthTexture, textureCoord).r;
 			float linearDepth = linearizeDepth(depth);
 			
