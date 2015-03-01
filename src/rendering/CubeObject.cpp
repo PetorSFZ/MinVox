@@ -8,140 +8,184 @@ namespace vox {
 CubeObject::CubeObject()
 {
 	const float positions[] = {
-		// Bottom
-		1.0f, 0.0f, 0.0f, // 0, bottom-bottom-left
-		1.0f, 0.0f, 1.0f, // 1, bottom-bottom-right
-		0.0f, 0.0f, 0.0f, // 2, bottom-top-left
-		0.0f, 0.0f, 1.0f, // 3, bottom-top-right
-
-		// Top
-		1.0f, 1.0f, 0.0f, // 4, top-bottom-left
-		1.0f, 1.0f, 1.0f, // 5, top-bottom-right
-		0.0f, 1.0f, 0.0f, // 6, top-top-left
-		0.0f, 1.0f, 1.0f, // 7, top-top-right
+		// x, y, z
+		// Left
+		0.0f, 0.0f, 0.0f, // 0, left-bottom-back
+		0.0f, 0.0f, 1.0f, // 1, left-bottom-front
+		0.0f, 1.0f, 0.0f, // 2, left-top-back
+		0.0f, 1.0f, 1.0f, // 3, left-top-front
 
 		// Right
-		1.0f, 0.0f, 0.0f, // 8, right-bottom-back
-		1.0f, 0.0f, 1.0f, // 9, right-bottom-front
-		1.0f, 1.0f, 0.0f, // 10, right-top-back
-		1.0f, 1.0f, 1.0f, // 11, right-top-front
+		1.0f, 0.0f, 0.0f, // 4, right-bottom-back
+		1.0f, 0.0f, 1.0f, // 5, right-bottom-front
+		1.0f, 1.0f, 0.0f, // 6, right-top-back
+		1.0f, 1.0f, 1.0f, // 7, right-top-front
 
-		// Left
-		0.0f, 0.0f, 0.0f, // 12, left-bottom-back
-		0.0f, 0.0f, 1.0f, // 13, left-bottom-front
-		0.0f, 1.0f, 0.0f, // 14, left-top-back
-		0.0f, 1.0f, 1.0f, // 15, left-top-front
+		// Bottom
+		0.0f, 0.0f, 0.0f, // 8, left-bottom-back
+		0.0f, 0.0f, 1.0f, // 9, left-bottom-front
+		1.0f, 0.0f, 0.0f, // 10, right-bottom-back
+		1.0f, 0.0f, 1.0f, // 11, right-bottom-front
+
+		// Top
+		0.0f, 1.0f, 0.0f, // 12, left-top-back
+		0.0f, 1.0f, 1.0f, // 13, left-top-front
+		1.0f, 1.0f, 0.0f, // 14, right-top-back
+		1.0f, 1.0f, 1.0f, // 15, right-top-front
 
 		// Back
-		0.0f, 0.0f, 0.0f, // 16, back-left-bottom
-		1.0f, 0.0f, 0.0f, // 17, back-right-bottom
-		0.0f, 1.0f, 0.0f, // 18, back-left-top
-		1.0f, 1.0f, 0.0f, // 19, back-right-top
+		0.0f, 0.0f, 0.0f, // 16, left-bottom-back
+		0.0f, 1.0f, 0.0f, // 17, left-top-back
+		1.0f, 0.0f, 0.0f, // 18, right-bottom-back
+		1.0f, 1.0f, 0.0f, // 19, right-top-back
 
 		// Front
-		0.0f, 0.0f, 1.0f, // 20, front-left-bottom
-		1.0f, 0.0f, 1.0f, // 21, front-right-bottom
-		0.0f, 1.0f, 1.0f, // 22, front-left-top
-		1.0f, 1.0f, 1.0f  // 23, front-right-top
+		0.0f, 0.0f, 1.0f, // 20, left-bottom-front
+		0.0f, 1.0f, 1.0f, // 21, left-top-front
+		1.0f, 0.0f, 1.0f, // 22, right-bottom-front
+		1.0f, 1.0f, 1.0f  // 23, right-top-front
+
 	};
 	const float uvCoords[] = {
-		// Bottom
-		0.0f, 0.0f, // 0, bottom-bottom-left
-		0.0f, 1.0f, // 1, bottom-bottom-right
-		1.0f, 0.0f, // 2, bottom-top-left
-		1.0f, 1.0f, // 3, bottom-top-right
-
-		// Top
-		0.0f, 0.0f, // 4, top-bottom-left
-		0.0f, 1.0f, // 5, top-bottom-right
-		1.0f, 0.0f, // 6, top-top-left
-		1.0f, 1.0f, // 7, top-top-right
+		// u, v
+		// Left
+		0.0f, 0.0f, // 0, left-bottom-back
+		1.0f, 0.0f, // 1, left-bottom-front
+		0.0f, 1.0f, // 2, left-top-back
+		1.0f, 1.0f, // 3, left-top-front
 
 		// Right
-		0.0f, 0.0f, // 8, right-bottom-back
-		0.0f, 1.0f, // 9, right-bottom-front
-		1.0f, 0.0f, // 10, right-top-back
-		1.0f, 1.0f, // 11, right-top-front
+		1.0f, 0.0f, // 4, right-bottom-back
+		0.0f, 0.0f, // 5, right-bottom-front
+		1.0f, 1.0f, // 6, right-top-back
+		0.0f, 1.0f, // 7, right-top-front
 
-		// Left
-		0.0f, 0.0f, // 12, left-bottom-back
-		0.0f, 1.0f, // 13, left-bottom-front
-		1.0f, 0.0f, // 14, left-top-back
-		1.0f, 1.0f, // 15, left-top-front
+		// Bottom
+		0.0f, 0.0f, // 8, left-bottom-back
+		0.0f, 1.0f, // 9, left-bottom-front
+		1.0f, 0.0f, // 10, right-bottom-back
+		1.0f, 1.0f, // 11, right-bottom-front
+
+		// Top
+		0.0f, 1.0f, // 12, left-top-back
+		0.0f, 0.0f, // 13, left-top-front
+		1.0f, 1.0f, // 14, right-top-back
+		1.0f, 0.0f, // 15, right-top-front
 
 		// Back
-		0.0f, 0.0f, // 16, back-left-bottom
-		0.0f, 1.0f, // 17, back-right-bottom
-		1.0f, 0.0f, // 18, back-left-top
-		1.0f, 1.0f, // 19, back-right-top
+		1.0f, 0.0f, // 16, left-bottom-back
+		1.0f, 1.0f, // 17, left-top-back
+		0.0f, 0.0f, // 18, right-bottom-back
+		0.0f, 1.0f, // 19, right-top-back
 
 		// Front
-		0.0f, 0.0f, // 20, front-left-bottom
-		0.0f, 1.0f, // 21, front-right-bottom
-		1.0f, 0.0f, // 22, front-left-top
-		1.0f, 1.0f  // 23, front-right-top
+		0.0f, 0.0f, // 20, left-bottom-front
+		0.0f, 1.0f, // 21, left-top-front
+		1.0f, 0.0f, // 22, right-bottom-front
+		1.0f, 1.0f  // 23, right-top-front
 	};
-	const float normals[] = {
-		// Bottom
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-
-		// Top
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
+	const float flatNormals[] = {
+		// x, y, z
+		// Left
+		-1.0f, 0.0f, 0.0f, // 0, left-bottom-back
+		-1.0f, 0.0f, 0.0f, // 1, left-bottom-front
+		-1.0f, 0.0f, 0.0f, // 2, left-top-back
+		-1.0f, 0.0f, 0.0f, // 3, left-top-front
 
 		// Right
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, // 4, right-bottom-back
+		1.0f, 0.0f, 0.0f, // 5, right-bottom-front
+		1.0f, 0.0f, 0.0f, // 6, right-top-back
+		1.0f, 0.0f, 0.0f, // 7, right-top-front
 
-		// Left
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
+		// Bottom
+		0.0f, -1.0f, 0.0f, // 8, left-bottom-back
+		0.0f, -1.0f, 0.0f, // 9, left-bottom-front
+		0.0f, -1.0f, 0.0f, // 10, right-bottom-back
+		0.0f, -1.0f, 0.0f, // 11, right-bottom-front
+
+		// Top
+		0.0f, 1.0f, 0.0f, // 12, left-top-back
+		0.0f, 1.0f, 0.0f, // 13, left-top-front
+		0.0f, 1.0f, 0.0f, // 14, right-top-back
+		0.0f, 1.0f, 0.0f, // 15, right-top-front
 
 		// Back
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f, // 16, left-bottom-back
+		0.0f, 0.0f, -1.0f, // 17, left-top-back
+		0.0f, 0.0f, -1.0f, // 18, right-bottom-back
+		0.0f, 0.0f, -1.0f, // 19, right-top-back
 
 		// Front
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f
+		0.0f, 0.0f, 1.0f, // 20, left-bottom-front
+		0.0f, 0.0f, 1.0f, // 21, left-top-front
+		0.0f, 0.0f, 1.0f, // 22, right-bottom-front
+		0.0f, 0.0f, 1.0f  // 23, right-top-front
+	};
+	const float val = 1.0f / std::sqrtf(3.0f);
+	const float sphereNormals[] = {
+		// x, y, z
+		// Left
+		-val, -val, -val, // 0, left-bottom-back
+		-val, -val, val, // 1, left-bottom-front
+		-val, val, -val, // 2, left-top-back
+		-val, val, val, // 3, left-top-front
+
+		// Right
+		val, -val, -val, // 4, right-bottom-back
+		val, -val, val, // 5, right-bottom-front
+		val, val, -val, // 6, right-top-back
+		val, val, val, // 7, right-top-front
+
+		// Bottom
+		-val, -val, -val, // 8, left-bottom-back
+		-val, -val, val, // 9, left-bottom-front
+		val, -val, -val, // 10, right-bottom-back
+		val, -val, val, // 11, right-bottom-front
+
+		// Top
+		-val, val, -val, // 12, left-top-back
+		-val, val, val, // 13, left-top-front
+		val, val, -val, // 14, right-top-back
+		val, val, val, // 15, right-top-front
+
+		// Back
+		-val, -val, -val, // 16, left-bottom-back
+		-val, val, -val, // 17, left-top-back
+		val, -val, -val, // 18, right-bottom-back
+		val, val, -val, // 19, right-top-back
+
+		// Front
+		-val, -val, val, // 20, left-bottom-front
+		-val, val, val, // 21, left-top-front
+		val, -val, val, // 22, right-bottom-front
+		val, val, val, // 23, right-top-front
 	};
 	const unsigned int indices[] = {
-		// Bottom
+		// Left
 		0, 1, 2,
-		2, 1, 3,
-
-		// Top
-		6, 5, 4,
-		7, 5, 6,
+		3, 2, 1,
 
 		// Right
-		10, 9, 8,
+		5, 4, 7,
+		6, 7, 4,
+
+		// Bottom
+		8, 10, 9,
 		11, 9, 10,
 
-		// Left
-		12, 13, 14,
-		14, 13, 15,
+		// Top
+		13, 15, 12,
+		14, 12, 15,
 
 		// Back
-		18, 17, 16,
-		19, 17, 18,
+		18, 16, 19,
+		17, 19, 16,
 
 		// Front
-		20, 21, 22,
-		22, 21, 23
+		20, 22, 21,
+		23, 21, 22
+
 	};
 
 	// Buffer objects
@@ -151,7 +195,8 @@ CubeObject::CubeObject()
 
 	glGenBuffers(1, &normalBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(normals), normals, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(flatNormals), flatNormals, GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(sphereNormals), sphereNormals, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &uvBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);

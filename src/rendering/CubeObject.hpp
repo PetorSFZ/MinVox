@@ -2,7 +2,8 @@
 #ifndef VOX_RENDERING_CUBE_OBJECT_HPP
 #define VOX_RENDERING_CUBE_OBJECT_HPP
 
-#include <sfz/Math.hpp>
+#include <cmath>
+
 #include "sfz/GL.hpp"
 
 namespace vox {
