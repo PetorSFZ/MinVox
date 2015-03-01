@@ -389,6 +389,24 @@ bool handleInputs(float delta)
 			case 'S':
 				cam.mPos -= (cam.mDir * 25.0f * delta);
 				break;
+			case 'a':
+			case 'A':
+				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+				cam.mPos += (-right * 25.0f * delta);}
+				break;
+			case 'd':
+			case 'D':
+				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
+				cam.mPos += (right * 25.0f * delta);}
+				break;
+			case 'q':
+			case 'Q':
+				cam.mPos += (sfz::vec3f{0.0f,-1.0f,0.0} * 25.0f * delta);
+				break;
+			case 'e':
+			case 'E':
+				cam.mPos += (sfz::vec3f{0.0f,1.0f,0.0} * 25.0f * delta);
+				break;
 			case SDLK_UP:
 				{sfz::vec3f right = sfz::cross(cam.mDir, cam.mUp).normalize();
 				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::g_PI_FLOAT*delta);
