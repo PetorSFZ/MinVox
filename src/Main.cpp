@@ -12,62 +12,6 @@
 // Structs that really shouldn't be here.
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-struct ShadowMap {
-
-	GLuint mFBO, mDepthTexture;
-	int mResolution;
-	bool mHasPCF;
-
-	enum class DepthRes : GLint {
-		BITS_16 = GL_DEPTH_COMPONENT16,
-		BITS_24 = GL_DEPTH_COMPONENT24,
-		BITS_32 = GL_DEPTH_COMPONENT32
-	};
-
-	ShadowMap() = default;
-
-	ShadowMap(int resolution, DepthRes depthRes, bool pcf, const sfz::vec4f& borderColor)
-	:
-		mResolution{resolution},
-		mHasPCF{pcf}
-	{
-		// Generate framebuffer
-		glGenFramebuffers(1, &mFBO);
-		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-
-		// Generates depth texture
-		glGenTextures(1, &mDepthTexture);
-		glBindTexture(GL_TEXTURE_2D, mDepthTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(depthRes), resolution, resolution, 0,
-		             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-		// Set shadowmap texture min & mag filters (enable/disable pcf)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, pcf ? GL_LINEAR : GL_NEAREST);
-
-		// Set texture wrap mode to CLAMP_TO_BORDER and set border color.
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.glPtr());
-
-		// Magic lines that enable hardware shadowmaps somehow (becomes sampler2Dshadow?)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-
-		// Bind texture to framebuffer
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
-		glDrawBuffer(GL_NONE); // No color buffer
-		glReadBuffer(GL_NONE);
-
-		// Check that framebuffer is okay
-		sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
-
-		// Cleanup
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-};
-
 struct BigFramebuffer final {
 	GLuint mFrameBufferObject, mColorTexture, mNormalTexture, mDepthTexture;
 	int mWidth, mHeight;
@@ -171,7 +115,6 @@ struct Framebuffer final {
 GLuint shaderProgram, shadowMapShaderProgram, postProcessShaderProgram;
 BigFramebuffer baseFramebuffer;
 Framebuffer postProcessedFramebuffer;
-ShadowMap shadowMap;
 
 vox::World world{"test"};
 vox::Camera cam;
@@ -467,6 +410,8 @@ void drawLight(const vox::Assets& assets, GLuint shader);
 // Called once every frame
 void render(sdl::Window& window, vox::Assets& assets, float)
 {
+	static vox::ShadowMap shadowMap{4096, vox::ShadowMapRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
+
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -690,7 +635,6 @@ int main()
 	postProcessShaderProgram = vox::compilePostProcessShaderProgram();
 
 	calculateFramebuffers(window.drawableWidth(), window.drawableHeight());
-	shadowMap = ShadowMap{4096, ShadowMap::DepthRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(cam.mFov, aspect, 0.25f, 1000.0f);

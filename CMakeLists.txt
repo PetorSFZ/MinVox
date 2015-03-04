@@ -90,6 +90,8 @@ add_executable(
 	${SRC_DIR}/rendering/FullscreenQuadObject.cpp
 	${SRC_DIR}/rendering/Shaders.hpp
 	${SRC_DIR}/rendering/Shaders.cpp
+	${SRC_DIR}/rendering/ShadowMap.hpp
+	${SRC_DIR}/rendering/ShadowMap.cpp
 
 	${SRC_DIR}/sfz/SDL.hpp
 	${SRC_DIR}/sfz/sdl/GameController.hpp
