@@ -3,6 +3,7 @@
 #define SFZ_GEOMETRY_AABB_HPP
 
 #include <string>
+#include <array>
 #include <iostream> // std::ostream
 #include <functional> // std::hash
 
@@ -40,6 +41,10 @@ public:
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	std::array<vec3f,8> corners() const noexcept;
+	void corners(vec3f* arrayOut) const noexcept;
+	vec3f closestPoint(const vec3f& point) const noexcept;
+
 	size_t hash() const noexcept;
 	std::string to_string() const noexcept;
 
@@ -53,6 +58,10 @@ public:
 	float xExtent() const noexcept;
 	float yExtent() const noexcept;
 	float zExtent() const noexcept;
+	vec3f halfExtents() const noexcept;
+	float halfXExtent() const noexcept;
+	float halfYExtent() const noexcept;
+	float halfZExtent() const noexcept;
 
 	void min(const vec3f& newMin) noexcept;
 	void max(const vec3f& newMax) noexcept;

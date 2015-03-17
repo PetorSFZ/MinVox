@@ -38,6 +38,42 @@ AABB::AABB(const vec3f& centerPos, float xExtent, float yExtent, float zExtent) 
 // Public member functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+std::array<vec3f,8> AABB::corners() const noexcept
+{
+	std::array<vec3f,8> result;
+	this->corners(&result[0]);
+	return result;
+}
+
+void AABB::corners(vec3f* arrayOut) const noexcept
+{
+	const vec3f xExtent = vec3f{mMax[0] - mMin[0], 0.0f, 0.0f};
+	const vec3f yExtent = vec3f{0.0f, mMax[1] - mMin[1], 0.0f};
+	const vec3f zExtent = vec3f{0.0f, 0.0f, mMax[2] - mMin[2]};
+
+	arrayOut[0] = mMin; // Back-bottom-left
+	arrayOut[1] = mMin + zExtent; // Front-bottom-left
+	arrayOut[2] = mMin + yExtent; // Back-top-left
+	arrayOut[3] = mMin + zExtent + yExtent; // Front-top-left
+	arrayOut[4] = mMin + xExtent; // Back-bottom-right
+	arrayOut[5] = mMin + zExtent + xExtent; // Front-bottom-right
+	arrayOut[6] = mMin + yExtent + xExtent; // Back-top-right
+	arrayOut[7] = mMax; // Front-top-right
+}
+
+vec3f AABB::closestPoint(const vec3f& point) const noexcept
+{
+	vec3f res = point;
+	float val;
+	for (size_t i = 0; i < 3; i++) {
+		val = point[i];
+		if (val < mMin[i]) val = mMin[i];
+		if (val > mMax[i]) val = mMax[i];
+		res[i] = val;
+	}
+	return res;
+}
+
 size_t AABB::hash() const noexcept
 {
 	std::hash<vec3f> hasher;
@@ -67,7 +103,7 @@ vec3f AABB::position() const noexcept
 
 vec3f AABB::extents() const noexcept
 {
-	return vec3f{xExtent(), yExtent(), zExtent()};
+	return mMax - mMin;
 }
 
 float AABB::xExtent() const noexcept
@@ -83,6 +119,26 @@ float AABB::yExtent() const noexcept
 float AABB::zExtent() const noexcept
 {
 	return mMax[2] - mMin[2];
+}
+
+vec3f AABB::halfExtents() const noexcept
+{
+	return extents() / 2.0f;
+}
+
+float AABB::halfXExtent() const noexcept
+{
+	return xExtent() / 2.0f;
+}
+
+float AABB::halfYExtent() const noexcept
+{
+	return yExtent() / 2.0f;
+}
+
+float AABB::halfZExtent() const noexcept
+{
+	return zExtent() / 2.0f;
 }
 
 void AABB::min(const vec3f& newMin) noexcept

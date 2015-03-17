@@ -4,19 +4,6 @@
 
 namespace sfz {
 
-// Anonymous functions
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-namespace {
-
-bool approxEqual(float lhs, float rhs) noexcept
-{
-	static const float EPSILON = 0.001f;
-	return lhs <= rhs + EPSILON && lhs >= rhs - EPSILON;
-}
-
-} // anonymous namespace
-
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -61,6 +48,55 @@ OBB::OBB(const AABB& aabb) noexcept
 
 // Public member functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+std::array<vec3f,8> OBB::corners() const noexcept
+{
+	std::array<vec3f,8> result;
+	this->corners(&result[0]);
+	return result;
+}
+
+void OBB::corners(vec3f* arrayOut) const noexcept
+{
+	vec3f halfXExtVec = mAxes[0]*mHalfExtents[0];
+	vec3f halfYExtVec = mAxes[1]*mHalfExtents[1];
+	vec3f halfZExtVec = mAxes[2]*mHalfExtents[2];
+	arrayOut[0] = mCenter - halfXExtVec - halfYExtVec - halfZExtVec; // Back-bottom-left
+	arrayOut[1] = mCenter - halfXExtVec - halfYExtVec + halfZExtVec; // Front-bottom-left
+	arrayOut[2] = mCenter - halfXExtVec + halfYExtVec - halfZExtVec; // Back-top-left
+	arrayOut[3] = mCenter - halfXExtVec + halfYExtVec + halfZExtVec; // Front-top-left
+	arrayOut[4] = mCenter + halfXExtVec - halfYExtVec - halfZExtVec; // Back-bottom-right
+	arrayOut[5] = mCenter + halfXExtVec - halfYExtVec + halfZExtVec; // Front-bottom-right
+	arrayOut[6] = mCenter + halfXExtVec + halfYExtVec - halfZExtVec; // Back-top-right
+	arrayOut[7] = mCenter + halfXExtVec + halfYExtVec + halfZExtVec; // Front-top-right
+}
+
+vec3f OBB::closestPoint(const vec3f& point) const noexcept
+{
+	// Algorithm from Real-Time Collision Detection (Section 5.1.4)
+	const vec3f distToPoint = point - mCenter;
+	vec3f res = mCenter;
+
+	float dist;
+	for (size_t i = 0; i < 3; i++) {
+		dist = distToPoint.dot(mAxes[i]);
+		if (dist > mHalfExtents[i]) dist = mHalfExtents[i];
+		if (dist < -mHalfExtents[i]) dist = -mHalfExtents[i];
+		res += (dist * mAxes[i]);
+	}
+
+	return res;
+}
+
+OBB OBB::transformOBB(const mat4f& transform) const noexcept
+{
+	const vec3f newPos = transformPoint(transform, mCenter);
+	const vec3f newXHExt = transformDir(transform, mAxes[0] * mHalfExtents[0]);
+	const vec3f newYHExt = transformDir(transform, mAxes[1] * mHalfExtents[1]);
+	const vec3f newZHExt = transformDir(transform, mAxes[2] * mHalfExtents[2]);
+	return OBB{newPos, newXHExt.normalize(), newYHExt.normalize(), newZHExt.normalize(),
+	           newXHExt.norm(), newYHExt.norm(), newZHExt.norm()};
+}
 
 size_t OBB::hash() const noexcept
 {
