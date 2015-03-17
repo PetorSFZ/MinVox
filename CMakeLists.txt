@@ -55,13 +55,23 @@ include_directories(
 	${OPENGL_INCLUDE_DIR}
 )
 
-# Main executable
-add_executable(
-	MinVox
-
+# Source files
+set(SOURCE_BASE_FILES
 	${SRC_DIR}/Main.cpp
+	${SRC_DIR}/IO.hpp
+	${SRC_DIR}/Model.hpp
+	${SRC_DIR}/Rendering.hpp
+	${SRC_DIR}/Screens.hpp)
+source_group(vox FILES ${SOURCE_BASE_FILES})
 
-	${SRC_DIR}/VoxModel.hpp
+set(SOURCE_IO_FILES
+	${SRC_DIR}/io/ChunkIO.hpp
+	${SRC_DIR}/io/ChunkIO.cpp
+	${SRC_DIR}/io/IOUtils.hpp
+	${SRC_DIR}/io/IOUtils.cpp)
+source_group(vox_io FILES ${SOURCE_IO_FILES})
+
+set(SOURCE_MODEL_FILES
 	${SRC_DIR}/model/Chunk.hpp
 	${SRC_DIR}/model/Chunk.cpp
 	${SRC_DIR}/model/Offset.hpp
@@ -71,15 +81,10 @@ add_executable(
 	${SRC_DIR}/model/Voxel.hpp
 	${SRC_DIR}/model/Voxel.inl
 	${SRC_DIR}/model/World.hpp
-	${SRC_DIR}/model/World.cpp
+	${SRC_DIR}/model/World.cpp)
+source_group(vox_model FILES ${SOURCE_MODEL_FILES})
 
-	${SRC_DIR}/IO.hpp
-	${SRC_DIR}/io/ChunkIO.hpp
-	${SRC_DIR}/io/ChunkIO.cpp
-	${SRC_DIR}/io/IOUtils.hpp
-	${SRC_DIR}/io/IOUtils.cpp
-
-	${SRC_DIR}/Rendering.hpp
+set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/Assets.hpp
 	${SRC_DIR}/rendering/Assets.cpp
 	${SRC_DIR}/rendering/Camera.hpp
@@ -91,24 +96,55 @@ add_executable(
 	${SRC_DIR}/rendering/Shaders.hpp
 	${SRC_DIR}/rendering/Shaders.cpp
 	${SRC_DIR}/rendering/ShadowMap.hpp
-	${SRC_DIR}/rendering/ShadowMap.cpp
+	${SRC_DIR}/rendering/ShadowMap.cpp)
+source_group(vox_rendering FILES ${SOURCE_RENDERING_FILES})
 
+set(SOURCE_SCREENS_FILES
+	${SRC_DIR}/screens/Screen.hpp
+	${SRC_DIR}/screens/Screen.cpp
+	${SRC_DIR}/screens/ActionGameScreen.hpp
+	${SRC_DIR}/screens/ActionGameScreen.cpp
+	${SRC_DIR}/screens/BaseGameScreen.hpp
+	${SRC_DIR}/screens/BaseGameScreen.cpp
+	${SRC_DIR}/screens/CreationGameScreen.hpp
+	${SRC_DIR}/screens/CreationGameScreen.cpp)
+source_group(vox_screens FILES ${SOURCE_SCREENS_FILES})
+
+set(SOURCE_SFZ_FILES
 	${SRC_DIR}/sfz/SDL.hpp
+	${SRC_DIR}/sfz/GL.hpp)
+source_group(sfz FILES ${SOURCE_SFZ_FILES})
+
+set(SOURCE_SFZ_SDL_FILES
 	${SRC_DIR}/sfz/sdl/GameController.hpp
 	${SRC_DIR}/sfz/sdl/GameController.cpp
 	${SRC_DIR}/sfz/sdl/Session.hpp
 	${SRC_DIR}/sfz/sdl/Session.cpp
 	${SRC_DIR}/sfz/sdl/Window.hpp
-	${SRC_DIR}/sfz/sdl/Window.cpp
+	${SRC_DIR}/sfz/sdl/Window.cpp)
+source_group(sfz_sdl FILES ${SOURCE_SFZ_SDL_FILES})
 
-	${SRC_DIR}/sfz/GL.hpp
+set(SOURCE_SFZ_GL_FILES
 	${SRC_DIR}/sfz/gl/Context.hpp
 	${SRC_DIR}/sfz/gl/Context.cpp
 	${SRC_DIR}/sfz/gl/Texture.hpp
 	${SRC_DIR}/sfz/gl/Texture.cpp
 	${SRC_DIR}/sfz/gl/Utils.hpp
-	${SRC_DIR}/sfz/gl/Utils.cpp
-)
+	${SRC_DIR}/sfz/gl/Utils.cpp)
+source_group(sfz_gl FILES ${SOURCE_SFZ_GL_FILES})
+
+set(SOURCE_ALL_FILES
+	${SOURCE_BASE_FILES}
+	${SOURCE_IO_FILES}
+	${SOURCE_MODEL_FILES}
+	${SOURCE_RENDERING_FILES}
+	${SOURCE_SCREENS_FILES}
+	${SOURCE_SFZ_FILES}
+	${SOURCE_SFZ_SDL_FILES}
+	${SOURCE_SFZ_GL_FILES})
+
+# Main executable
+add_executable(MinVox ${SOURCE_ALL_FILES})
 
 # Linking libraries to main executable
 target_link_libraries(

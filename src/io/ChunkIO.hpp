@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cstdio>
 
-#include "VoxModel.hpp"
+#include "Model.hpp"
 #include "io/IOUtils.hpp"
 
 namespace vox {

@@ -6,7 +6,7 @@
 #include <sfz/Assert.hpp>
 #include <sfz/Math.hpp>
 
-#include "VoxModel.hpp"
+#include "Model.hpp"
 #include "Rendering.hpp"
 
 // Structs that really shouldn't be here.

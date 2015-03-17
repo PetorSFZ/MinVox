@@ -1,6 +1,6 @@
 #pragma once
-#ifndef VOX_VOXMODEL_HPP
-#define VOX_VOXMODEL_HPP
+#ifndef VOX_MODEL_HPP
+#define VOX_MODEL_HPP
 
 #include "model/Chunk.hpp"
 #include "model/Offset.hpp"
