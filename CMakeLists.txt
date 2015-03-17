@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project("MinVox")
+
+# Project name
+project("SkipIfZero Common")
 
 # Sets build type to release if no build type is specified in a single-configuration generator.
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -22,127 +24,85 @@ else()
 endif()
 
 # Directories
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(INCLUDE_DIR ${SRC_DIR}) # Same as source dir since not a library
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals)
-set(CMAKE_MODULES ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-# Adds our cmake modules to module path.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_MODULES})
-
-# SkipIfZero Common
-add_subdirectory(${EXTERNALS_DIR}/SkipIfZeroCommon)
-
-# Finds SDL2 and SDL2_image, will make use of $SDL2 environment variable on Windows.
-find_package(SDL2 REQUIRED) # ${SDL2_INCLUDE_DIR}, ${SDL2_LIBRARY}
-find_package(SDL2_image REQUIRED) # ${SDL2_IMAGE_INCLUDE_DIR}, ${SDL2_IMAGE_LIBRARY}
-
-# GLEW
-# find_package(GLEW REQUIRED) # ${GLEW_INCLUDE_DIRS}, ${GLEW_LIBRARIES}
-add_definitions(-DGLEW_STATIC)
-add_subdirectory(${EXTERNALS_DIR}/glew)
-
-# Links OpenGL
-find_package(OpenGL REQUIRED) # ${OPENGL_INCLUDE_DIR}, ${OPENGL_LIBRARIES}
+# Subdirectories (libraries)
+add_subdirectory(${EXTERNALS_DIR}/catch)
 
 # Include directories
-include_directories(
-	${INCLUDE_DIR}
-	${SFZ_COMMON_INCLUDE_DIRS}
-	${SDL2_INCLUDE_DIR}
-	${SDL2_IMAGE_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIRS}
-	${OPENGL_INCLUDE_DIR}
-)
+include_directories(${INCLUDE_DIR})
+include_directories(${CATCH_INCLUDE_DIRS})
 
-# Main executable
-add_executable(
-	MinVox
+# Sources and headers needed to compile library
+set(SOURCE_INCLUDE_FILES
+	${INCLUDE_DIR}/sfz/MSVC12HackON.hpp
+	${INCLUDE_DIR}/sfz/MSVC12HackOFF.hpp
+	${INCLUDE_DIR}/sfz/Assert.hpp
+	${INCLUDE_DIR}/sfz/Assert.inl
 
-	${SRC_DIR}/Main.cpp
+	${INCLUDE_DIR}/sfz/Geometry.hpp
+	${INCLUDE_DIR}/sfz/geometry/AABB.hpp
+	 ${SOURCE_DIR}/sfz/geometry/AABB.cpp
+	${INCLUDE_DIR}/sfz/geometry/Intersection.hpp
+	 ${SOURCE_DIR}/sfz/geometry/Intersection.cpp
+	${INCLUDE_DIR}/sfz/geometry/OBB.hpp
+	 ${SOURCE_DIR}/sfz/geometry/OBB.cpp
+	${INCLUDE_DIR}/sfz/geometry/Plane.hpp
+	 ${SOURCE_DIR}/sfz/geometry/Plane.cpp
+	${INCLUDE_DIR}/sfz/geometry/Sphere.hpp
+	 ${SOURCE_DIR}/sfz/geometry/Sphere.cpp
 
-	${SRC_DIR}/VoxModel.hpp
-	${SRC_DIR}/model/Chunk.hpp
-	${SRC_DIR}/model/Chunk.cpp
-	${SRC_DIR}/model/ChunkOffset.hpp
-	${SRC_DIR}/model/TerrainGeneration.hpp
-	${SRC_DIR}/model/TerrainGeneration.inl
-	${SRC_DIR}/model/Voxel.hpp
-	${SRC_DIR}/model/Voxel.inl
-	${SRC_DIR}/model/World.hpp
-	${SRC_DIR}/model/World.cpp
+	${INCLUDE_DIR}/sfz/Math.hpp
+	${INCLUDE_DIR}/sfz/math/MathConstants.hpp
+	${INCLUDE_DIR}/sfz/math/MathHelpers.hpp
+	${INCLUDE_DIR}/sfz/math/MathHelpers.inl
+	${INCLUDE_DIR}/sfz/math/Matrix.hpp
+	${INCLUDE_DIR}/sfz/math/Matrix.inl
+	${INCLUDE_DIR}/sfz/math/MatrixSupport.hpp
+	${INCLUDE_DIR}/sfz/math/MatrixSupport.inl
+	${INCLUDE_DIR}/sfz/math/Vector.hpp
+	${INCLUDE_DIR}/sfz/math/Vector.inl
+	${INCLUDE_DIR}/sfz/math/VectorSupport.hpp
+	${INCLUDE_DIR}/sfz/math/VectorSupport.inl
 
-	${SRC_DIR}/IO.hpp
-	${SRC_DIR}/io/ChunkIO.hpp
-	${SRC_DIR}/io/ChunkIO.cpp
-	${SRC_DIR}/io/IOUtils.hpp
-	${SRC_DIR}/io/IOUtils.cpp
+	${INCLUDE_DIR}/sfz/Util.hpp
+	${INCLUDE_DIR}/sfz/util/BlockingQueue.hpp
+	${INCLUDE_DIR}/sfz/util/BlockingQueue.inl
+	${INCLUDE_DIR}/sfz/util/ScopedThread.hpp
+	 ${SOURCE_DIR}/sfz/util/ScopedThread.cpp
+	${INCLUDE_DIR}/sfz/util/StopWatch.hpp
+	 ${SOURCE_DIR}/sfz/util/StopWatch.cpp)
 
-	${SRC_DIR}/Rendering.hpp
-	${SRC_DIR}/rendering/Assets.hpp
-	${SRC_DIR}/rendering/Assets.cpp
-	${SRC_DIR}/rendering/Camera.hpp
-	${SRC_DIR}/rendering/Camera.cpp
-	${SRC_DIR}/rendering/CubeObject.hpp
-	${SRC_DIR}/rendering/CubeObject.cpp
-	${SRC_DIR}/rendering/Shaders.hpp
-	${SRC_DIR}/rendering/Shaders.cpp
+# Library compile target
+add_library(SkipIfZeroCommon ${SOURCE_INCLUDE_FILES})
 
-	${SRC_DIR}/sfz/SDL.hpp
-	${SRC_DIR}/sfz/sdl/Session.hpp
-	${SRC_DIR}/sfz/sdl/Session.cpp
-	${SRC_DIR}/sfz/sdl/Window.hpp
-	${SRC_DIR}/sfz/sdl/Window.cpp
+# Variables for linking library
+set(SFZ_COMMON_INCLUDE_DIRS ${INCLUDE_DIR} PARENT_SCOPE)
+set(SFZ_COMMON_LIBRARIES SkipIfZeroCommon PARENT_SCOPE)
 
-	${SRC_DIR}/sfz/GL.hpp
-	${SRC_DIR}/sfz/gl/Context.hpp
-	${SRC_DIR}/sfz/gl/Context.cpp
-	${SRC_DIR}/sfz/gl/Texture.hpp
-	${SRC_DIR}/sfz/gl/Texture.cpp
-	${SRC_DIR}/sfz/gl/Utils.hpp
-	${SRC_DIR}/sfz/gl/Utils.cpp
-)
+# Enables testing
+enable_testing(true)
 
-# Linking libraries to main executable
-target_link_libraries(
-	MinVox
+# Tests
+add_executable(Vector_Tests ${TEST_DIR}/sfz/math/Vector_Tests.cpp)
+set_property(TARGET Vector_Tests APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
+add_test(Vector_Tests_Name Vector_Tests)
 
-	${SFZ_COMMON_LIBRARIES}
-	${SDL2_LIBRARY}
-	${SDL2_IMAGE_LIBRARY}
-	${GLEW_LIBRARIES}
-	${OPENGL_LIBRARIES}
-)
+add_executable(Matrix_Tests ${TEST_DIR}/sfz/math/Matrix_Tests.cpp)
+set_property(TARGET Matrix_Tests APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
+add_test(Matrix_Tests_Name Matrix_Tests)
 
-# Xcode specific file copying
-if(CMAKE_GENERATOR STREQUAL Xcode)
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Debug)
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Release)
-endif()
+add_executable(MathConstants_Tests ${TEST_DIR}/sfz/math/MathConstants_Tests.cpp)
+set_property(TARGET MathConstants_Tests APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
+add_test(MathConstants_Tests_Name MathConstants_Tests)
 
-# MSVC specific file copying
-if(MSVC)
-	
-	# Assets folder
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Debug)
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Release)
+add_executable(Intersection_Tests ${TEST_DIR}/sfz/geometry/Intersection_Tests.cpp ${SOURCE_INCLUDE_FILES})
+set_property(TARGET Intersection_Tests APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
+add_test(Intersection_Tests_Name Intersection_Tests)
 
-	# Runtime DLLs
-	file(COPY RuntimeDLLs/msvc12_x64_debug/libjpeg-9.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_debug/libpng16-16.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_debug/libtiff-5.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_debug/libwebp-4.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_debug/SDL2.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_debug/SDL2_image.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_debug/zlib1.dll DESTINATION ${CMAKE_BINARY_DIR})
-
-	file(COPY RuntimeDLLs/msvc12_x64_release/libjpeg-9.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_release/libpng16-16.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_release/libtiff-5.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_release/libwebp-4.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_release/SDL2.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_release/SDL2_image.dll DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY RuntimeDLLs/msvc12_x64_release/zlib1.dll DESTINATION ${CMAKE_BINARY_DIR})
-
-endif()
+add_executable(BlockingQueue_Tests ${TEST_DIR}/sfz/util/BlockingQueue_Tests.cpp)
+set_property(TARGET BlockingQueue_Tests APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
+add_test(BlockingQueue_Tests_Name BlockingQueue_Tests)
