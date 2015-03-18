@@ -100,8 +100,7 @@ set(SOURCE_RENDERING_FILES
 source_group(vox_rendering FILES ${SOURCE_RENDERING_FILES})
 
 set(SOURCE_SCREENS_FILES
-	${SRC_DIR}/screens/Screen.hpp
-	${SRC_DIR}/screens/Screen.cpp
+	${SRC_DIR}/screens/IScreen.hpp
 	${SRC_DIR}/screens/ActionGameScreen.hpp
 	${SRC_DIR}/screens/ActionGameScreen.cpp
 	${SRC_DIR}/screens/BaseGameScreen.hpp
