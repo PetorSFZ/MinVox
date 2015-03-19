@@ -75,7 +75,7 @@ const Offset World::chunkOffset(const Chunk* chunkPtr) const
 	return Offset{0,0,0};
 }
 
-const Chunk* World::chunkPtr(size_t index)
+const Chunk* World::chunkPtr(size_t index) const
 {
 	sfz_assert_debug(index < mNumElements);
 	return &mChunks[index];

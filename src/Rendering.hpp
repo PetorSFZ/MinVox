@@ -5,6 +5,7 @@
 #include "rendering/Assets.hpp"
 #include "rendering/Camera.hpp"
 #include "rendering/CubeObject.hpp"
+#include "rendering/Framebuffer.hpp"
 #include "rendering/FullscreenQuadObject.hpp"
 #include "rendering/Shaders.hpp"
 #include "rendering/ShadowMap.hpp"

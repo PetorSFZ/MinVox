@@ -39,8 +39,8 @@ public:
 	const Chunk* chunkPtr(const Offset& offset) const;
 	const Offset chunkOffset(const Chunk* chunkPtr) const;
 
-	const Chunk* chunkPtr(size_t index);
-	inline size_t numChunks() { return mNumElements; }
+	const Chunk* chunkPtr(size_t index) const;
+	inline size_t numChunks() const { return mNumElements; }
 
 	vec3f positionFromChunkOffset(const Offset& offset) const;
 	Offset chunkOffsetFromPosition(const vec3f& position) const;
