@@ -7,25 +7,25 @@ namespace vox {
 
 namespace {
 
-sfz::vec3f sphericalToCartesian(float r, float theta, float phi)
+vec3f sphericalToCartesian(float r, float theta, float phi)
 {
 	using std::sinf;
 	using std::cosf;
-	return sfz::vec3f{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
+	return vec3f{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
 }
 
-sfz::vec3f sphericalToCartesian(const sfz::vec3f& spherical)
+vec3f sphericalToCartesian(const vec3f& spherical)
 {
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
 void drawWorld(const World& world, const Assets& assets, GLuint shader)
 {
-	static vox::CubeObject cubeObj;
-	const vox::Chunk* chunkPtr;
-	vox::Offset offset;
-	sfz::vec3f offsetVec;
-	sfz::mat4f transform = sfz::identityMatrix4<float>();
+	static CubeObject cubeObj;
+	const Chunk* chunkPtr;
+	Offset offset;
+	vec3f offsetVec;
+	mat4f transform = sfz::identityMatrix4<float>();
 	bool fullChunk;
 
 	for (size_t i = 0; i < world.numChunks(); i++) {
@@ -90,7 +90,8 @@ void drawLight(const vox::Assets& assets, GLuint shader, const vec3f& lightPos)
 BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName)
 :
 	mWorld{worldName},
-	mCam{},
+	mCam{vec3f{-3.0f, 1.2f, 0.2f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f}, 75.0f,
+	     (float)window.width()/(float)window.height(), 0.5f, 1000.0f},
 
 	mWindow{window},
 	mAssets{},
@@ -103,10 +104,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()}
 {
-
-	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
-	projMatrix = sfz::glPerspectiveProjectionMatrix(mCam.mFov, aspect, 0.5f, 1000.0f);
-
 	lightPosSpherical = vec3f{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	lightTarget = vec3f{16.0f, 0.0f, 16.0f};
 	lightColor = vec3f{1.0f, 1.0f, 1.0f};
@@ -136,7 +133,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case SDL_WINDOWEVENT_RESIZED:
 				float w = static_cast<float>(event.window.data1);
 				float h = static_cast<float>(event.window.data2);
-				projMatrix = sfz::glPerspectiveProjectionMatrix(mCam.mFov, w/h, 0.5f, 1000.0f);
+				mCam.mAspectRatio = w/h;
 				reloadFramebuffers(event.window.data1, event.window.data2);
 				break;
 			}
@@ -263,7 +260,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 		                                                (sfz::g_PI_FLOAT*2.0f));
 	}
 
-	mCam.update();
+	mCam.updateMatrices();
 	mWorld.update(mCam.mPos);
 }
 
@@ -324,13 +321,13 @@ void BaseGameScreen::render(float delta)
 
 	// Set view and projection matrix uniforms
 	gl::setUniform(mShaderProgram, "viewMatrix", mCam.mViewMatrix);
-	gl::setUniform(mShaderProgram, "projectionMatrix", projMatrix);
+	gl::setUniform(mShaderProgram, "projectionMatrix", mCam.mProjMatrix);
 
 	// Calculate and set lightMatrix
-	sfz::mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
-	                       * sfz::scalingMatrix4(0.5f)
-	                       * lightProjMatrix
-	                       * lightViewMatrix; // * inverse(viewMatrix), done in vertex shader.
+	mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
+	                  * sfz::scalingMatrix4(0.5f)
+	                  * lightProjMatrix
+	                  * lightViewMatrix; // * inverse(viewMatrix), done in vertex shader.
 	
 	gl::setUniform(mShaderProgram, "lightMatrix", lightMatrix);
 

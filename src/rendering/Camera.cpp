@@ -1,25 +1,36 @@
 #include "rendering/Camera.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Camera::Camera()
+Camera::Camera(const vec3f& position, const vec3f& direction, const vec3f& upVector,
+               float verticalFov, float aspectRatio, float near, float far) noexcept
+:
+	mPos{position},
+	mDir{direction},
+	mUp{upVector},
+	mVerticalFov{verticalFov},
+	mAspectRatio{aspectRatio},
+	mNear{near},
+	mFar{far}
 {
-	mPos = sfz::vec3f{-3.0f, 1.2f, 0.2f};
-	mDir = sfz::vec3f{1.0f, -0.1f, 0.0f}.normalize();
-	mUp = sfz::vec3f{0, 1, 0};
-	mFov = 75;
-	mViewMatrix = sfz::lookAt(mPos, mPos + mDir, mUp);
+	updateMatrices();
 }
+
 
 // Public functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void Camera::update()
+void Camera::updateMatrices() noexcept
 {
 	mViewMatrix = sfz::lookAt(mPos, mPos + mDir, mUp);
+	mProjMatrix = sfz::glPerspectiveProjectionMatrix(mVerticalFov, mAspectRatio, mNear, mFar);
 }
 
 } // namespace vox
+
+#include <sfz/MSVC12HackOFF.hpp>

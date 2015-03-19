@@ -4,19 +4,34 @@
 
 #include <sfz/Math.hpp>
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
+using sfz::vec3f;
+using sfz::mat4f;
+
 struct Camera final {
+	// Public members
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	sfz::vec3f mPos, mDir, mUp;
-	float mFov;
-	sfz::mat4f mViewMatrix;
+	vec3f mPos, mDir, mUp;
+	float mVerticalFov, mAspectRatio, mNear, mFar;
+	mat4f mViewMatrix, mProjMatrix;
 
-	Camera();
+	// Constructors & destructors
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void update();
+	Camera(const vec3f& position, const vec3f& direction, const vec3f& upVector,
+	       float verticalFov, float aspectRatio, float near, float far) noexcept;
+
+	// Public methods
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	void updateMatrices() noexcept;
 };
 
 } // namespace vox
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif

@@ -13,6 +13,9 @@
 
 namespace vox {
 
+using sfz::vec3f;
+using sfz::mat4f;
+
 class BaseGameScreen : public IScreen {
 public:
 	// Constructors & destructors
@@ -58,10 +61,9 @@ protected:
 	ShadowMap mShadowMap;
 	FullscreenQuadObject mFullscreenQuad;
 
-	sfz::mat4f projMatrix;
-	sfz::vec3f lightPosSpherical;
-	sfz::vec3f lightTarget;
-	sfz::vec3f lightColor;
+	vec3f lightPosSpherical;
+	vec3f lightTarget;
+	vec3f lightColor;
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;
