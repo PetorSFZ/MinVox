@@ -6,7 +6,7 @@
 
 namespace vox {
 
-class CreationGameScreen final : BaseGameScreen {
+class CreationGameScreen final : BaseGameScreen {
 public:
 
 };

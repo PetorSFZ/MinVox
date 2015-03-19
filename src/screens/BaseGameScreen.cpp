@@ -105,6 +105,10 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	float aspect = static_cast<float>(window.width()) / static_cast<float>(window.height());
 	projMatrix = sfz::glPerspectiveProjectionMatrix(mCam.mFov, aspect, 0.5f, 1000.0f);
+
+	lightPosSpherical = vec3f{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
+	lightTarget = vec3f{16.0f, 0.0f, 16.0f};
+	lightColor = vec3f{1.0f, 1.0f, 1.0f};
 }
 
 /*BaseGameScreen::BaseGameScreen(const BaseGameScreen& baseGameScreen)

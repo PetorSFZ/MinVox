@@ -57,9 +57,9 @@ protected:
 	Framebuffer mPostProcessedFramebuffer;
 
 	sfz::mat4f projMatrix;
-	sfz::vec3f lightPosSpherical{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
-	sfz::vec3f lightTarget{16.0f, 0.0f, 16.0f};
-	sfz::vec3f lightColor{1.0f, 1.0f, 1.0f};
+	sfz::vec3f lightPosSpherical;
+	sfz::vec3f lightTarget;
+	sfz::vec3f lightColor;
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;
