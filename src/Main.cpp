@@ -82,15 +82,18 @@ void addControllers()
 	          << SDL_GameControllerName(controllerPtrs[currentController]) << std::endl;
 }
 
-void updateControllers(const std::vector<SDL_Event>& events)
+void pollEventsUpdateControllers(std::vector<SDL_Event>& events)
 {
+	events.clear();
+
 	// Starts updating controller structs
 	for (size_t i = 0; i < 4; i++) {
 		if (controllerPtrs[i] == NULL) break;
 		sdl::updateStart(controllers[i]);
 	}
 
-	for (auto& event : events) {
+	SDL_Event event;
+	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
 		case SDL_CONTROLLERDEVICEADDED:
 		case SDL_CONTROLLERDEVICEREMOVED:
@@ -106,6 +109,8 @@ void updateControllers(const std::vector<SDL_Event>& events)
 			if (event.caxis.which >= 4) break;
 			sdl::updateProcessEvent(controllers[event.caxis.which], event);
 			break;
+		default:
+			events.push_back(event); // Add to event list if it's not a controller event.
 		}
 	}
 
@@ -115,7 +120,6 @@ void updateControllers(const std::vector<SDL_Event>& events)
 		sdl::updateFinish(controllers[i]);
 	}
 }
-
 
 // Main
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -150,9 +154,7 @@ int main()
 
 	addControllers();
 
-	SDL_Event event;
 	std::vector<SDL_Event> events{32};
-
 	std::unique_ptr<vox::IScreen> currentScreen;
 	currentScreen = std::unique_ptr<vox::IScreen>{new vox::BaseGameScreen{window, "test"}};
 
@@ -161,9 +163,7 @@ int main()
 
 	while (running) {
 		delta = calculateDelta();
-		events.clear();
-		while (SDL_PollEvent(&event) != 0) events.push_back(event);
-		updateControllers(events);
+		pollEventsUpdateControllers(events);
 
 		currentScreen->update(events, controllers[currentController], delta);
 		auto newScreen = currentScreen->changeScreen();
