@@ -53,8 +53,8 @@ struct GameController final {
 	/** Range (norm of vector): (middle) [0.0f, 1.0f] (fully-pressed) */
 	sfz::vec2f mRightStick;
 
-	float mLeftStickDeadzone = 0.05f;
-	float mRightStickDeadzone = 0.05f;
+	float mLeftStickDeadzone = 0.15f;
+	float mRightStickDeadzone = 0.15f;
 
 	/** Range: (not-pressed) [0.0f, 1.0f] (fully-pressed) */
 	float mLeftTrigger;
