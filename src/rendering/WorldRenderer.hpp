@@ -42,8 +42,7 @@ private:
 	const World& mWorld;
 	const Assets& mAssets;
 
-	CubeObject cubeObj;
-
+	CubeObject mCubeObj;
 };
 
 } // namespace vox

@@ -68,7 +68,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 					gl::setUniform(shaderProgram, "modelMatrix", transform);
 
 					glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
-					cubeObj.render();
+					mCubeObj.render();
 				}
 			}
 		}

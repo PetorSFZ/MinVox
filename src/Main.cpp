@@ -156,7 +156,7 @@ int main()
 
 	std::vector<SDL_Event> events{32};
 	std::unique_ptr<vox::IScreen> currentScreen;
-	currentScreen = std::unique_ptr<vox::IScreen>{new vox::BaseGameScreen{window, "test"}};
+	currentScreen = std::unique_ptr<vox::IScreen>{new vox::CreationGameScreen{window, "test"}};
 
 	bool running = true;
 	float delta = calculateDelta();

@@ -42,6 +42,9 @@ protected:
 	// Protected methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	virtual void updateSpecific(const std::vector<SDL_Event>& events,
+	                            const sdl::GameController& ctrl, float delta) = 0;
+
 	void quitApplication();
 
 	void changeScreen(IScreen* newScreen);
