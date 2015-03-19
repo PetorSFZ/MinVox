@@ -230,13 +230,13 @@ GLuint compilePostProcessShaderProgram()
 			                          vec3(-0.47761092, 0.2847911, -0.0271716) );
 
 
-			if (textureCoord.x > 600 && textureCoord.y > 600) {
+			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
 				fragmentColor = vec4(vec3(linearDepth), 1.0);
 			} else if (textureCoord.x > 600 && textureCoord.y < 600) {
 				fragmentColor = vec4(normal, 1.0);
-			} else {
+			} else {*/
 				fragmentColor = color;
-			}
+			//}
 		}
 	)");
 
