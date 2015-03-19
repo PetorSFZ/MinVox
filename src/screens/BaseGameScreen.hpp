@@ -55,6 +55,8 @@ protected:
 	GLuint mShaderProgram, mShadowMapShaderProgram, mPostProcessShaderProgram;
 	BigFramebuffer mBaseFramebuffer;
 	Framebuffer mPostProcessedFramebuffer;
+	ShadowMap mShadowMap;
+	FullscreenQuadObject mFullscreenQuad;
 
 	sfz::mat4f projMatrix;
 	sfz::vec3f lightPosSpherical;

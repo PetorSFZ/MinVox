@@ -98,6 +98,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mShaderProgram{vox::compileStandardShaderProgram()},
 	mShadowMapShaderProgram{vox::compileShadowMapShaderProgram()},
 	mPostProcessShaderProgram{vox::compilePostProcessShaderProgram()},
+	mShadowMap{4096, vox::ShadowMapRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}},
 	
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()}
@@ -268,8 +269,6 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 
 void BaseGameScreen::render(float delta)
 {
-	static vox::ShadowMap shadowMap{4096, vox::ShadowMapRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}};
-
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -285,8 +284,8 @@ void BaseGameScreen::render(float delta)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mShadowMapShaderProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowMap.mFBO);
-	glViewport(0, 0, shadowMap.mResolution, shadowMap.mResolution);
+	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
+	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
 
 	// Light position and matrices
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
@@ -342,7 +341,7 @@ void BaseGameScreen::render(float delta)
 	// Set shadow map uniforms and textures
 	gl::setUniform(mShaderProgram, "shadowMap", 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, shadowMap.mDepthTexture);
+	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
 
 	// Only one texture is used when rendering SnakeTiles
 	gl::setUniform(mShaderProgram, "tex", 0);
@@ -373,8 +372,7 @@ void BaseGameScreen::render(float delta)
 	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mDepthTexture);
 	gl::setUniform(mPostProcessShaderProgram, "depthTexture", 2);
 
-	static vox::FullscreenQuadObject fullscreenQuad;
-	fullscreenQuad.render();
+	mFullscreenQuad.render();
 
 	glUseProgram(0);
 
