@@ -19,57 +19,6 @@ vec3f sphericalToCartesian(const vec3f& spherical)
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
-void drawWorld(const World& world, const Assets& assets, GLuint shader)
-{
-	static CubeObject cubeObj;
-	const Chunk* chunkPtr;
-	Offset offset;
-	vec3f offsetVec;
-	mat4f transform = sfz::identityMatrix4<float>();
-	bool fullChunk;
-
-	for (size_t i = 0; i < world.numChunks(); i++) {
-		chunkPtr = world.chunkPtr(i);
-		if (chunkPtr == nullptr) continue;
-		//if (chunkPtr->isEmptyChunk()) continue;
-
-		offset = world.chunkOffset(chunkPtr);
-		offsetVec = world.positionFromChunkOffset(offset);
-		fullChunk = chunkPtr->isFullChunk();
-
-
-		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
-			//if (chunkPtr->isEmptyLayer(y)) continue;
-			for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
-				//if (chunkPtr->isEmptyXRow(y, z)) continue;
-				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
-
-					// Only renders outside of full chunks.
-					/*if (fullChunk && offset != world.currentChunkOffset()) {
-						const size_t max = vox::CHUNK_SIZE-1;
-						bool yMid = (y != 0 && y != max);
-						bool zMid = (z != 0 && z != max);
-						bool xMid = (x != 0 && x != max);
-
-						if (yMid && zMid && xMid) continue;
-					}*/
-
-					vox::Voxel v = chunkPtr->getVoxel(y, z, x);
-					if (v.type() == vox::VoxelType::AIR) continue;
-
-					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
-					                                                   static_cast<float>(y),
-					                                                   static_cast<float>(z)});
-					gl::setUniform(shader, "modelMatrix", transform);
-
-					glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
-					cubeObj.render();
-				}
-			}
-		}
-	}
-}
-
 void drawLight(const vox::Assets& assets, GLuint shader, const vec3f& lightPos)
 {
 	static vox::CubeObject cubeObj;
@@ -100,6 +49,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mShadowMapShaderProgram{vox::compileShadowMapShaderProgram()},
 	mPostProcessShaderProgram{vox::compilePostProcessShaderProgram()},
 	mShadowMap{4096, vox::ShadowMapRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}},
+	mWorldRenderer{mWorld, mAssets},
 	
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()}
@@ -302,7 +252,7 @@ void BaseGameScreen::render(float delta)
 	glPolygonOffset(5.0f, 25.0f);
 
 	// Draw shadow casters
-	drawWorld(mWorld, mAssets, mShadowMapShaderProgram);
+	mWorldRenderer.drawWorld(mCam, mShadowMapShaderProgram); // TODO: Should use camera from ShadowMap perspective
 
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -345,7 +295,7 @@ void BaseGameScreen::render(float delta)
 	glActiveTexture(GL_TEXTURE0);
 
 	// Drawing objects
-	drawWorld(mWorld, mAssets, mShaderProgram);
+	mWorldRenderer.drawWorld(mCam, mShaderProgram);
 	drawLight(mAssets, mShaderProgram, lightPos);
 
 	// Applying post-process effects

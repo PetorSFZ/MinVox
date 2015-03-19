@@ -60,6 +60,7 @@ protected:
 	Framebuffer mPostProcessedFramebuffer;
 	ShadowMap mShadowMap;
 	FullscreenQuadObject mFullscreenQuad;
+	WorldRenderer mWorldRenderer;
 
 	vec3f lightPosSpherical;
 	vec3f lightTarget;
