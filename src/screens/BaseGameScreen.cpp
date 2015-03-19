@@ -287,7 +287,7 @@ void BaseGameScreen::render(float delta)
 	// Light position and matrices
 	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
 	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
-	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(60.0f, 1.0f, 3.0f, 150.0f);
+	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(65.0f, 1.0f, 3.0f, 120.0f);
 	
 	gl::setUniform(mShadowMapShaderProgram, "viewMatrix", lightViewMatrix);
 	gl::setUniform(mShadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
@@ -299,7 +299,7 @@ void BaseGameScreen::render(float delta)
 
 	// Fix surface acne
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(2.0f, 20.0f);
+	glPolygonOffset(5.0f, 25.0f);
 
 	// Draw shadow casters
 	drawWorld(mWorld, mAssets, mShadowMapShaderProgram);
