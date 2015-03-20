@@ -4,6 +4,18 @@
 
 namespace vox {
 
+// Constructors & destructors
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+Chunk::Chunk() noexcept
+{
+	static_assert(sizeof(Voxel) == 1, "Voxel is padded.");
+	static_assert(sizeof(ChunkPart2) == 8, "ChunkPart2 is padded.");
+	static_assert(sizeof(ChunkPart4) == 64, "ChunkPart4 is padded.");
+	static_assert(sizeof(ChunkPart8) == 512, "ChunkPart8 is padded.");
+	static_assert(sizeof(Chunk) == 4096, "Chunk is padded.");
+}
+
 // Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

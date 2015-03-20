@@ -33,6 +33,8 @@ struct ChunkPart8 {
 struct Chunk {
 	ChunkPart8 mChunkPart8s[2][2][2];
 
+	Chunk() noexcept;
+
 	Voxel getVoxel(size_t y, size_t z, size_t x) const noexcept;
 	Voxel getVoxel(const Offset& offset) const noexcept;
 	void setVoxel(size_t y, size_t z, size_t x, Voxel voxel) noexcept;
