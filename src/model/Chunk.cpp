@@ -19,104 +19,110 @@ Chunk::Chunk() noexcept
 // Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Voxel Chunk::getVoxel(size_t y, size_t z, size_t x) const noexcept
+Voxel Chunk::getVoxel(size_t x, size_t y, size_t z) const noexcept
 {
-	sfz_assert_debug(0 <= y && y < CHUNK_SIZE);
-	sfz_assert_debug(0 <= z && z < CHUNK_SIZE);
-	sfz_assert_debug(0 <= x && x < CHUNK_SIZE);
+	sfz_assert_debug(x < CHUNK_SIZE);
+	sfz_assert_debug(y < CHUNK_SIZE);
+	sfz_assert_debug(z < CHUNK_SIZE);
 
-	size_t yi, zi, xi;
+	size_t xi, yi, zi;
 	
+	if (x < 8) xi = 0;
+	else xi = 1;
 	if (y < 8) yi = 0;
 	else yi = 1;
 	if (z < 8) zi = 0;
 	else zi = 1;
-	if (x < 8) xi = 0;
-	else xi = 1;
-	const ChunkPart8* part8 = &mChunkPart8s[yi][zi][xi];
+	const ChunkPart8* part8 = &mChunkPart8s[xi][yi][zi];
 
+	x %= 8;
 	y %= 8;
 	z %= 8;
-	x %= 8;
+	if (x < 4) xi = 0;
+	else xi = 1;
 	if (y < 4) yi = 0;
 	else yi = 1;
 	if (z < 4) zi = 0;
 	else zi = 1;
-	if (x < 4) xi = 0;
-	else xi = 1;
-	const ChunkPart4* part4 = &part8->mChunkPart4s[yi][zi][xi];
+	const ChunkPart4* part4 = &part8->mChunkPart4s[xi][yi][zi];
 
+	x %= 4;
 	y %= 4;
 	z %= 4;
-	x %= 4;
+	if (x < 2) xi = 0;
+	else xi = 1;
 	if (y < 2) yi = 0;
 	else yi = 1;
 	if (z < 2) zi = 0;
 	else zi = 1;
-	if (x < 2) xi = 0;
-	else xi = 1;
-	const ChunkPart2* part2 = &part4->mChunkPart2s[yi][zi][xi];
+	const ChunkPart2* part2 = &part4->mChunkPart2s[xi][yi][zi];
 
+	x %= 2;
 	y %= 2;
 	z %= 2;
-	x %= 2;
 
-	return part2->mVoxel[y][z][x];
+	return part2->mVoxel[x][y][z];
 }
 
-Voxel Chunk::getVoxel(const Offset& offset) const noexcept
+Voxel Chunk::getVoxel(const vec3i& offset) const noexcept
 {
-	return getVoxel((size_t)offset.mY, (size_t)offset.mZ, (size_t)offset.mX);
+	sfz_assert_debug(0 <= offset[0]);
+	sfz_assert_debug(0 <= offset[1]);
+	sfz_assert_debug(0 <= offset[2]);
+	return getVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2]);
 }
 
-void Chunk::setVoxel(size_t y, size_t z, size_t x, Voxel voxel) noexcept
+void Chunk::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 {
-	sfz_assert_debug(0 <= y && y < CHUNK_SIZE);
-	sfz_assert_debug(0 <= z && z < CHUNK_SIZE);
-	sfz_assert_debug(0 <= x && x < CHUNK_SIZE);
+	sfz_assert_debug(x < CHUNK_SIZE);
+	sfz_assert_debug(y < CHUNK_SIZE);
+	sfz_assert_debug(z < CHUNK_SIZE);
 
-	size_t yi, zi, xi;
+	size_t xi, yi, zi;
 	
+	if (x < 8) xi = 0;
+	else xi = 1;
 	if (y < 8) yi = 0;
 	else yi = 1;
 	if (z < 8) zi = 0;
 	else zi = 1;
-	if (x < 8) xi = 0;
-	else xi = 1;
-	ChunkPart8* part8 = &mChunkPart8s[yi][zi][xi];
+	ChunkPart8* part8 = &mChunkPart8s[xi][yi][zi];
 
+	x %= 8;
 	y %= 8;
 	z %= 8;
-	x %= 8;
+	if (x < 4) xi = 0;
+	else xi = 1;
 	if (y < 4) yi = 0;
 	else yi = 1;
 	if (z < 4) zi = 0;
 	else zi = 1;
-	if (x < 4) xi = 0;
-	else xi = 1;
-	ChunkPart4* part4 = &part8->mChunkPart4s[yi][zi][xi];
+	ChunkPart4* part4 = &part8->mChunkPart4s[xi][yi][zi];
 
+	x %= 4;
 	y %= 4;
 	z %= 4;
-	x %= 4;
+	if (x < 2) xi = 0;
+	else xi = 1;
 	if (y < 2) yi = 0;
 	else yi = 1;
 	if (z < 2) zi = 0;
 	else zi = 1;
-	if (x < 2) xi = 0;
-	else xi = 1;
-	ChunkPart2* part2 = &part4->mChunkPart2s[yi][zi][xi];
+	ChunkPart2* part2 = &part4->mChunkPart2s[xi][yi][zi];
 
+	x %= 2;
 	y %= 2;
 	z %= 2;
-	x %= 2;
 
-	part2->mVoxel[y][z][x] = voxel;
+	part2->mVoxel[x][y][z] = voxel;
 }
 
-void Chunk::setVoxel(const Offset& offset, Voxel voxel) noexcept
+void Chunk::setVoxel(const vec3i& offset, Voxel voxel) noexcept
 {
-	setVoxel((size_t)offset.mY, (size_t)offset.mZ, (size_t)offset.mX, voxel);
+	sfz_assert_debug(0 <= offset[0]);
+	sfz_assert_debug(0 <= offset[1]);
+	sfz_assert_debug(0 <= offset[2]);
+	setVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2], voxel);
 }
 
 /*

@@ -1,5 +1,7 @@
 #include "model/World.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 // Anonymous functions
@@ -20,23 +22,23 @@ size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange)
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-World::World(const std::string& name)
+World::World(const std::string& name) noexcept
 :
 	mHorizontalChunkRange{1},
 	mVerticalChunkRange{1},
 	mNumElements{calculateNumChunks(mHorizontalChunkRange, mVerticalChunkRange)},
 	mChunks{new Chunk[mNumElements]},
-	mOffsets{new Offset[mNumElements]},
-	mCurrentChunkOffset{0 ,0, 0},
+	mOffsets{new vec3i[mNumElements]},
 	mName{name}
 {
+	mCurrentChunkOffset = vec3i{0,0,0};
 	size_t count = 0;
 	for(int y = -mVerticalChunkRange; y <= mVerticalChunkRange; y++) {
 		for (int z = -mHorizontalChunkRange; z <= mHorizontalChunkRange; z++) {
 			for (int x = -mHorizontalChunkRange; x <= mHorizontalChunkRange; x++) {
 
 				sfz_assert_debug(count < mNumElements);
-				mOffsets[count] = Offset{y, z, x};
+				mOffsets[count] = vec3i{x, y, z};
 				mChunks[count] = generateChunk(mOffsets[count]);
 				count++;
 			}
@@ -47,9 +49,9 @@ World::World(const std::string& name)
 // Public member functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void World::update(const vec3f& camPos)
+void World::update(const vec3f& camPos) noexcept
 {
-	Offset oldChunkOffset = mCurrentChunkOffset;
+	vec3i oldChunkOffset = mCurrentChunkOffset;
 	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
 
 	if (oldChunkOffset != mCurrentChunkOffset) {
@@ -57,7 +59,7 @@ void World::update(const vec3f& camPos)
 	}
 }
 
-const Chunk* World::chunkPtr(const Offset& offset) const
+const Chunk* World::chunkPtr(const vec3i& offset) const noexcept
 {
 	for (size_t i = 0; i < mNumElements; i++) {
 		if (mOffsets[i] == offset) return &mChunks[i];
@@ -66,32 +68,35 @@ const Chunk* World::chunkPtr(const Offset& offset) const
 	return nullptr;
 }
 
-const Offset World::chunkOffset(const Chunk* chunkPtr) const
+const vec3i World::chunkOffset(const Chunk* chunkPtr) const noexcept
 {
 	for (size_t i = 0; i < mNumElements; i++) {
 		if ((&mChunks[i]) == chunkPtr) return mOffsets[i];
 	}
 	sfz_assert_debug_m(false, "Invalid chunk pointer.");
-	return Offset{0,0,0};
+	return vec3i{0,0,0};
 }
 
-const Chunk* World::chunkPtr(size_t index) const
+const Chunk* World::chunkPtr(size_t index) const noexcept
 {
 	sfz_assert_debug(index < mNumElements);
 	return &mChunks[index];
 }
 
-vec3f World::positionFromChunkOffset(const Offset& offset) const
+vec3f World::positionFromChunkOffset(const vec3i& offset) const noexcept
 {
-	return chunkToVoxelOffset(offset, static_cast<int>(CHUNK_SIZE)).toVector();
+	vec3i voxelOffset = offset * static_cast<int>(CHUNK_SIZE);
+	return vec3f{(float)voxelOffset[0], (float)voxelOffset[1], (float)voxelOffset[2]};
 }
 
-Offset World::chunkOffsetFromPosition(const vec3f& position) const
+vec3i World::chunkOffsetFromPosition(const vec3f& position) const noexcept
 {
 	int x = static_cast<int>(position[0]);
 	int y = static_cast<int>(position[1]);
 	int z = static_cast<int>(position[2]);
-	return Offset{y, z, x};
+	return vec3i{y, z, x};
 }
 
 } // namespace vox
+
+#include <sfz/MSVC12HackOFF.hpp>

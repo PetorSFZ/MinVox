@@ -6,8 +6,9 @@
 #include <cstdint> // uint8_t
 #include <limits> //std::numeric_limits
 
+#include <sfz/Math.hpp>
+
 #include "model/Voxel.hpp"
-#include "model/Offset.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -15,6 +16,7 @@ namespace vox {
 
 using std::uint8_t;
 using std::size_t;
+using sfz::vec3i;
 
 const size_t CHUNK_SIZE = 16;
 
@@ -35,11 +37,16 @@ struct Chunk {
 
 	Chunk() noexcept;
 
-	Voxel getVoxel(size_t y, size_t z, size_t x) const noexcept;
-	Voxel getVoxel(const Offset& offset) const noexcept;
-	void setVoxel(size_t y, size_t z, size_t x, Voxel voxel) noexcept;
-	void setVoxel(const Offset& offset, Voxel voxel) noexcept;
+	Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
+	Voxel getVoxel(const vec3i& offset) const noexcept;
+	void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
+	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };
+/*
+inline Offset chunkToVoxelOffset(const Offset& offset, int chunkSize)
+{
+	return Offset{offset.mY*chunkSize, offset.mZ*chunkSize, offset.mX*chunkSize};
+}*/
 
 /*struct Chunk final {
 	using bitset_t = std::uint16_t;

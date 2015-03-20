@@ -28,7 +28,7 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 {
 	const Chunk* chunkPtr;
-	Offset offset;
+	vec3i offset;
 	vec3f offsetVec;
 	mat4f transform = sfz::identityMatrix4<float>();
 	bool fullChunk;
@@ -59,7 +59,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 						if (yMid && zMid && xMid) continue;
 					}*/
 
-					vox::Voxel v = chunkPtr->getVoxel(y, z, x);
+					vox::Voxel v = chunkPtr->getVoxel(x, y, z);
 					if (v.type() == vox::VoxelType::AIR) continue;
 
 					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),

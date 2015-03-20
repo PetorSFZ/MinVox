@@ -12,14 +12,16 @@
 
 #include "model/Voxel.hpp"
 #include "model/Chunk.hpp"
-#include "model/Offset.hpp"
 #include "io/ChunkIO.hpp"
+
+#include <sfz/MSVC12HackON.hpp>
 
 namespace vox {
 
 using std::size_t;
 using std::unique_ptr;
 using sfz::vec3f;
+using sfz::vec3i;
 
 class World final {
 public:
@@ -27,25 +29,22 @@ public:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	World() = delete;
-	World(const World&) = delete;
-	World& operator= (const World&) = delete;
-
-	World(const std::string& name);
+	World(const std::string& name) noexcept;
 
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void update(const vec3f& camPos);
-	const Chunk* chunkPtr(const Offset& offset) const;
-	const Offset chunkOffset(const Chunk* chunkPtr) const;
+	void update(const vec3f& camPos) noexcept;
+	const Chunk* chunkPtr(const vec3i& offset) const noexcept;
+	const vec3i chunkOffset(const Chunk* chunkPtr) const noexcept;
 
-	const Chunk* chunkPtr(size_t index) const;
-	inline size_t numChunks() const { return mNumElements; }
+	const Chunk* chunkPtr(size_t index) const noexcept;
+	inline size_t numChunks() const noexcept { return mNumElements; }
 
-	vec3f positionFromChunkOffset(const Offset& offset) const;
-	Offset chunkOffsetFromPosition(const vec3f& position) const;
+	vec3f positionFromChunkOffset(const vec3i& offset) const noexcept;
+	vec3i chunkOffsetFromPosition(const vec3f& position) const noexcept;
 
-	inline Offset currentChunkOffset() const { return mCurrentChunkOffset; }
+	inline vec3i currentChunkOffset() const noexcept { return mCurrentChunkOffset; }
 
 private:
 	// Private Members
@@ -55,12 +54,13 @@ private:
 	int mVerticalChunkRange;
 	size_t mNumElements;
 	unique_ptr<Chunk[]> mChunks;
-	unique_ptr<Offset[]> mOffsets;
-	Offset mCurrentChunkOffset;
+	unique_ptr<vec3i[]> mOffsets;
+	vec3i mCurrentChunkOffset;
 	
 	std::string mName;
 };
 
 } // namespace vox
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif
