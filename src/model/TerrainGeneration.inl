@@ -22,7 +22,7 @@ inline Chunk generateChunk(const Offset& offset)
 		worldOffset.mX = worldOffsetOrig.mX;
 	}
 
-	chunk.updateAllFlags();
+	//chunk.updateAllFlags();
 
 	return chunk;
 }

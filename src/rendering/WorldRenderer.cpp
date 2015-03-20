@@ -40,7 +40,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 
 		offset = mWorld.chunkOffset(chunkPtr);
 		offsetVec = mWorld.positionFromChunkOffset(offset);
-		fullChunk = chunkPtr->isFullChunk();
+		//fullChunk = chunkPtr->isFullChunk();
 
 
 		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {

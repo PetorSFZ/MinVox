@@ -9,6 +9,8 @@
 #include "model/Voxel.hpp"
 #include "model/Offset.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 using std::uint8_t;
@@ -16,7 +18,28 @@ using std::size_t;
 
 const size_t CHUNK_SIZE = 16;
 
-struct Chunk final {
+struct ChunkPart2 {
+	Voxel mVoxel[2][2][2];
+};
+
+struct ChunkPart4 {
+	ChunkPart2 mChunkPart2s[2][2][2];
+};
+
+struct ChunkPart8 {
+	ChunkPart4 mChunkPart4s[2][2][2];
+};
+
+struct Chunk {
+	ChunkPart8 mChunkPart8s[2][2][2];
+
+	Voxel getVoxel(size_t y, size_t z, size_t x) const noexcept;
+	Voxel getVoxel(const Offset& offset) const noexcept;
+	void setVoxel(size_t y, size_t z, size_t x, Voxel voxel) noexcept;
+	void setVoxel(const Offset& offset, Voxel voxel) noexcept;
+};
+
+/*struct Chunk final {
 	using bitset_t = std::uint16_t;
 
 	// Public members
@@ -69,8 +92,9 @@ struct Chunk final {
 	void setFullZRowFlag(size_t y, size_t x);
 	void clearFullZRowFlag(size_t y, size_t x);
 	bool checkFullZRowFlag(size_t y, size_t z) const;
-};
+};*/
 
 } // namespace vox
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif
