@@ -21,13 +21,13 @@ std::string filename(int yOffset, int zOffset, int xOffset, const std::string& w
 
 bool readChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::string& worldName)
 {
-	/*static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
+	static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
 	std::string filePath = filename(yOffset, zOffset, xOffset, worldName);
 	if (!exists(filePath)) return false;
 
 	std::FILE* chunkFile = fopen(filePath.c_str(), "rb");
 
-	size_t readCount = fread(chunk.mVoxels, sizeof(Voxel), VOXELS_PER_CHUNK, chunkFile);
+	size_t readCount = fread(chunk.mChunkPart8s, sizeof(Voxel), VOXELS_PER_CHUNK, chunkFile);
 	fclose(chunkFile);
 
 	if (readCount != VOXELS_PER_CHUNK) {
@@ -37,14 +37,14 @@ bool readChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::s
 	}
 
 	// Sets flags
-	chunk.updateAllFlags();
-	*/
+	//chunk.updateAllFlags();
+	
 	return true;
 }
 
 bool writeChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::string& worldName)
 {
-	/*static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
+	static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
 	std::string dirPath = directoryPath(worldName);
 	std::string filePath = filename(yOffset, zOffset, xOffset, worldName);
 
@@ -60,7 +60,7 @@ bool writeChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::
 	std::FILE* chunkFile = fopen(filePath.c_str(), "wb");
 	if (chunkFile == NULL) return false;
 
-	size_t writeCount = fwrite(chunk.mVoxels, sizeof(Voxel), VOXELS_PER_CHUNK, chunkFile);
+	size_t writeCount = fwrite(chunk.mChunkPart8s, sizeof(Voxel), VOXELS_PER_CHUNK, chunkFile);
 	fclose(chunkFile);
 
 	if (writeCount != VOXELS_PER_CHUNK) {
@@ -68,7 +68,7 @@ bool writeChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::
 		          << " voxels to file: " << filePath << std::endl;
 		return false;
 	}
-	*/
+	
 	return true;
 }
 
