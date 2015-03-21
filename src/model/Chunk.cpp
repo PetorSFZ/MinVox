@@ -4,7 +4,42 @@
 
 namespace vox {
 
-// Constructors & destructors
+// ChunkPart2: Getters & setters
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+Voxel ChunkPart2::getVoxel(size_t x, size_t y, size_t z) const noexcept
+{
+	sfz_assert_debug(x < 2);
+	sfz_assert_debug(y < 2);
+	sfz_assert_debug(z < 2);
+	return mVoxel[x][y][z];
+}
+
+Voxel ChunkPart2::getVoxel(const vec3i& offset) const noexcept
+{
+	sfz_assert_debug(0 <= offset[0]);
+	sfz_assert_debug(0 <= offset[1]);
+	sfz_assert_debug(0 <= offset[2]);
+	return getVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2]);
+}
+
+void ChunkPart2::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
+{
+	sfz_assert_debug(x < 2);
+	sfz_assert_debug(y < 2);
+	sfz_assert_debug(z < 2);
+	mVoxel[x][y][z] = voxel;
+}
+
+void ChunkPart2::setVoxel(const vec3i& offset, Voxel voxel) noexcept
+{
+	sfz_assert_debug(0 <= offset[0]);
+	sfz_assert_debug(0 <= offset[1]);
+	sfz_assert_debug(0 <= offset[2]);
+	setVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2], voxel);
+}
+
+// Chunk: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 Chunk::Chunk() noexcept
@@ -16,7 +51,7 @@ Chunk::Chunk() noexcept
 	static_assert(sizeof(Chunk) == 4096, "Chunk is padded.");
 }
 
-// Getters & setters
+// Chunk: Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 Voxel Chunk::getVoxel(size_t x, size_t y, size_t z) const noexcept
@@ -61,7 +96,7 @@ Voxel Chunk::getVoxel(size_t x, size_t y, size_t z) const noexcept
 	y %= 2;
 	z %= 2;
 
-	return part2->mVoxel[x][y][z];
+	return part2->getVoxel(x, y, z);
 }
 
 Voxel Chunk::getVoxel(const vec3i& offset) const noexcept
@@ -114,7 +149,7 @@ void Chunk::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 	y %= 2;
 	z %= 2;
 
-	part2->mVoxel[x][y][z] = voxel;
+	part2->setVoxel(x, y, z, voxel);
 }
 
 void Chunk::setVoxel(const vec3i& offset, Voxel voxel) noexcept

@@ -20,8 +20,14 @@ using sfz::vec3i;
 
 const size_t CHUNK_SIZE = 16;
 
-struct ChunkPart2 {
+class ChunkPart2 {
+private:
 	Voxel mVoxel[2][2][2];
+public:
+	Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
+	Voxel getVoxel(const vec3i& offset) const noexcept;
+	void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
+	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };
 
 struct ChunkPart4 {
