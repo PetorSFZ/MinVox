@@ -13,8 +13,8 @@ namespace vox {
 
 using std::size_t;
 
-bool readChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::string& worldName);
-bool writeChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::string& worldName);
+bool readChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::string& worldName);
+bool writeChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::string& worldName);
 
 } // namespace vox
 

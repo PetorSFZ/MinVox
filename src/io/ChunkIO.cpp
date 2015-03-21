@@ -10,19 +10,19 @@ std::string directoryPath(const std::string& worldName)
 	return std::move(directoryPath);
 }
 
-std::string filename(int yOffset, int zOffset, int xOffset, const std::string& worldName)
+std::string filename(int xOffset, int yOffset, int zOffset, const std::string& worldName)
 {
-	std::string filePath = directoryPath(worldName) + "chunk" + std::to_string(yOffset) + "y"
-	                     + std::to_string(zOffset) + "z" + std::to_string(xOffset) + "x.bin";
+	std::string filePath = directoryPath(worldName) + "chunk" + std::to_string(xOffset) + "x"
+	                     + std::to_string(yOffset) + "y" + std::to_string(zOffset) + "z.bin";
 	return std::move(filePath);
 }
 
 } // anonymous namespace
 
-bool readChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::string& worldName)
+bool readChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::string& worldName)
 {
 	static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
-	std::string filePath = filename(yOffset, zOffset, xOffset, worldName);
+	std::string filePath = filename(xOffset, yOffset, zOffset, worldName);
 	if (!exists(filePath)) return false;
 
 	std::FILE* chunkFile = fopen(filePath.c_str(), "rb");
@@ -42,11 +42,11 @@ bool readChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::s
 	return true;
 }
 
-bool writeChunk(Chunk& chunk, int yOffset, int zOffset, int xOffset, const std::string& worldName)
+bool writeChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::string& worldName)
 {
 	static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
 	std::string dirPath = directoryPath(worldName);
-	std::string filePath = filename(yOffset, zOffset, xOffset, worldName);
+	std::string filePath = filename(xOffset, yOffset, zOffset, worldName);
 
 	// Make sure directory exists
 	if (!exists(dirPath)) {

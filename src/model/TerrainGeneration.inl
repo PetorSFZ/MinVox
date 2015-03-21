@@ -35,7 +35,6 @@ inline Voxel generateVoxel(const vec3i& worldOffset) noexcept
 
 	// Ground
 	if (worldOffset[1] == 0) return Voxel{VoxelType::VANILLA, 0};
-	if (worldOffset[1] == -1) return Voxel{VoxelType::VANILLA, 0};
 
 	if (worldOffset[1] == heightFunc(worldOffset[0], worldOffset[2])) {
 		return Voxel{VoxelType::BLUE, 0};

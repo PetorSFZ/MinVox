@@ -24,22 +24,25 @@ size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange)
 
 World::World(const std::string& name) noexcept
 :
-	mHorizontalChunkRange{1},
-	mVerticalChunkRange{1},
-	mNumElements{calculateNumChunks(mHorizontalChunkRange, mVerticalChunkRange)},
-	mChunks{new Chunk[mNumElements]},
-	mOffsets{new vec3i[mNumElements]},
+	mHorizontalRange{2},
+	mVerticalRange{1},
+	mNumChunks{calculateNumChunks(mHorizontalRange, mVerticalRange)},
+	mChunks{new Chunk[mNumChunks]},
+	mOffsets{new vec3i[mNumChunks]},
+	mAvailabilities{new bool[mNumChunks]},
 	mName{name}
 {
 	mCurrentChunkOffset = vec3i{0,0,0};
 	size_t count = 0;
-	for(int y = -mVerticalChunkRange; y <= mVerticalChunkRange; y++) {
-		for (int z = -mHorizontalChunkRange; z <= mHorizontalChunkRange; z++) {
-			for (int x = -mHorizontalChunkRange; x <= mHorizontalChunkRange; x++) {
+	for(int y = -mVerticalRange; y <= mVerticalRange; y++) {
+		for (int z = -mHorizontalRange; z <= mHorizontalRange; z++) {
+			for (int x = -mHorizontalRange; x <= mHorizontalRange; x++) {
 
-				sfz_assert_debug(count < mNumElements);
+				sfz_assert_debug(count < mNumChunks);
 				mOffsets[count] = vec3i{x, y, z};
-				mChunks[count] = generateChunk(mOffsets[count]);
+				if (!readChunk(mChunks[count], x, y, z, mName)) {
+					mChunks[count] = generateChunk(mOffsets[count]);
+				}
 				count++;
 			}
 		}
@@ -55,32 +58,23 @@ void World::update(const vec3f& camPos) noexcept
 	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
 
 	if (oldChunkOffset != mCurrentChunkOffset) {
-		// TODO: Streaming should happen here.
-	}
-}
+		vec3i minOffset = mCurrentChunkOffset - vec3i{mHorizontalRange, mVerticalRange, mHorizontalRange};
+		vec3i maxOffset = mCurrentChunkOffset + vec3i{mHorizontalRange, mVerticalRange, mHorizontalRange};
 
-const Chunk* World::chunkPtr(const vec3i& offset) const noexcept
-{
-	for (size_t i = 0; i < mNumElements; i++) {
-		if (mOffsets[i] == offset) return &mChunks[i];
+		size_t count = 0; 
+		for (int x = minOffset[0]; x <= maxOffset[0]; x++) {
+			for (int y = minOffset[1]; y <= maxOffset[1]; y++) {
+				for (int z = minOffset[2]; z <= maxOffset[2]; z++) {
+					mOffsets[count] = vec3i{x, y, z};
+					if (!readChunk(mChunks[count], x, y, z, mName)) {
+						mChunks[count] = generateChunk(mOffsets[count]);
+					}
+					mAvailabilities[count] = true;
+					count++;
+				}
+			}
+		}
 	}
-	sfz_assert_debug_m(false, "Invalid chunk offset.");
-	return nullptr;
-}
-
-const vec3i World::chunkOffset(const Chunk* chunkPtr) const noexcept
-{
-	for (size_t i = 0; i < mNumElements; i++) {
-		if ((&mChunks[i]) == chunkPtr) return mOffsets[i];
-	}
-	sfz_assert_debug_m(false, "Invalid chunk pointer.");
-	return vec3i{0,0,0};
-}
-
-const Chunk* World::chunkPtr(size_t index) const noexcept
-{
-	sfz_assert_debug(index < mNumElements);
-	return &mChunks[index];
 }
 
 vec3f World::positionFromChunkOffset(const vec3i& offset) const noexcept
@@ -91,10 +85,62 @@ vec3f World::positionFromChunkOffset(const vec3i& offset) const noexcept
 
 vec3i World::chunkOffsetFromPosition(const vec3f& position) const noexcept
 {
-	int x = static_cast<int>(position[0]);
-	int y = static_cast<int>(position[1]);
-	int z = static_cast<int>(position[2]);
-	return vec3i{y, z, x};
+	int x = static_cast<int>(std::round(position[0]/(float)CHUNK_SIZE));
+	int y = static_cast<int>(std::round(position[1])/(float)CHUNK_SIZE);
+	int z = static_cast<int>(std::round(position[2])/(float)CHUNK_SIZE);
+	return vec3i{x, y, z};
+}
+
+// Getters / setters
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+const Chunk* World::chunkPtr(size_t index) const noexcept
+{
+	sfz_assert_debug(index < mNumChunks);
+	return &mChunks[index];
+}
+
+const Chunk* World::chunkPtr(const vec3i& offset) const noexcept
+{
+	for (size_t i = 0; i < mNumChunks; i++) {
+		if (mOffsets[i] == offset) return &mChunks[i];
+	}
+	sfz_assert_debug_m(false, "Invalid chunk offset.");
+	return nullptr;
+}
+
+
+const vec3i World::chunkOffset(size_t index) const noexcept
+{
+	sfz_assert_debug(index < mNumChunks);
+	return mOffsets[index];
+}
+
+const vec3i World::chunkOffset(const Chunk* chunkPtr) const noexcept
+{
+	sfz_assert_debug(&mChunks[0] <= chunkPtr && chunkPtr <= &mChunks[mNumChunks-1]);
+	return mOffsets[chunkPtr - (&mChunks[0])];
+}
+
+
+bool World::chunkAvailable(size_t index) const noexcept
+{
+	sfz_assert_debug(index < mNumChunks);
+	return mAvailabilities[index];
+}
+
+bool World::chunkAvailable(const Chunk* chunkPtr) const noexcept
+{
+	sfz_assert_debug(&mChunks[0] <= chunkPtr && chunkPtr <= &mChunks[mNumChunks-1]);
+	return mAvailabilities[chunkPtr - (&mChunks[0])];
+}
+
+bool World::chunkAvailable(const vec3i& offset) const noexcept
+{
+	for (size_t i = 0; i < mNumChunks; i++) {
+		if (mOffsets[i] == offset) return mAvailabilities[i];
+	}
+	return false;
 }
 
 } // namespace vox

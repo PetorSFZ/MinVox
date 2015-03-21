@@ -33,7 +33,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 	mat4f transform = sfz::identityMatrix4<float>();
 	bool fullChunk;
 
-	for (size_t i = 0; i < mWorld.numChunks(); i++) {
+	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		chunkPtr = mWorld.chunkPtr(i);
 		if (chunkPtr == nullptr) continue;
 		//if (chunkPtr->isEmptyChunk()) continue;

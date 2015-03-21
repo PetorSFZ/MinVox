@@ -25,39 +25,51 @@ using sfz::vec3i;
 
 class World final {
 public:
+	// Public members
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	const int mHorizontalRange;
+	const int mVerticalRange;
+	const size_t mNumChunks;
+	const std::string mName;
+
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	World() = delete;
 	World(const std::string& name) noexcept;
 
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void update(const vec3f& camPos) noexcept;
-	const Chunk* chunkPtr(const vec3i& offset) const noexcept;
-	const vec3i chunkOffset(const Chunk* chunkPtr) const noexcept;
-
-	const Chunk* chunkPtr(size_t index) const noexcept;
-	inline size_t numChunks() const noexcept { return mNumElements; }
 
 	vec3f positionFromChunkOffset(const vec3i& offset) const noexcept;
+
 	vec3i chunkOffsetFromPosition(const vec3f& position) const noexcept;
 
+	// Getters / setters
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	
 	inline vec3i currentChunkOffset() const noexcept { return mCurrentChunkOffset; }
+
+	const Chunk* chunkPtr(size_t index) const noexcept;
+	const Chunk* chunkPtr(const vec3i& offset) const noexcept;
+
+	const vec3i chunkOffset(size_t index) const noexcept;
+	const vec3i chunkOffset(const Chunk* chunkPtr) const noexcept;
+
+	bool chunkAvailable(size_t index) const noexcept;
+	bool chunkAvailable(const Chunk* chunkPtr) const noexcept;
+	bool chunkAvailable(const vec3i& offset) const noexcept;
 
 private:
 	// Private Members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	int mHorizontalChunkRange;
-	int mVerticalChunkRange;
-	size_t mNumElements;
+	vec3i mCurrentChunkOffset;
 	unique_ptr<Chunk[]> mChunks;
 	unique_ptr<vec3i[]> mOffsets;
-	vec3i mCurrentChunkOffset;
-	
-	std::string mName;
+	unique_ptr<bool[]> mAvailabilities;
 };
 
 } // namespace vox
