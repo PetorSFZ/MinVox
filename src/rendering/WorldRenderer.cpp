@@ -9,6 +9,11 @@ namespace vox {
 
 namespace {
 
+vec3f offsetToVector(const vec3i& offset) noexcept
+{
+	return vec3f{(float)offset[0], (float)offset[1], (float)offset[2]};
+}
+
 } // anonymous namespace
 
 // Constructors & destructors
@@ -32,8 +37,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
-		vec3i chunkOffsetInt = mWorld.chunkOffset(i)*(int)CHUNK_SIZE;
-		vec3f chunkOffset{(float)chunkOffsetInt[0], (float)chunkOffsetInt[1], (float)chunkOffsetInt[2]};
+		vec3f chunkOffset = offsetToVector(mWorld.chunkOffset(i)*(int)CHUNK_SIZE);
 
 		vec3i part8Itr = chunkPartIterateBegin();
 		while (part8Itr != chunkPartIterateEnd()) {
@@ -48,17 +52,23 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 					while (voxelItr != chunkPartIterateEnd()) {
 						
 						Voxel v = chunkPart2->getVoxel(voxelItr);
-						voxelItr = chunkPartIterateNext(voxelItr);
 
-						if (v.type() == vox::VoxelType::AIR) continue;
-						vec3i voxelOffsetInt = part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr;
-						vec3f voxelOffset{(float)voxelOffsetInt[0], (float)voxelOffsetInt[1], (float)voxelOffsetInt[2]};
+
+						if (v.type() == vox::VoxelType::AIR) {
+							voxelItr = chunkPartIterateNext(voxelItr);
+							continue;
+						}
+						vec3f voxelOffset = offsetToVector(part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr);
 
 						sfz::translation(transform, chunkOffset + voxelOffset);
 						gl::setUniform(shaderProgram, "modelMatrix", transform);
 
 						glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
 						mCubeObj.render();
+
+
+						voxelItr = chunkPartIterateNext(voxelItr);
+
 
 					}
 					part2Itr = chunkPartIterateNext(part2Itr);
