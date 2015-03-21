@@ -32,7 +32,8 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
-		vec3f chunkOffset = vec3f{mWorld.chunkOffset(i)*(int)CHUNK_SIZE};
+		vec3i chunkOffsetInt = mWorld.chunkOffset(i)*(int)CHUNK_SIZE;
+		vec3f chunkOffset{(float)chunkOffsetInt[0], (float)chunkOffsetInt[1], (float)chunkOffsetInt[2]};
 
 		vec3i part8Itr = chunkPartIterateBegin();
 		while (part8Itr != chunkPartIterateEnd()) {
@@ -50,7 +51,9 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 						voxelItr = chunkPartIterateNext(voxelItr);
 
 						if (v.type() == vox::VoxelType::AIR) continue;
-						vec3f voxelOffset = vec3f{part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr};
+						vec3i voxelOffsetInt = part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr;
+						vec3f voxelOffset{(float)voxelOffsetInt[0], (float)voxelOffsetInt[1], (float)voxelOffsetInt[2]};
+
 						sfz::translation(transform, chunkOffset + voxelOffset);
 						gl::setUniform(shaderProgram, "modelMatrix", transform);
 
