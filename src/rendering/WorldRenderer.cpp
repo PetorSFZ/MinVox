@@ -27,7 +27,46 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 {
-	const Chunk* chunkPtr;
+	mat4f transform = sfz::identityMatrix4<float>();
+
+	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
+		if (!mWorld.chunkAvailable(i)) continue;
+		const Chunk* chunkPtr = mWorld.chunkPtr(i);
+		vec3f chunkOffset = vec3f{mWorld.chunkOffset(i)*(int)CHUNK_SIZE};
+
+		vec3i part8Itr = chunkPartIterateBegin();
+		while (part8Itr != chunkPartIterateEnd()) {
+			const ChunkPart8* chunkPart8 = chunkPtr->chunkPart8Ptr(part8Itr);
+			vec3i part4Itr = chunkPartIterateBegin();
+			while (part4Itr != chunkPartIterateEnd()) {
+				const ChunkPart4* chunkPart4 = chunkPart8->chunkPart4Ptr(part4Itr);
+				vec3i part2Itr = chunkPartIterateBegin();
+				while (part2Itr != chunkPartIterateEnd()) {
+					const ChunkPart2* chunkPart2 = chunkPart4->chunkPart2Ptr(part2Itr);
+					vec3i voxelItr = chunkPartIterateBegin();
+					while (voxelItr != chunkPartIterateEnd()) {
+						
+						Voxel v = chunkPart2->getVoxel(voxelItr);
+						voxelItr = chunkPartIterateNext(voxelItr);
+
+						if (v.type() == vox::VoxelType::AIR) continue;
+						vec3f voxelOffset = vec3f{part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr};
+						sfz::translation(transform, chunkOffset + voxelOffset);
+						gl::setUniform(shaderProgram, "modelMatrix", transform);
+
+						glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
+						mCubeObj.render();
+
+					}
+					part2Itr = chunkPartIterateNext(part2Itr);
+				}
+				part4Itr = chunkPartIterateNext(part4Itr);
+			}
+			part8Itr = chunkPartIterateNext(part8Itr);
+		}
+	}
+
+	/*const Chunk* chunkPtr;
 	vec3i offset;
 	vec3f offsetVec;
 	mat4f transform = sfz::identityMatrix4<float>();
@@ -49,16 +88,6 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				//if (chunkPtr->isEmptyXRow(y, z)) continue;
 				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
 
-					// Only renders outside of full chunks.
-					/*if (fullChunk && offset != world.currentChunkOffset()) {
-						const size_t max = vox::CHUNK_SIZE-1;
-						bool yMid = (y != 0 && y != max);
-						bool zMid = (z != 0 && z != max);
-						bool xMid = (x != 0 && x != max);
-
-						if (yMid && zMid && xMid) continue;
-					}*/
-
 					vox::Voxel v = chunkPtr->getVoxel(x, y, z);
 					if (v.type() == vox::VoxelType::AIR) continue;
 
@@ -72,7 +101,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				}
 			}
 		}
-	}
+	}*/
 }
 
 

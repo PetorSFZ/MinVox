@@ -32,14 +32,26 @@ public:
 
 struct ChunkPart4 {
 	ChunkPart2 mChunkPart2s[2][2][2];
+	inline const ChunkPart2* chunkPart2Ptr(const vec3i& offset) const noexcept
+	{
+		return &mChunkPart2s[offset[0]][offset[1]][offset[2]];
+	}
 };
 
 struct ChunkPart8 {
 	ChunkPart4 mChunkPart4s[2][2][2];
+	inline const ChunkPart4* chunkPart4Ptr(const vec3i& offset) const noexcept
+	{
+		return &mChunkPart4s[offset[0]][offset[1]][offset[2]];
+	}
 };
 
 struct Chunk {
 	ChunkPart8 mChunkPart8s[2][2][2];
+	inline const ChunkPart8* chunkPart8Ptr(const vec3i& offset) const noexcept
+	{
+		return &mChunkPart8s[offset[0]][offset[1]][offset[2]];
+	}
 
 	Chunk() noexcept;
 
@@ -48,6 +60,33 @@ struct Chunk {
 	void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
 	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };
+
+inline bool partChunkIterate(vec3i& itr) noexcept
+{
+	sfz_assert_debug(0 <= itr[0] && itr[0] < 2);
+	sfz_assert_debug(0 <= itr[1] && itr[1] < 2);
+	sfz_assert_debug(0 <= itr[2] && itr[2] < 2);
+
+	itr[2]++;
+}
+
+inline vec3i chunkPartIterateBegin() noexcept { return vec3i{0,0,0}; }
+inline vec3i chunkPartIterateEnd() noexcept { return vec3i{2,0,0}; }
+inline vec3i chunkPartIterateNext(const vec3i& current) noexcept
+{
+	vec3i next = current;
+	next[2]++;
+	if (next[2] >= 2) {
+		next[1]++;
+		next[2] = 0;
+		if (next[1] >= 2) {
+			next[0]++;
+			next[1] = 0;
+		}
+	}
+	return next;
+}
+
 /*
 inline Offset chunkToVoxelOffset(const Offset& offset, int chunkSize)
 {
