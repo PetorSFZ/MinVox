@@ -3,6 +3,7 @@
 #define VOX_RENDERING_CAMERA_HPP
 
 #include <sfz/Math.hpp>
+#include <sfz/Geometry.hpp>
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -10,6 +11,7 @@ namespace vox {
 
 using sfz::vec3f;
 using sfz::mat4f;
+using sfz::AABB;
 
 struct Camera final {
 	// Public members
@@ -29,6 +31,7 @@ struct Camera final {
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void updateMatrices() noexcept;
+	bool isVisible(const AABB& aabb) const noexcept;
 };
 
 } // namespace vox

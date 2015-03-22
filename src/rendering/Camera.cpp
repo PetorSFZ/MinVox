@@ -31,6 +31,12 @@ void Camera::updateMatrices() noexcept
 	mProjMatrix = sfz::glPerspectiveProjectionMatrix(mVerticalFov, mAspectRatio, mNear, mFar);
 }
 
+bool Camera::isVisible(const AABB& aabb) const noexcept
+{
+	// TODO: Proper implementation to enable view frustrum culling!
+	return true;
+}
+
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>

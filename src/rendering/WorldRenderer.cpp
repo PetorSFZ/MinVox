@@ -33,43 +33,65 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
+	AABB aabb{vec3f{-1.0,-1.0,-1.0}, vec3f{1.0f,1.0f,1.0f}};
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
-		vec3f chunkOffset = offsetToVector(mWorld.chunkOffset(i)*(int)CHUNK_SIZE);
+		vec3i chunkOffset = mWorld.chunkOffset(i);
+
+		calculateChunkAABB(aabb, chunkOffset);
+		if (!cam.isVisible(aabb)) continue;
 
 		vec3i part8Itr = chunkPartIterateBegin();
 		while (part8Itr != chunkPartIterateEnd()) {
+			calculateChunkPart8AABB(aabb, chunkOffset, part8Itr);
+			if (!cam.isVisible(aabb)) {
+				part8Itr = chunkPartIterateNext(part8Itr);
+				continue;
+			}
 			const ChunkPart8* chunkPart8 = chunkPtr->chunkPart8Ptr(part8Itr);
+			
 			vec3i part4Itr = chunkPartIterateBegin();
 			while (part4Itr != chunkPartIterateEnd()) {
+				calculateChunkPart4AABB(aabb, chunkOffset, part8Itr, part4Itr);
+				if (!cam.isVisible(aabb)) {
+					part4Itr = chunkPartIterateNext(part4Itr);
+					continue;
+				}
 				const ChunkPart4* chunkPart4 = chunkPart8->chunkPart4Ptr(part4Itr);
+
 				vec3i part2Itr = chunkPartIterateBegin();
 				while (part2Itr != chunkPartIterateEnd()) {
+					calculateChunkPart2AABB(aabb, chunkOffset, part8Itr, part4Itr, part2Itr);
+					if (!cam.isVisible(aabb)) {
+						part2Itr = chunkPartIterateNext(part2Itr);
+						continue;
+					}
 					const ChunkPart2* chunkPart2 = chunkPart4->chunkPart2Ptr(part2Itr);
+					
 					vec3i voxelItr = chunkPartIterateBegin();
 					while (voxelItr != chunkPartIterateEnd()) {
-						
+						calculateVoxelAABB(aabb, chunkOffset, part8Itr, part4Itr, part2Itr, voxelItr);
+						if (!cam.isVisible(aabb)) {
+							voxelItr = chunkPartIterateNext(voxelItr);
+							continue;
+						}
 						Voxel v = chunkPart2->getVoxel(voxelItr);
-
 
 						if (v.type() == vox::VoxelType::AIR) {
 							voxelItr = chunkPartIterateNext(voxelItr);
 							continue;
 						}
-						vec3f voxelOffset = offsetToVector(part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr);
 
-						sfz::translation(transform, chunkOffset + voxelOffset);
+						vec3f voxelPosition = offsetToVector(chunkOffset*16 + part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr);
+						sfz::translation(transform, voxelPosition);
 						gl::setUniform(shaderProgram, "modelMatrix", transform);
 
 						glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
 						mCubeObj.render();
 
-
 						voxelItr = chunkPartIterateNext(voxelItr);
-
-
 					}
 					part2Itr = chunkPartIterateNext(part2Itr);
 				}

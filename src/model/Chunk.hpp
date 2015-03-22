@@ -7,6 +7,7 @@
 #include <limits> //std::numeric_limits
 
 #include <sfz/Math.hpp>
+#include <sfz/Geometry.hpp>
 
 #include "model/Voxel.hpp"
 
@@ -16,9 +17,14 @@ namespace vox {
 
 using std::uint8_t;
 using std::size_t;
+using sfz::vec3f;
 using sfz::vec3i;
+using sfz::AABB;
 
 const size_t CHUNK_SIZE = 16;
+
+// ChunkParts
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 class ChunkPart2 {
 private:
@@ -46,6 +52,9 @@ struct ChunkPart8 {
 	}
 };
 
+// Chunk
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 struct Chunk {
 	ChunkPart8 mChunkPart8s[2][2][2];
 	inline const ChunkPart8* chunkPart8Ptr(const vec3i& offset) const noexcept
@@ -61,14 +70,8 @@ struct Chunk {
 	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };
 
-inline bool partChunkIterate(vec3i& itr) noexcept
-{
-	sfz_assert_debug(0 <= itr[0] && itr[0] < 2);
-	sfz_assert_debug(0 <= itr[1] && itr[1] < 2);
-	sfz_assert_debug(0 <= itr[2] && itr[2] < 2);
-
-	itr[2]++;
-}
+// ChunkPart iterator functions
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 inline vec3i chunkPartIterateBegin() noexcept { return vec3i{0,0,0}; }
 inline vec3i chunkPartIterateEnd() noexcept { return vec3i{2,0,0}; }
@@ -87,66 +90,63 @@ inline vec3i chunkPartIterateNext(const vec3i& current) noexcept
 	return next;
 }
 
-/*
-inline Offset chunkToVoxelOffset(const Offset& offset, int chunkSize)
+// Chunk AABB calculators
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+inline void calculateChunkAABB(AABB& aabb, const vec3i& chunkOffset) noexcept
 {
-	return Offset{offset.mY*chunkSize, offset.mZ*chunkSize, offset.mX*chunkSize};
-}*/
+	static vec3f chunkSize{16.0f, 16.0f, 16.0f};
+	vec3i minTemp = chunkOffset*16;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkSize);
+}
 
-/*struct Chunk final {
-	using bitset_t = std::uint16_t;
+inline void calculateChunkPart8AABB(AABB& aabb, const vec3i& chunkOffset,
+                                                const vec3i& part8Offset) noexcept
+{
+	static vec3f chunkPart8Size{8.0f, 8.0f, 8.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart8Size);
+}
 
-	// Public members
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+inline void calculateChunkPart4AABB(AABB& aabb, const vec3i& chunkOffset,
+                                                const vec3i& part8Offset,
+                                                const vec3i& part4Offset) noexcept
+{
+	static vec3f chunkPart4Size{4.0f, 4.0f, 4.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart4Size);
+}
 
-	Voxel mVoxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-	bitset_t mEmptyXRowFlags[CHUNK_SIZE];
-	bitset_t mFullXRowFlags[CHUNK_SIZE];
-	bitset_t mFullZRowFlags[CHUNK_SIZE];
+inline void calculateChunkPart2AABB(AABB& aabb, const vec3i& chunkOffset,
+                                                const vec3i& part8Offset,
+                                                const vec3i& part4Offset,
+                                                const vec3i& part2Offset) noexcept
+{
+	static vec3f chunkPart2Size{2.0f, 2.0f, 2.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4 + part2Offset*2;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart2Size);
+}
 
-	// Constructor & destructors
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	Chunk(); 
-
-	// Getters / Setters
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	Voxel getVoxel(const Offset& offset) const;
-	const Voxel* getVoxelPtr(const Offset& offset) const;
-	void setVoxel(const Offset& offset, Voxel voxel);
-
-	Voxel getVoxel(size_t y, size_t z, size_t x) const;
-	const Voxel* getVoxelPtr(size_t y, size_t z, size_t x) const;
-	void setVoxel(size_t y, size_t z, size_t x, Voxel voxel);
-
-	// Query functions
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	bool isEmptyXRow(size_t y, size_t z) const;
-	bool isEmptyLayer(size_t y) const;
-	bool isEmptyChunk() const;
-
-	bool isFullLayer(size_t y) const;
-	bool isFullChunk() const;
-
-	// Helper functions
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	void updateAllFlags();
-
-	void setEmptyXRowFlag(size_t y, size_t z);
-	void clearEmptyXRowFlag(size_t y, size_t z);
-	bool checkEmptyXRowFlag(size_t y, size_t z) const;
-
-	void setFullXRowFlag(size_t y, size_t z);
-	void clearFullXRowFlag(size_t y, size_t z);
-	bool checkFullXRowFlag(size_t y, size_t z) const;
-
-	void setFullZRowFlag(size_t y, size_t x);
-	void clearFullZRowFlag(size_t y, size_t x);
-	bool checkFullZRowFlag(size_t y, size_t z) const;
-};*/
+inline void calculateVoxelAABB(AABB& aabb, const vec3i& chunkOffset,
+                                           const vec3i& part8Offset,
+                                           const vec3i& part4Offset,
+                                           const vec3i& part2Offset,
+                                           const vec3i& voxelOffset) noexcept
+{
+	static vec3f voxelSize{1.0f, 1.0f, 1.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4 + part2Offset*2 + voxelOffset;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + voxelSize);
+}
 
 } // namespace vox
 
