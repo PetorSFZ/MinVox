@@ -32,8 +32,8 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 {
-	mat4f transform = sfz::identityMatrix4<float>();
-	AABB aabb{vec3f{-1.0,-1.0,-1.0}, vec3f{1.0f,1.0f,1.0f}};
+	/*mat4f transform = sfz::identityMatrix4<float>();
+	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
@@ -89,31 +89,27 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 			}
 			part8Itr = chunkPartIterateNext(part8Itr);
 		}
-	}
+	}*/
 
-	/*const Chunk* chunkPtr;
-	vec3i offset;
-	vec3f offsetVec;
+	// Old naive loop
 	mat4f transform = sfz::identityMatrix4<float>();
-	bool fullChunk;
+	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
-		chunkPtr = mWorld.chunkPtr(i);
-		if (chunkPtr == nullptr) continue;
-		//if (chunkPtr->isEmptyChunk()) continue;
+		if (!mWorld.chunkAvailable(i)) continue;
+		const Chunk* chunkPtr = mWorld.chunkPtr(i);
 
-		offset = mWorld.chunkOffset(chunkPtr);
-		offsetVec = mWorld.positionFromChunkOffset(offset);
-		//fullChunk = chunkPtr->isFullChunk();
+		vec3i offset = mWorld.chunkOffset(chunkPtr);
+		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
 
+		calculateChunkAABB(aabb, offset);
+		if (!cam.isVisible(aabb)) continue;
 
-		for (size_t y = 0; y < vox::CHUNK_SIZE; y++) {
-			//if (chunkPtr->isEmptyLayer(y)) continue;
-			for (size_t z = 0; z < vox::CHUNK_SIZE; z++) {
-				//if (chunkPtr->isEmptyXRow(y, z)) continue;
-				for (size_t x = 0; x < vox::CHUNK_SIZE; x++) {
+		for (size_t x = 0; x < CHUNK_SIZE; x++) {
+			for (size_t y = 0; y < CHUNK_SIZE; y++) {
+				for (size_t z = 0; z < CHUNK_SIZE; z++) {
 
-					vox::Voxel v = chunkPtr->getVoxel(x, y, z);
+					Voxel v = chunkPtr->getVoxel(x, y, z);
 					if (v.type() == vox::VoxelType::AIR) continue;
 
 					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
@@ -126,7 +122,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				}
 			}
 		}
-	}*/
+	}
 }
 
 
