@@ -57,6 +57,8 @@ include_directories(
 
 # Source files
 set(SOURCE_BASE_FILES
+	${SRC_DIR}/GlobalConfig.hpp
+	${SRC_DIR}/GlobalConfig.cpp
 	${SRC_DIR}/Main.cpp
 	${SRC_DIR}/IO.hpp
 	${SRC_DIR}/Model.hpp

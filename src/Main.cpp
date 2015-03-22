@@ -9,9 +9,12 @@
 #include <sfz/Math.hpp>
 
 #include "Screens.hpp"
+#include "GlobalConfig.hpp"
 
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+vox::GlobalConfig config;
 
 // Controllers
 SDL_GameController* controllerPtrs[4];
@@ -149,8 +152,8 @@ int main()
 	}
 	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
 
-	// Disable vsync
-	SDL_GL_SetSwapInterval(0);
+	// Enable/disable vsync
+	if (!config.mVsync) SDL_GL_SetSwapInterval(0);
 
 	// Game loop
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -168,7 +171,7 @@ int main()
 		delta = calculateDelta();
 		pollEventsUpdateControllers(events);
 
-		std::cout << "FPS: " << 1.0f/delta << std::endl;
+		if (config.mPrintFPS) std::cout << "FPS: " << 1.0f/delta << std::endl;
 
 		currentScreen->update(events, controllers[currentController], delta);
 		auto newScreen = currentScreen->changeScreen();
