@@ -134,7 +134,7 @@ int main()
 
 	sdl::Session sdlSession{{sdl::InitFlags::EVENTS, sdl::InitFlags::VIDEO,
 	                         sdl::InitFlags::GAMECONTROLLER}, {sdl::ImgInitFlags::PNG}};
-	sdl::Window window{"MinVox", 1024, 1024,
+	sdl::Window window{"MinVox", 800, 800,
 	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
 
 	// Enable SDL Events for controllers

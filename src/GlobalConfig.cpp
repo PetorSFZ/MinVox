@@ -7,7 +7,7 @@ namespace vox {
 GlobalConfig::GlobalConfig() noexcept
 {
 	mVsync = false;
-	mPrintFPS = false;
+	mPrintFPS = true;
 }
 
 } // namespace vox
