@@ -12,6 +12,20 @@
 
 namespace vox {
 
+namespace {
+
+#ifdef _WIN32
+bool existsDir(const std::string& path)
+{
+	DWORD ftyp = GetFileAttributesA(path.c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES) return false;
+	if (ftyp & FILE_ATTRIBUTE_DIRECTORY) return true;
+	return false;
+}
+#endif
+
+} // anonymous namespace
+
 const std::string& basePath()
 {
 	static const std::string BASE_PATH{SDL_GetBasePath()};
@@ -27,10 +41,13 @@ const std::string& assetsPath()
 bool exists(const std::string& path)
 {
 #ifdef _WIN32
-	DWORD ftyp = GetFileAttributesA(path.c_str());
-	if (ftyp == INVALID_FILE_ATTRIBUTES) return false;
-	if (ftyp & FILE_ATTRIBUTE_DIRECTORY) return true;
-	return false;
+	std::FILE* file = fopen(path.c_str(), "r");
+	if (file == NULL) {
+		return false || existsDir(path);
+	} else {
+		fclose(file);
+		return true || existsDir(path);
+	}
 #else
 	std::FILE* file = fopen(path.c_str(), "r");
 	if (file == NULL) {

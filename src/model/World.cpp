@@ -67,7 +67,9 @@ void World::update(const vec3f& camPos) noexcept
 				for (int z = minOffset[2]; z <= maxOffset[2]; z++) {
 					mOffsets[count] = vec3i{x, y, z};
 					if (!readChunk(mChunks[count], x, y, z, mName)) {
+						std::cout << "Generated and wrote chunk at: " << mOffsets[count] << std::endl;
 						mChunks[count] = generateChunk(mOffsets[count]);
+						writeChunk(mChunks[count], x, y, z, mName);
 					}
 					mAvailabilities[count] = true;
 					count++;
