@@ -165,6 +165,8 @@ int main()
 		delta = calculateDelta();
 		pollEventsUpdateControllers(events);
 
+		std::cout << "FPS: " << 1.0f/delta << std::endl;
+
 		currentScreen->update(events, controllers[currentController], delta);
 		auto newScreen = currentScreen->changeScreen();
 		if (newScreen != nullptr) {
