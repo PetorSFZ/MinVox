@@ -66,9 +66,9 @@ protected:
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 
-	vec3f lightPosSpherical;
-	vec3f lightTarget;
-	vec3f lightColor;
+	Camera mSunCam;
+	vec3f mLightPosSpherical, mLightTarget, mLightColor;
+
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;

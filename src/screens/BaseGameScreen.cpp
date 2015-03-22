@@ -52,11 +52,14 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWorldRenderer{mWorld, mAssets},
 	
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
-	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()}
+	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
+
+	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
+	        65.0f, 1.0f, 3.0f, 120.0f}
 {
-	lightPosSpherical = vec3f{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
-	lightTarget = vec3f{16.0f, 0.0f, 16.0f};
-	lightColor = vec3f{1.0f, 1.0f, 1.0f};
+	mLightPosSpherical = vec3f{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
+	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
+	mLightColor = vec3f{1.0f, 1.0f, 1.0f};
 }
 
 /*BaseGameScreen::BaseGameScreen(const BaseGameScreen& baseGameScreen)
@@ -94,12 +97,13 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 	updateSpecific(events, ctrl, delta);
 
 	if (currentLightAxis != -1) {
-		lightPosSpherical[currentLightAxis] += delta * lightCurrentSpeed;
-		lightPosSpherical[currentLightAxis] = std::fmod(lightPosSpherical[currentLightAxis],
+		mLightPosSpherical[currentLightAxis] += delta * lightCurrentSpeed;
+		mLightPosSpherical[currentLightAxis] = std::fmod(mLightPosSpherical[currentLightAxis],
 		                                                (sfz::g_PI_FLOAT*2.0f));
 	}
 
 	mCam.updateMatrices();
+	mCam.updatePlanes();
 	mWorld.update(mCam.mPos);
 }
 
@@ -124,12 +128,13 @@ void BaseGameScreen::render(float delta)
 	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
 
 	// Light position and matrices
-	const sfz::vec3f lightPos = sphericalToCartesian(lightPosSpherical);
-	const sfz::mat4f lightViewMatrix = sfz::lookAt(lightPos, lightTarget, sfz::vec3f{0.0f, 1.0f, 0.0f});
-	const sfz::mat4f lightProjMatrix = sfz::glPerspectiveProjectionMatrix(65.0f, 1.0f, 3.0f, 120.0f);
+	mSunCam.mPos = sphericalToCartesian(mLightPosSpherical);
+	mSunCam.mDir = (mLightTarget - mSunCam.mPos).normalize();
+	mSunCam.updateMatrices();
+	mSunCam.updatePlanes();
 	
-	gl::setUniform(mShadowMapShaderProgram, "viewMatrix", lightViewMatrix);
-	gl::setUniform(mShadowMapShaderProgram, "projectionMatrix", lightProjMatrix);
+	gl::setUniform(mShadowMapShaderProgram, "viewMatrix", mSunCam.mViewMatrix);
+	gl::setUniform(mShadowMapShaderProgram, "projectionMatrix", mSunCam.mProjMatrix);
 
 	// Clear shadow map
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -141,7 +146,7 @@ void BaseGameScreen::render(float delta)
 	glPolygonOffset(5.0f, 25.0f);
 
 	// Draw shadow casters
-	mWorldRenderer.drawWorld(mCam, mShadowMapShaderProgram); // TODO: Should use camera from ShadowMap perspective
+	mWorldRenderer.drawWorld(mSunCam, mShadowMapShaderProgram); // TODO: Should use camera from ShadowMap perspective
 
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -165,14 +170,14 @@ void BaseGameScreen::render(float delta)
 	// Calculate and set lightMatrix
 	mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
 	                  * sfz::scalingMatrix4(0.5f)
-	                  * lightProjMatrix
-	                  * lightViewMatrix; // * inverse(viewMatrix), done in vertex shader.
+	                  * mSunCam.mProjMatrix
+	                  * mSunCam.mViewMatrix; // * inverse(viewMatrix), done in vertex shader.
 	
 	gl::setUniform(mShaderProgram, "lightMatrix", lightMatrix);
 
 	// Set light position uniform
-	gl::setUniform(mShaderProgram, "msLightPos", lightPos);
-	gl::setUniform(mShaderProgram, "lightColor", lightColor);
+	gl::setUniform(mShaderProgram, "msLightPos", mSunCam.mPos);
+	gl::setUniform(mShaderProgram, "lightColor", mLightColor);
 	
 	// Set shadow map uniforms and textures
 	gl::setUniform(mShaderProgram, "shadowMap", 1);
@@ -185,7 +190,7 @@ void BaseGameScreen::render(float delta)
 
 	// Drawing objects
 	mWorldRenderer.drawWorld(mCam, mShaderProgram);
-	drawLight(mAssets, mShaderProgram, lightPos);
+	drawLight(mAssets, mShaderProgram, mSunCam.mPos);
 
 	// Applying post-process effects
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
