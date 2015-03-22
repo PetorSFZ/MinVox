@@ -149,6 +149,9 @@ int main()
 	}
 	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
 
+	// Disable vsync
+	SDL_GL_SetSwapInterval(0);
+
 	// Game loop
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

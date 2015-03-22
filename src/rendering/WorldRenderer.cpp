@@ -63,20 +63,10 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 
 				vec3i part2Itr = chunkPartIterateBegin();
 				while (part2Itr != chunkPartIterateEnd()) {
-					calculateChunkPart2AABB(aabb, chunkOffset, part8Itr, part4Itr, part2Itr);
-					if (!cam.isVisible(aabb)) {
-						part2Itr = chunkPartIterateNext(part2Itr);
-						continue;
-					}
 					const ChunkPart2* chunkPart2 = chunkPart4->chunkPart2Ptr(part2Itr);
 					
 					vec3i voxelItr = chunkPartIterateBegin();
 					while (voxelItr != chunkPartIterateEnd()) {
-						calculateVoxelAABB(aabb, chunkOffset, part8Itr, part4Itr, part2Itr, voxelItr);
-						if (!cam.isVisible(aabb)) {
-							voxelItr = chunkPartIterateNext(voxelItr);
-							continue;
-						}
 						Voxel v = chunkPart2->getVoxel(voxelItr);
 
 						if (v.type() == vox::VoxelType::AIR) {
