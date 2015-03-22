@@ -12,8 +12,8 @@ std::string directoryPath(const std::string& worldName)
 
 std::string filename(int xOffset, int yOffset, int zOffset, const std::string& worldName)
 {
-	std::string filePath = directoryPath(worldName) + "chunk" + std::to_string(xOffset) + "x"
-	                     + std::to_string(yOffset) + "y" + std::to_string(zOffset) + "z.bin";
+	std::string filePath = directoryPath(worldName) + "chunk__" + std::to_string(xOffset) + "x_"
+	                     + std::to_string(yOffset) + "y_" + std::to_string(zOffset) + "z.bin";
 	return std::move(filePath);
 }
 
@@ -36,9 +36,6 @@ bool readChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::s
 		return false;
 	}
 
-	// Sets flags
-	//chunk.updateAllFlags();
-	
 	return true;
 }
 

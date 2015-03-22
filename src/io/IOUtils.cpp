@@ -1,6 +1,8 @@
 #include "io/IOUtils.hpp"
 
 #ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
 #include <direct.h>
 #elif __APPLE__
 #include <sys/stat.h>
@@ -24,6 +26,12 @@ const std::string& assetsPath()
 
 bool exists(const std::string& path)
 {
+#ifdef _WIN32
+	DWORD ftyp = GetFileAttributesA(path.c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES) return false;
+	if (ftyp & FILE_ATTRIBUTE_DIRECTORY) return true;
+	return false;
+#else
 	std::FILE* file = fopen(path.c_str(), "r");
 	if (file == NULL) {
 		return false;
@@ -31,6 +39,7 @@ bool exists(const std::string& path)
 		fclose(file);
 		return true;
 	}
+#endif
 }
 
 bool createDirectory(const std::string& path)
