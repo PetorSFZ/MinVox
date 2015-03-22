@@ -12,6 +12,7 @@ namespace vox {
 using sfz::vec3f;
 using sfz::mat4f;
 using sfz::AABB;
+using sfz::Plane;
 
 struct Camera final {
 	// Public members
@@ -20,6 +21,7 @@ struct Camera final {
 	vec3f mPos, mDir, mUp;
 	float mVerticalFov, mAspectRatio, mNear, mFar;
 	mat4f mViewMatrix, mProjMatrix;
+	Plane mNearPlane, mFarPlane, mUpPlane, mDownPlane, mLeftPlane, mRightPlane;
 
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -31,6 +33,7 @@ struct Camera final {
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void updateMatrices() noexcept;
+	void updatePlanes() noexcept;
 	bool isVisible(const AABB& aabb) const noexcept;
 };
 

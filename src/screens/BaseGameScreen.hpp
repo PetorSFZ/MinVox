@@ -14,6 +14,7 @@
 namespace vox {
 
 using sfz::vec3f;
+using sfz::vec4f;
 using sfz::mat4f;
 
 class BaseGameScreen : public IScreen {

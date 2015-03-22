@@ -48,7 +48,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mShaderProgram{vox::compileStandardShaderProgram()},
 	mShadowMapShaderProgram{vox::compileShadowMapShaderProgram()},
 	mPostProcessShaderProgram{vox::compilePostProcessShaderProgram()},
-	mShadowMap{4096, vox::ShadowMapRes::BITS_32, true, sfz::vec4f{1.f, 1.f, 1.f, 1.f}},
+	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
 	mWorldRenderer{mWorld, mAssets},
 	
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
