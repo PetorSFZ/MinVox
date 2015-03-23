@@ -9,7 +9,7 @@ namespace vox {
 
 namespace {
 
-size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange)
+size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange) noexcept
 {
 	size_t horizontalSide = (static_cast<size_t>(horizontalChunkRange)*2)+1;
 	size_t slab = static_cast<size_t>(horizontalSide*horizontalSide);
@@ -17,36 +17,50 @@ size_t calculateNumChunks(int horizontalChunkRange, int verticalChunkRange)
 	return slab * verticalSide;
 }
 
+vec3i minChunkOffset(const World& world) noexcept
+{
+	vec3i range{world.mHorizontalRange, world.mVerticalRange, world.mHorizontalRange};
+	return world.currentChunkOffset() - range;
+}
+
+vec3i maxChunkOffset(const World& world) noexcept
+{
+	vec3i range{world.mHorizontalRange, world.mVerticalRange, world.mHorizontalRange};
+	return world.currentChunkOffset() + range;
+}
+
+bool outside(const vec3i& offset, const vec3i& min, const vec3i& max) noexcept
+{
+	return (offset[0] < min[0] || max[0] < offset[0]) ||
+	       (offset[1] < min[1] || max[1] < offset[1]) ||
+	       (offset[2] < min[2] || max[2] < offset[2]);
+}
+
 } // namespace
 
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-World::World(const std::string& name) noexcept
+World::World(const std::string& name, const vec3f& camPos) noexcept
 :
 	mHorizontalRange{2},
 	mVerticalRange{1},
 	mNumChunks{calculateNumChunks(mHorizontalRange, mVerticalRange)},
+	mName{name},
 	mChunks{new Chunk[mNumChunks]},
 	mOffsets{new vec3i[mNumChunks]},
 	mAvailabilities{new bool[mNumChunks]},
-	mName{name}
+	mToBeReplaced{new bool[mNumChunks]}
 {
-	mCurrentChunkOffset = vec3i{0,0,0};
-	size_t count = 0;
-	for(int y = -mVerticalRange; y <= mVerticalRange; y++) {
-		for (int z = -mHorizontalRange; z <= mHorizontalRange; z++) {
-			for (int x = -mHorizontalRange; x <= mHorizontalRange; x++) {
+	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
 
-				sfz_assert_debug(count < mNumChunks);
-				mOffsets[count] = vec3i{x, y, z};
-				if (!readChunk(mChunks[count], x, y, z, mName)) {
-					mChunks[count] = generateChunk(mOffsets[count]);
-				}
-				count++;
-			}
-		}
+	for (size_t i = 0; i < mNumChunks; i++) {
+		mOffsets[i] = vec3i{-100000000, -1000000000, -10000000};
+		mAvailabilities[i] = false;
+		mToBeReplaced[i] = true;
 	}
+
+	loadChunks();
 }
 
 // Public member functions
@@ -58,24 +72,8 @@ void World::update(const vec3f& camPos) noexcept
 	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
 
 	if (oldChunkOffset != mCurrentChunkOffset) {
-		vec3i minOffset = mCurrentChunkOffset - vec3i{mHorizontalRange, mVerticalRange, mHorizontalRange};
-		vec3i maxOffset = mCurrentChunkOffset + vec3i{mHorizontalRange, mVerticalRange, mHorizontalRange};
-
-		size_t count = 0; 
-		for (int x = minOffset[0]; x <= maxOffset[0]; x++) {
-			for (int y = minOffset[1]; y <= maxOffset[1]; y++) {
-				for (int z = minOffset[2]; z <= maxOffset[2]; z++) {
-					mOffsets[count] = vec3i{x, y, z};
-					if (!readChunk(mChunks[count], x, y, z, mName)) {
-						std::cout << "Generated and wrote chunk at: " << mOffsets[count] << std::endl;
-						mChunks[count] = generateChunk(mOffsets[count]);
-						writeChunk(mChunks[count], x, y, z, mName);
-					}
-					mAvailabilities[count] = true;
-					count++;
-				}
-			}
-		}
+		checkWhichChunksToReplace();
+		loadChunks();
 	}
 }
 
@@ -143,6 +141,58 @@ bool World::chunkAvailable(const vec3i& offset) const noexcept
 		if (mOffsets[i] == offset) return mAvailabilities[i];
 	}
 	return false;
+}
+
+// Private methods
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void World::checkWhichChunksToReplace() noexcept
+{
+	const vec3i min = minChunkOffset(*this);
+	const vec3i max = maxChunkOffset(*this);
+	for (size_t i = 0; i < mNumChunks; i++) {
+		mToBeReplaced[i] = outside(mOffsets[i], min, max);
+	}
+}
+
+void World::loadChunks() noexcept
+{
+	const vec3i min = minChunkOffset(*this);
+	const vec3i max = maxChunkOffset(*this);
+	const vec3i end = offsetIterateEnd(min, max);
+	vec3i itr = min;
+	size_t currentWriteIndex = 0;
+	size_t chunksLoaded = 0;
+
+	while (itr != end) {
+		bool offsetIsLoaded = false;
+		for (size_t i = 0; i < mNumChunks; i++) {
+			if (mOffsets[i] == itr && !mToBeReplaced[i]) {
+				offsetIsLoaded = true;
+				break;
+			}
+		}
+
+		if (!offsetIsLoaded) {
+			while (!mToBeReplaced[currentWriteIndex]) currentWriteIndex++;
+			sfz_assert_debug(currentWriteIndex < mNumChunks);
+
+			if (!readChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName)) {
+				std::cout << "Generated and wrote chunk at: " << mOffsets[currentWriteIndex] << std::endl;
+				mChunks[currentWriteIndex] = generateChunk(itr);
+				writeChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName);
+			}
+			mOffsets[currentWriteIndex] = itr;
+			mAvailabilities[currentWriteIndex] = true;
+			mToBeReplaced[currentWriteIndex] = false;
+			chunksLoaded++;
+			currentWriteIndex++;
+		}
+
+		itr = offsetIterateNext(itr, min, max);
+	}
+
+	std::cout << "Loaded " << chunksLoaded << " chunks.\n";
 }
 
 } // namespace vox

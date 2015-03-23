@@ -36,7 +36,7 @@ public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	World(const std::string& name) noexcept;
+	World(const std::string& name, const vec3f& camPos) noexcept;
 
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -63,6 +63,12 @@ public:
 	bool chunkAvailable(const vec3i& offset) const noexcept;
 
 private:
+	// Private methods
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	void checkWhichChunksToReplace() noexcept;
+	void loadChunks() noexcept;
+
 	// Private Members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -70,6 +76,7 @@ private:
 	unique_ptr<Chunk[]> mChunks;
 	unique_ptr<vec3i[]> mOffsets;
 	unique_ptr<bool[]> mAvailabilities;
+	unique_ptr<bool[]> mToBeReplaced;
 };
 
 } // namespace vox
