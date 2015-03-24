@@ -83,16 +83,59 @@ vec3f World::positionFromChunkOffset(const vec3i& offset) const noexcept
 	return vec3f{(float)voxelOffset[0], (float)voxelOffset[1], (float)voxelOffset[2]};
 }
 
+vec3i World::chunkOffsetFromPosition(const vec3i& position) const noexcept
+{
+	vec3i offset = position / (int)CHUNK_SIZE;
+	vec3i voxelOffset = position - (offset*(int)CHUNK_SIZE);
+	if (voxelOffset[0] < 0) offset[0]--;
+	if (voxelOffset[1] < 0) offset[1]--;
+	if (voxelOffset[2] < 0) offset[2]--;
+	return offset;
+}
+
 vec3i World::chunkOffsetFromPosition(const vec3f& position) const noexcept
 {
-	int x = static_cast<int>(std::round(position[0]/(float)CHUNK_SIZE));
-	int y = static_cast<int>(std::round(position[1])/(float)CHUNK_SIZE);
-	int z = static_cast<int>(std::round(position[2])/(float)CHUNK_SIZE);
-	return vec3i{x, y, z};
+	return chunkOffsetFromPosition(vec3i{(int)position[0], (int)position[1], (int)position[2]});
+}
+
+void World::setVoxel(const vec3i& position, Voxel voxel) noexcept
+{
+	vec3i chunkOffset = chunkOffsetFromPosition(position);
+	vec3i voxelOffset = position - (chunkOffset*(int)CHUNK_SIZE);
+
+	int index = chunkIndex(chunkOffset);
+	if (index == -1) return;
+	Chunk* chunkPtr = &mChunks[index];
+	Voxel oldVoxel = chunkPtr->getVoxel(voxelOffset);
+	
+	chunkPtr->setVoxel(voxelOffset, voxel);
+	bool success = writeChunk(*chunkPtr, chunkOffset[0], chunkOffset[1], chunkOffset[2], mName);
+	if (!success) {
+		chunkPtr->setVoxel(voxelOffset, oldVoxel);
+	}
+}
+
+void World::setVoxel(const vec3f& position, Voxel voxel) noexcept
+{
+	setVoxel(vec3i{(int)position[0], (int)position[1], (int)position[2]}, voxel);
 }
 
 // Getters / setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+size_t World::chunkIndex(const Chunk* chunkPtr) const noexcept
+{
+	return chunkPtr - (&mChunks[0]);
+}
+
+int World::chunkIndex(const vec3i& offset) const noexcept
+{
+	for (int i = 0; i < (int)mNumChunks; i++) {
+		if (mOffsets[i] == offset && mAvailabilities[i]) return i;
+	}
+	return -1;
+}
+
 
 const Chunk* World::chunkPtr(size_t index) const noexcept
 {

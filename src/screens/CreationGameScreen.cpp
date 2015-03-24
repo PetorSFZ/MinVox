@@ -112,7 +112,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Face buttons
 	if (ctrl.mButtonY == sdl::Button::UP) {
-		changeScreen(new ActionGameScreen(mWindow, "HREKOWFPKOEAOFEPA"));
+		currentLightAxis = -1;
 	}
 	if (ctrl.mButtonX == sdl::Button::UP) {
 		currentLightAxis = 1;
@@ -121,12 +121,16 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		currentLightAxis = 2;
 	}
 	if (ctrl.mButtonA == sdl::Button::UP) {
-		currentLightAxis = -1;
+		vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
+		mWorld.setVoxel(pos, Voxel{VoxelType::ORANGE, 0});
 	}
 
 	// Menu buttons
 	if (ctrl.mButtonBack == sdl::Button::UP) {
 		quitApplication();
+	}
+	if (ctrl.mButtonStart == sdl::Button::UP) {
+		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
 	}
 }
 

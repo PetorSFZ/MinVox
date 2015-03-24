@@ -45,12 +45,19 @@ public:
 
 	vec3f positionFromChunkOffset(const vec3i& offset) const noexcept;
 
+	vec3i chunkOffsetFromPosition(const vec3i& position) const noexcept;
 	vec3i chunkOffsetFromPosition(const vec3f& position) const noexcept;
+
+	void setVoxel(const vec3i& position, Voxel voxel) noexcept;
+	void setVoxel(const vec3f& position, Voxel voxel) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	
 	inline vec3i currentChunkOffset() const noexcept { return mCurrentChunkOffset; }
+
+	size_t chunkIndex(const Chunk* chunkPtr) const noexcept;
+	int chunkIndex(const vec3i& offset) const noexcept;
 
 	const Chunk* chunkPtr(size_t index) const noexcept;
 	const Chunk* chunkPtr(const vec3i& offset) const noexcept;
