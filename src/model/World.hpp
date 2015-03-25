@@ -60,14 +60,8 @@ public:
 	int chunkIndex(const vec3i& offset) const noexcept;
 
 	const Chunk* chunkPtr(size_t index) const noexcept;
-	const Chunk* chunkPtr(const vec3i& offset) const noexcept;
-
 	const vec3i chunkOffset(size_t index) const noexcept;
-	const vec3i chunkOffset(const Chunk* chunkPtr) const noexcept;
-
 	bool chunkAvailable(size_t index) const noexcept;
-	bool chunkAvailable(const Chunk* chunkPtr) const noexcept;
-	bool chunkAvailable(const vec3i& offset) const noexcept;
 
 private:
 	// Private methods

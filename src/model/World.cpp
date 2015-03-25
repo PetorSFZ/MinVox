@@ -143,47 +143,16 @@ const Chunk* World::chunkPtr(size_t index) const noexcept
 	return &mChunks[index];
 }
 
-const Chunk* World::chunkPtr(const vec3i& offset) const noexcept
-{
-	for (size_t i = 0; i < mNumChunks; i++) {
-		if (mOffsets[i] == offset) return &mChunks[i];
-	}
-	sfz_assert_debug_m(false, "Invalid chunk offset.");
-	return nullptr;
-}
-
-
 const vec3i World::chunkOffset(size_t index) const noexcept
 {
 	sfz_assert_debug(index < mNumChunks);
 	return mOffsets[index];
 }
 
-const vec3i World::chunkOffset(const Chunk* chunkPtr) const noexcept
-{
-	sfz_assert_debug(&mChunks[0] <= chunkPtr && chunkPtr <= &mChunks[mNumChunks-1]);
-	return mOffsets[chunkPtr - (&mChunks[0])];
-}
-
-
 bool World::chunkAvailable(size_t index) const noexcept
 {
 	sfz_assert_debug(index < mNumChunks);
 	return mAvailabilities[index];
-}
-
-bool World::chunkAvailable(const Chunk* chunkPtr) const noexcept
-{
-	sfz_assert_debug(&mChunks[0] <= chunkPtr && chunkPtr <= &mChunks[mNumChunks-1]);
-	return mAvailabilities[chunkPtr - (&mChunks[0])];
-}
-
-bool World::chunkAvailable(const vec3i& offset) const noexcept
-{
-	for (size_t i = 0; i < mNumChunks; i++) {
-		if (mOffsets[i] == offset) return mAvailabilities[i];
-	}
-	return false;
 }
 
 // Private methods

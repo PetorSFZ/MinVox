@@ -32,7 +32,7 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 {
-	/*mat4f transform = sfz::identityMatrix4<float>();
+	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
@@ -89,17 +89,17 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 			}
 			part8Itr = chunkPartIterateNext(part8Itr);
 		}
-	}*/
+	}
 
 	// Old naive loop
-	mat4f transform = sfz::identityMatrix4<float>();
+	/*mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
 
-		vec3i offset = mWorld.chunkOffset(chunkPtr);
+		vec3i offset = mWorld.chunkOffset(i);
 		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
 
 		calculateChunkAABB(aabb, offset);
@@ -122,7 +122,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				}
 			}
 		}
-	}
+	}*/
 }
 
 
