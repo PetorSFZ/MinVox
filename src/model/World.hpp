@@ -36,7 +36,8 @@ public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	World(const std::string& name, const vec3f& camPos) noexcept;
+	World(const std::string& name, const vec3f& camPos,
+	      size_t horizontalRange, size_t verticalRange) noexcept;
 
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

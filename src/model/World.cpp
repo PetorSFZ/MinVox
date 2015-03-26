@@ -41,10 +41,11 @@ bool outside(const vec3i& offset, const vec3i& min, const vec3i& max) noexcept
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-World::World(const std::string& name, const vec3f& camPos) noexcept
+World::World(const std::string& name, const vec3f& camPos,
+             size_t horizontalRange, size_t verticalRange) noexcept
 :
-	mHorizontalRange{2},
-	mVerticalRange{1},
+	mHorizontalRange{horizontalRange},
+	mVerticalRange{verticalRange},
 	mNumChunks{calculateNumChunks(mHorizontalRange, mVerticalRange)},
 	mName{name},
 	mChunks{new Chunk[mNumChunks]},

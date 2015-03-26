@@ -8,6 +8,15 @@ GlobalConfig::GlobalConfig() noexcept
 {
 	mVsync = false;
 	mPrintFPS = true;
+
+	mHorizontalRange = 2;
+	mVerticalRange = 1;
+}
+
+GlobalConfig& getGlobalConfig() noexcept
+{
+	static GlobalConfig globalConfig;
+	return globalConfig;
 }
 
 } // namespace vox

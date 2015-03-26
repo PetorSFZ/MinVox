@@ -38,7 +38,7 @@ void drawLight(const vox::Assets& assets, GLuint shader, const vec3f& lightPos)
 
 BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName)
 :
-	mWorld{worldName, vec3f{-3.0f, 1.2f, 0.2f}},
+	mWorld{worldName, vec3f{-3.0f, 1.2f, 0.2f}, getGlobalConfig().mHorizontalRange, getGlobalConfig().mVerticalRange},
 	mCam{vec3f{-3.0f, 1.2f, 0.2f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.5f, 1000.0f},
 

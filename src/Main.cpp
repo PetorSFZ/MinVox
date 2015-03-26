@@ -14,7 +14,7 @@
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-vox::GlobalConfig config;
+vox::GlobalConfig& config = vox::getGlobalConfig();
 
 // Controllers
 SDL_GameController* controllerPtrs[4];

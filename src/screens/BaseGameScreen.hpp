@@ -10,6 +10,7 @@
 #include "Model.hpp"
 #include "Rendering.hpp"
 #include "screens/IScreen.hpp"
+#include "GlobalConfig.hpp"
 
 namespace vox {
 
