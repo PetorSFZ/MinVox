@@ -122,7 +122,9 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	}
 	if (ctrl.mButtonA == sdl::Button::UP) {
 		vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
-		mWorld.setVoxel(pos, Voxel{VoxelType::ORANGE, 0});
+		Voxel v = mWorld.getVoxel(pos);
+		if (v.type() != VoxelType::AIR) mWorld.setVoxel(pos, Voxel{VoxelType::AIR, 0});
+		else mWorld.setVoxel(pos, Voxel{VoxelType::ORANGE, 0});
 	}
 
 	// Menu buttons

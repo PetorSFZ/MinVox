@@ -156,6 +156,22 @@ bool World::chunkAvailable(size_t index) const noexcept
 	return mAvailabilities[index];
 }
 
+Voxel World::getVoxel(const vec3i& offset) const noexcept
+{
+	vec3i chunkOffset = chunkOffsetFromPosition(offset);
+	vec3i voxelOffset = offset - (chunkOffset*(int)CHUNK_SIZE);
+
+	int index = chunkIndex(chunkOffset);
+	if (index == -1) return Voxel{VoxelType::AIR, 0};
+	Chunk* chunkPtr = &mChunks[index];
+	return chunkPtr->getVoxel(voxelOffset);
+}
+
+Voxel World::getVoxel(const vec3f& position) const noexcept
+{
+	return getVoxel(vec3i{(int)position[0], (int)position[1], (int)position[2]});
+}
+
 // Private methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

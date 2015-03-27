@@ -64,6 +64,9 @@ public:
 	const vec3i chunkOffset(size_t index) const noexcept;
 	bool chunkAvailable(size_t index) const noexcept;
 
+	Voxel getVoxel(const vec3i& offset) const noexcept;
+	Voxel getVoxel(const vec3f& position) const noexcept;
+
 private:
 	// Private methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
