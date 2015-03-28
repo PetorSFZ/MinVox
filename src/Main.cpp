@@ -134,7 +134,7 @@ int main()
 
 	sdl::Session sdlSession{{sdl::InitFlags::EVENTS, sdl::InitFlags::VIDEO,
 	                         sdl::InitFlags::GAMECONTROLLER}, {sdl::ImgInitFlags::PNG}};
-	sdl::Window window{"MinVox", 800, 800,
+	sdl::Window window{"MinVox", config.mWindowResolutionX, config.mWindowResolutionY,
 	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
 
 	// Enable SDL Events for controllers
@@ -153,7 +153,7 @@ int main()
 	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
 
 	// Enable/disable vsync
-	if (!config.mVsync) SDL_GL_SetSwapInterval(0);
+	if (!config.mVSync) SDL_GL_SetSwapInterval(0);
 
 	// Game loop
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
