@@ -44,8 +44,8 @@ bool outside(const vec3i& offset, const vec3i& min, const vec3i& max) noexcept
 World::World(const std::string& name, const vec3f& camPos,
              size_t horizontalRange, size_t verticalRange) noexcept
 :
-	mHorizontalRange{horizontalRange},
-	mVerticalRange{verticalRange},
+	mHorizontalRange{static_cast<int>(horizontalRange)},
+	mVerticalRange{static_cast<int>(verticalRange)},
 	mNumChunks{calculateNumChunks(mHorizontalRange, mVerticalRange)},
 	mName{name},
 	mChunks{new Chunk[mNumChunks]},
