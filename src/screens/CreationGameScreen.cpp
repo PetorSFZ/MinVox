@@ -43,6 +43,12 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 			case 'E':
 				mCam.mPos += (sfz::vec3f{0.0f,1.0f,0.0} * 25.0f * delta);
 				break;
+			case 'p':
+			case 'P':
+				mOldWorldRenderer = !mOldWorldRenderer;
+				if (mOldWorldRenderer) std::cout << "Using old (linear) world renderer.\n";
+				else std::cout << "Using (recursive) world renderer.\n";
+				break;
 			case SDLK_UP:
 				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
 				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::g_PI_FLOAT*delta);
