@@ -34,6 +34,7 @@ public:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void drawWorld(const Camera& cam, GLuint shaderProgram) noexcept;
+	void drawWorldOld(const Camera& cam, GLuint shaderProgram) noexcept;
 
 private:
 	// Private members

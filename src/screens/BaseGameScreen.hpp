@@ -67,6 +67,8 @@ protected:
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 
+	bool mOldWorldRenderer = false;
+
 	Camera mSunCam;
 	vec3f mLightPosSpherical, mLightTarget, mLightColor;
 

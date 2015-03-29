@@ -90,9 +90,12 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 			part8Itr = chunkPartIterateNext(part8Itr);
 		}
 	}
+}
 
+void WorldRenderer::drawWorldOld(const Camera& cam, GLuint shaderProgram) noexcept
+{
 	// Old naive loop
-	/*mat4f transform = sfz::identityMatrix4<float>();
+	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
@@ -122,9 +125,8 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				}
 			}
 		}
-	}*/
+	}
 }
-
 
 } // namespace vox
 

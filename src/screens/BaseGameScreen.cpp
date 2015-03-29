@@ -146,7 +146,8 @@ void BaseGameScreen::render(float delta)
 	glPolygonOffset(5.0f, 25.0f);
 
 	// Draw shadow casters
-	mWorldRenderer.drawWorld(mSunCam, mShadowMapShaderProgram); // TODO: Should use camera from ShadowMap perspective
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSunCam, mShadowMapShaderProgram);
+	else mWorldRenderer.drawWorldOld(mSunCam, mShadowMapShaderProgram);
 
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -189,7 +190,8 @@ void BaseGameScreen::render(float delta)
 	glActiveTexture(GL_TEXTURE0);
 
 	// Drawing objects
-	mWorldRenderer.drawWorld(mCam, mShaderProgram);
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, mShaderProgram);
+	else mWorldRenderer.drawWorldOld(mCam, mShaderProgram);
 	drawLight(mAssets, mShaderProgram, mSunCam.mPos);
 
 	// Applying post-process effects

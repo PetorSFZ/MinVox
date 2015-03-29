@@ -129,7 +129,9 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Menu buttons
 	if (ctrl.mButtonBack == sdl::Button::UP) {
-		quitApplication();
+		mOldWorldRenderer = !mOldWorldRenderer;
+		if (mOldWorldRenderer) std::cout << "Using old (linear) world renderer.\n";
+		else std::cout << "Using (recursive) world renderer.\n";
 	}
 	if (ctrl.mButtonStart == sdl::Button::UP) {
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
