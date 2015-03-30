@@ -16,12 +16,52 @@
 namespace vox {
 
 using std::uint8_t;
+using std::uint16_t;
 using std::size_t;
 using sfz::vec3f;
 using sfz::vec3i;
 using sfz::AABB;
 
 const size_t CHUNK_SIZE = 16;
+
+// ChunkIndex & iterators
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+struct ChunkIndex final {
+	uint16_t mIndex;
+
+	ChunkIndex() noexcept = default;
+	inline ChunkIndex(uint16_t index) : mIndex{index} {}
+
+	static inline uint16_t valueOfBit(uint16_t value, uint16_t position) noexcept
+	{
+		return (value >> position) & uint16_t(1);
+	}
+
+	inline uint16_t part8X() const noexcept { return valueOfBit(mIndex, 11); }
+	inline uint16_t part8Y() const noexcept { return valueOfBit(mIndex, 10); }
+	inline uint16_t part8Z() const noexcept { return valueOfBit(mIndex, 9); }
+
+	inline uint16_t part4X() const noexcept { return valueOfBit(mIndex, 8); }
+	inline uint16_t part4Y() const noexcept { return valueOfBit(mIndex, 7); }
+	inline uint16_t part4Z() const noexcept { return valueOfBit(mIndex, 6); }
+
+	inline uint16_t part2X() const noexcept { return valueOfBit(mIndex, 5); }
+	inline uint16_t part2Y() const noexcept { return valueOfBit(mIndex, 4); }
+	inline uint16_t part2Z() const noexcept { return valueOfBit(mIndex, 3); }
+
+	inline uint16_t voxelX() const noexcept { return valueOfBit(mIndex, 2); }
+	inline uint16_t voxelY() const noexcept { return valueOfBit(mIndex, 1); }
+	inline uint16_t voxelZ() const noexcept { return valueOfBit(mIndex, 0); }
+
+	inline void operator++ (int) noexcept { mIndex++; }
+	inline ChunkIndex& operator-- () noexcept { mIndex--; return *this; }
+	inline bool operator== (const ChunkIndex& o) const noexcept { return mIndex == o.mIndex; }
+	inline bool operator!= (const ChunkIndex& o) const noexcept { return mIndex != o.mIndex; }
+};
+
+const ChunkIndex ChunkIterateBegin{0};
+const ChunkIndex ChunkIterateEnd{uint16_t(1) << 12};
 
 // ChunkParts
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -66,6 +106,7 @@ struct Chunk {
 
 	Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
 	Voxel getVoxel(const vec3i& offset) const noexcept;
+	Voxel getVoxel(ChunkIndex index) const noexcept;
 	void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
 	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };

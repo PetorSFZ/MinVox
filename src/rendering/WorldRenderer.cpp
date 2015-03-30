@@ -38,6 +38,36 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
+
+		vec3i offset = mWorld.chunkOffset(i);
+		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
+
+		calculateChunkAABB(aabb, offset);
+		if (!cam.isVisible(aabb)) continue;
+
+		for (ChunkIndex index = ChunkIterateBegin; index != ChunkIterateEnd; index++) {
+
+			Voxel v = chunkPtr->getVoxel(index);
+			if (v.type() == vox::VoxelType::AIR) continue;
+
+			vec3f voxelOffs{static_cast<float>(index.part8X()*8 + index.part4X()*4 + index.part2X()*2 + index.voxelX()),
+			                static_cast<float>(index.part8Y()*8 + index.part4Y()*4 + index.part2Y()*2 + index.voxelY()),
+							static_cast<float>(index.part8Z()*8 + index.part4Z()*4 + index.part2Z()*2 + index.voxelZ())};
+
+			sfz::translation(transform, offsetVec + voxelOffs);
+			gl::setUniform(shaderProgram, "modelMatrix", transform);
+
+			glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
+			mCubeObj.render();
+		}
+	}
+
+	/*mat4f transform = sfz::identityMatrix4<float>();
+	AABB aabb;
+
+	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
+		if (!mWorld.chunkAvailable(i)) continue;
+		const Chunk* chunkPtr = mWorld.chunkPtr(i);
 		vec3i chunkOffset = mWorld.chunkOffset(i);
 
 		calculateChunkAABB(aabb, chunkOffset);
@@ -89,7 +119,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 			}
 			part8Itr = chunkPartIterateNext(part8Itr);
 		}
-	}
+	}*/
 }
 
 void WorldRenderer::drawWorldOld(const Camera& cam, GLuint shaderProgram) noexcept

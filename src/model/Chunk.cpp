@@ -107,6 +107,15 @@ Voxel Chunk::getVoxel(const vec3i& offset) const noexcept
 	return getVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2]);
 }
 
+Voxel Chunk::getVoxel(ChunkIndex i) const noexcept
+{
+	sfz_assert_debug(i.mIndex < ChunkIterateEnd.mIndex);
+	const ChunkPart8* part8 = &mChunkPart8s[i.part8X()][i.part8Y()][i.part8Z()];
+	const ChunkPart4* part4 = &part8->mChunkPart4s[i.part4X()][i.part4Y()][i.part4Z()];
+	const ChunkPart2* part2 = &part4->mChunkPart2s[i.part2X()][i.part2Y()][i.part2Z()];
+	return part2->getVoxel((size_t)i.voxelX(), (size_t)i.voxelY(), (size_t)i.voxelZ());
+}
+
 void Chunk::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 {
 	sfz_assert_debug(x < CHUNK_SIZE);
