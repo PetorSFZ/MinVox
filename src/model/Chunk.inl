@@ -2,6 +2,37 @@
 
 namespace vox {
 
+// ChunkIndex & iterators
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+inline vec3f ChunkIndex::part8Offset() const noexcept
+{
+	return vec3f{static_cast<float>(part8X()*8),
+	             static_cast<float>(part8Y()*8),
+	             static_cast<float>(part8Z()*8)};
+}
+
+inline vec3f ChunkIndex::part4Offset() const noexcept
+{
+	return vec3f{static_cast<float>(part8X()*8 + part4X()*4),
+	             static_cast<float>(part8Y()*8 + part4Y()*4),
+	             static_cast<float>(part8Z()*8 + part4Z()*4)};
+}
+
+inline vec3f ChunkIndex::part2Offset() const noexcept
+{
+	return vec3f{static_cast<float>(part8X()*8 + part4X()*4 + part2X()*2),
+	             static_cast<float>(part8Y()*8 + part4Y()*4 + part2Y()*2),
+	             static_cast<float>(part8Z()*8 + part4Z()*4 + part2Z()*2)};
+}
+
+inline vec3f ChunkIndex::voxelOffset() const noexcept
+{
+	return vec3f{static_cast<float>(part8X()*8 + part4X()*4 + part2X()*2 + voxelX()),
+	             static_cast<float>(part8Y()*8 + part4Y()*4 + part2Y()*2 + voxelY()),
+	             static_cast<float>(part8Z()*8 + part4Z()*4 + part2Z()*2 + voxelZ())};
+}
+
 // ChunkPart2: Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

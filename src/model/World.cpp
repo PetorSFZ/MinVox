@@ -36,6 +36,26 @@ bool outside(const vec3i& offset, const vec3i& min, const vec3i& max) noexcept
 	       (offset[2] < min[2] || max[2] < offset[2]);
 }
 
+inline vec3i offsetIterateNext(const vec3i& current, const vec3i& min, const vec3i& max) noexcept
+{
+	vec3i next = current;
+	next[2]++;
+	if (next[2] > max[2]) {
+		next[2] = min[2];
+		next[1]++;
+		if (next[1] > max[1]) {
+			next[1] = min[1];
+			next[0]++;
+		}
+	}
+	return next;
+}
+
+inline vec3i offsetIterateEnd(const vec3i& min, const vec3i& max) noexcept
+{
+	return vec3i{max[0] + 1, min[1], min[2]};
+}
+
 } // namespace
 
 // Constructors & destructors

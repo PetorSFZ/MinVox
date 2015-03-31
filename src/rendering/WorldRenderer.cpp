@@ -50,11 +50,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 			Voxel v = chunkPtr->getVoxel(index);
 			if (v.type() == vox::VoxelType::AIR) continue;
 
-			vec3f voxelOffs{static_cast<float>(index.part8X()*8 + index.part4X()*4 + index.part2X()*2 + index.voxelX()),
-			                static_cast<float>(index.part8Y()*8 + index.part4Y()*4 + index.part2Y()*2 + index.voxelY()),
-							static_cast<float>(index.part8Z()*8 + index.part4Z()*4 + index.part2Z()*2 + index.voxelZ())};
-
-			sfz::translation(transform, offsetVec + voxelOffs);
+			sfz::translation(transform, offsetVec + index.voxelOffset());
 			gl::setUniform(shaderProgram, "modelMatrix", transform);
 
 			glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));

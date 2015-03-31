@@ -54,12 +54,19 @@ struct ChunkIndex final {
 	inline uint16_t voxelY() const noexcept { return valueOfBit(mIndex, 1); }
 	inline uint16_t voxelZ() const noexcept { return valueOfBit(mIndex, 0); }
 
+	inline vec3f part8Offset() const noexcept;
+	inline vec3f part4Offset() const noexcept;
+	inline vec3f part2Offset() const noexcept;
+	inline vec3f voxelOffset() const noexcept;
+
 	inline void operator++ (int) noexcept { mIndex++; }
 	inline ChunkIndex& operator-- () noexcept { mIndex--; return *this; }
 	inline bool operator== (const ChunkIndex& o) const noexcept { return mIndex == o.mIndex; }
 	inline bool operator!= (const ChunkIndex& o) const noexcept { return mIndex != o.mIndex; }
 };
 
+// Can iterate through all the voxels in a Chunk using the following loop:
+// for (ChunkIndex i = ChunkIterateBegin; i < ChunkIterateEnd; i++) { }
 const ChunkIndex ChunkIterateBegin{0};
 const ChunkIndex ChunkIterateEnd{uint16_t(1) << 12};
 
@@ -112,46 +119,6 @@ struct Chunk {
 	inline void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
 	inline void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };
-
-// ChunkPart iterator functions
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-inline vec3i chunkPartIterateBegin() noexcept { return vec3i{0,0,0}; }
-inline vec3i chunkPartIterateEnd() noexcept { return vec3i{2,0,0}; }
-inline vec3i chunkPartIterateNext(const vec3i& current) noexcept
-{
-	vec3i next = current;
-	next[2]++;
-	if (next[2] >= 2) {
-		next[2] = 0;
-		next[1]++;
-		if (next[1] >= 2) {
-			next[1] = 0;
-			next[0]++;
-		}
-	}
-	return next;
-}
-
-inline vec3i offsetIterateNext(const vec3i& current, const vec3i& min, const vec3i& max) noexcept
-{
-	vec3i next = current;
-	next[2]++;
-	if (next[2] > max[2]) {
-		next[2] = min[2];
-		next[1]++;
-		if (next[1] > max[1]) {
-			next[1] = min[1];
-			next[0]++;
-		}
-	}
-	return next;
-}
-
-inline vec3i offsetIterateEnd(const vec3i& min, const vec3i& max) noexcept
-{
-	return vec3i{max[0] + 1, min[1], min[2]};
-}
 
 // Chunk AABB calculators
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
