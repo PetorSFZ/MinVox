@@ -1,5 +1,3 @@
-#include "model/Chunk.hpp"
-
 #include <sfz/MSVC12HackON.hpp>
 
 namespace vox {
@@ -7,7 +5,7 @@ namespace vox {
 // ChunkPart2: Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Voxel ChunkPart2::getVoxel(size_t x, size_t y, size_t z) const noexcept
+inline Voxel ChunkPart2::getVoxel(size_t x, size_t y, size_t z) const noexcept
 {
 	sfz_assert_debug(x < 2);
 	sfz_assert_debug(y < 2);
@@ -15,7 +13,7 @@ Voxel ChunkPart2::getVoxel(size_t x, size_t y, size_t z) const noexcept
 	return mVoxel[x][y][z];
 }
 
-Voxel ChunkPart2::getVoxel(const vec3i& offset) const noexcept
+inline Voxel ChunkPart2::getVoxel(const vec3i& offset) const noexcept
 {
 	sfz_assert_debug(0 <= offset[0]);
 	sfz_assert_debug(0 <= offset[1]);
@@ -23,7 +21,12 @@ Voxel ChunkPart2::getVoxel(const vec3i& offset) const noexcept
 	return getVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2]);
 }
 
-void ChunkPart2::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
+inline Voxel ChunkPart2::getVoxel(ChunkIndex index) const noexcept
+{
+	return mVoxel[index.voxelX()][index.voxelY()][index.voxelZ()];
+}
+
+inline void ChunkPart2::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 {
 	sfz_assert_debug(x < 2);
 	sfz_assert_debug(y < 2);
@@ -31,7 +34,7 @@ void ChunkPart2::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 	mVoxel[x][y][z] = voxel;
 }
 
-void ChunkPart2::setVoxel(const vec3i& offset, Voxel voxel) noexcept
+inline void ChunkPart2::setVoxel(const vec3i& offset, Voxel voxel) noexcept
 {
 	sfz_assert_debug(0 <= offset[0]);
 	sfz_assert_debug(0 <= offset[1]);
@@ -39,10 +42,15 @@ void ChunkPart2::setVoxel(const vec3i& offset, Voxel voxel) noexcept
 	setVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2], voxel);
 }
 
+inline void ChunkPart2::setVoxel(ChunkIndex index, Voxel voxel) noexcept
+{
+	mVoxel[index.voxelX()][index.voxelY()][index.voxelZ()] = voxel;
+}
+
 // Chunk: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Chunk::Chunk() noexcept
+inline Chunk::Chunk() noexcept
 {
 	static_assert(sizeof(Voxel) == 1, "Voxel is padded.");
 	static_assert(sizeof(ChunkPart2) == 8, "ChunkPart2 is padded.");
@@ -54,7 +62,7 @@ Chunk::Chunk() noexcept
 // Chunk: Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Voxel Chunk::getVoxel(size_t x, size_t y, size_t z) const noexcept
+inline Voxel Chunk::getVoxel(size_t x, size_t y, size_t z) const noexcept
 {
 	sfz_assert_debug(x < CHUNK_SIZE);
 	sfz_assert_debug(y < CHUNK_SIZE);
@@ -99,7 +107,7 @@ Voxel Chunk::getVoxel(size_t x, size_t y, size_t z) const noexcept
 	return part2->getVoxel(x, y, z);
 }
 
-Voxel Chunk::getVoxel(const vec3i& offset) const noexcept
+inline Voxel Chunk::getVoxel(const vec3i& offset) const noexcept
 {
 	sfz_assert_debug(0 <= offset[0]);
 	sfz_assert_debug(0 <= offset[1]);
@@ -107,16 +115,16 @@ Voxel Chunk::getVoxel(const vec3i& offset) const noexcept
 	return getVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2]);
 }
 
-Voxel Chunk::getVoxel(ChunkIndex i) const noexcept
+inline Voxel Chunk::getVoxel(ChunkIndex i) const noexcept
 {
 	sfz_assert_debug(i.mIndex < ChunkIterateEnd.mIndex);
 	const ChunkPart8* part8 = &mChunkPart8s[i.part8X()][i.part8Y()][i.part8Z()];
 	const ChunkPart4* part4 = &part8->mChunkPart4s[i.part4X()][i.part4Y()][i.part4Z()];
 	const ChunkPart2* part2 = &part4->mChunkPart2s[i.part2X()][i.part2Y()][i.part2Z()];
-	return part2->getVoxel((size_t)i.voxelX(), (size_t)i.voxelY(), (size_t)i.voxelZ());
+	return part2->getVoxel(i);
 }
 
-void Chunk::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
+inline void Chunk::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 {
 	sfz_assert_debug(x < CHUNK_SIZE);
 	sfz_assert_debug(y < CHUNK_SIZE);
@@ -161,7 +169,7 @@ void Chunk::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
 	part2->setVoxel(x, y, z, voxel);
 }
 
-void Chunk::setVoxel(const vec3i& offset, Voxel voxel) noexcept
+inline void Chunk::setVoxel(const vec3i& offset, Voxel voxel) noexcept
 {
 	sfz_assert_debug(0 <= offset[0]);
 	sfz_assert_debug(0 <= offset[1]);

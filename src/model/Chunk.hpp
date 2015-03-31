@@ -70,10 +70,12 @@ class ChunkPart2 {
 private:
 	Voxel mVoxel[2][2][2];
 public:
-	Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
-	Voxel getVoxel(const vec3i& offset) const noexcept;
-	void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
-	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
+	inline Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
+	inline Voxel getVoxel(const vec3i& offset) const noexcept;
+	inline Voxel getVoxel(ChunkIndex index) const noexcept;
+	inline void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
+	inline void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
+	inline void setVoxel(ChunkIndex index, Voxel voxel) noexcept;
 };
 
 struct ChunkPart4 {
@@ -102,13 +104,13 @@ struct Chunk {
 		return &mChunkPart8s[offset[0]][offset[1]][offset[2]];
 	}
 
-	Chunk() noexcept;
+	inline Chunk() noexcept;
 
-	Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
-	Voxel getVoxel(const vec3i& offset) const noexcept;
-	Voxel getVoxel(ChunkIndex index) const noexcept;
-	void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
-	void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
+	inline Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
+	inline Voxel getVoxel(const vec3i& offset) const noexcept;
+	inline Voxel getVoxel(ChunkIndex index) const noexcept;
+	inline void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
+	inline void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 };
 
 // ChunkPart iterator functions
@@ -212,4 +214,5 @@ inline void calculateVoxelAABB(AABB& aabb, const vec3i& chunkOffset,
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>
+#include "model/Chunk.inl"
 #endif
