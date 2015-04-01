@@ -58,8 +58,32 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 					index.plusPart4();
 					continue;
 				}
-				for (unsigned int voxeli = 0; voxeli < 64; voxeli++) {
-					
+
+				for (unsigned int part2i = 0; part2i < 8; part2i++) {
+					calculateChunkPart2AABB(aabb, offsetVec, index);
+					if (!cam.isVisible(aabb)) {
+						index.plusPart2();
+						continue;
+					}
+					for (unsigned int voxeli = 0; voxeli < 8; voxeli++) {
+						Voxel v = chunkPtr->getVoxel(index);
+						if (v.type() == vox::VoxelType::AIR) {
+							index++;
+							continue;
+						}
+
+						sfz::translation(transform, offsetVec + index.voxelOffset());
+						gl::setUniform(shaderProgram, "modelMatrix", transform);
+
+						glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
+						mCubeObj.render();
+
+						index++;
+					}
+				}
+
+				/*for (unsigned int voxeli = 0; voxeli < 64; voxeli++) {
+
 					Voxel v = chunkPtr->getVoxel(index);
 					if (v.type() == vox::VoxelType::AIR) {
 						index++;
@@ -73,70 +97,11 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 					mCubeObj.render();
 
 					index++;
-				}
+				}*/
 			} 
 		}
 		sfz_assert_debug(index == ChunkIterateEnd);
 	}
-
-	/*mat4f transform = sfz::identityMatrix4<float>();
-	AABB aabb;
-
-	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
-		if (!mWorld.chunkAvailable(i)) continue;
-		const Chunk* chunkPtr = mWorld.chunkPtr(i);
-		vec3i chunkOffset = mWorld.chunkOffset(i);
-
-		calculateChunkAABB(aabb, chunkOffset);
-		if (!cam.isVisible(aabb)) continue;
-
-		vec3i part8Itr = chunkPartIterateBegin();
-		while (part8Itr != chunkPartIterateEnd()) {
-			calculateChunkPart8AABB(aabb, chunkOffset, part8Itr);
-			if (!cam.isVisible(aabb)) {
-				part8Itr = chunkPartIterateNext(part8Itr);
-				continue;
-			}
-			const ChunkPart8* chunkPart8 = chunkPtr->chunkPart8Ptr(part8Itr);
-			
-			vec3i part4Itr = chunkPartIterateBegin();
-			while (part4Itr != chunkPartIterateEnd()) {
-				calculateChunkPart4AABB(aabb, chunkOffset, part8Itr, part4Itr);
-				if (!cam.isVisible(aabb)) {
-					part4Itr = chunkPartIterateNext(part4Itr);
-					continue;
-				}
-				const ChunkPart4* chunkPart4 = chunkPart8->chunkPart4Ptr(part4Itr);
-
-				vec3i part2Itr = chunkPartIterateBegin();
-				while (part2Itr != chunkPartIterateEnd()) {
-					const ChunkPart2* chunkPart2 = chunkPart4->chunkPart2Ptr(part2Itr);
-					
-					vec3i voxelItr = chunkPartIterateBegin();
-					while (voxelItr != chunkPartIterateEnd()) {
-						Voxel v = chunkPart2->getVoxel(voxelItr);
-
-						if (v.type() == vox::VoxelType::AIR) {
-							voxelItr = chunkPartIterateNext(voxelItr);
-							continue;
-						}
-
-						vec3f voxelPosition = offsetToVector(chunkOffset*16 + part8Itr*8 + part4Itr*4 + part2Itr*2 + voxelItr);
-						sfz::translation(transform, voxelPosition);
-						gl::setUniform(shaderProgram, "modelMatrix", transform);
-
-						glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
-						mCubeObj.render();
-
-						voxelItr = chunkPartIterateNext(voxelItr);
-					}
-					part2Itr = chunkPartIterateNext(part2Itr);
-				}
-				part4Itr = chunkPartIterateNext(part4Itr);
-			}
-			part8Itr = chunkPartIterateNext(part8Itr);
-		}
-	}*/
 }
 
 void WorldRenderer::drawWorldOld(const Camera& cam, GLuint shaderProgram) noexcept
