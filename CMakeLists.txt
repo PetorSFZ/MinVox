@@ -16,8 +16,8 @@ if(MSVC)
 else()
 	# GCC / Clang flags
 	set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c++11-extensions -std=c++11 -pthread")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DSFZ_NO_DEBUG")
-	set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -ffast-math -g -DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DSFZ_NO_DEBUG")
 	set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
 endif()
 
