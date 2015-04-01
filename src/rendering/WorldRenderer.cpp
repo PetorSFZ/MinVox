@@ -42,20 +42,41 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 		vec3i offset = mWorld.chunkOffset(i);
 		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
 
-		calculateChunkAABB(aabb, offset);
+		calculateChunkAABB(aabb, offsetVec);
 		if (!cam.isVisible(aabb)) continue;
 
-		for (ChunkIndex index = ChunkIterateBegin; index != ChunkIterateEnd; index++) {
+		ChunkIndex index = ChunkIterateBegin;
+		for (unsigned int part8i = 0; part8i < 8; part8i++) {
+			calculateChunkPart8AABB(aabb, offsetVec, index);
+			if (!cam.isVisible(aabb)) {
+				index.plusPart8();
+				continue;
+			}
+			for (unsigned int part4i = 0; part4i < 8; part4i++) {
+				calculateChunkPart4AABB(aabb, offsetVec, index);
+				if (!cam.isVisible(aabb)) {
+					index.plusPart4();
+					continue;
+				}
+				for (unsigned int voxeli = 0; voxeli < 64; voxeli++) {
+					
+					Voxel v = chunkPtr->getVoxel(index);
+					if (v.type() == vox::VoxelType::AIR) {
+						index++;
+						continue;
+					}
 
-			Voxel v = chunkPtr->getVoxel(index);
-			if (v.type() == vox::VoxelType::AIR) continue;
+					sfz::translation(transform, offsetVec + index.voxelOffset());
+					gl::setUniform(shaderProgram, "modelMatrix", transform);
 
-			sfz::translation(transform, offsetVec + index.voxelOffset());
-			gl::setUniform(shaderProgram, "modelMatrix", transform);
+					glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
+					mCubeObj.render();
 
-			glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
-			mCubeObj.render();
+					index++;
+				}
+			} 
 		}
+		sfz_assert_debug(index == ChunkIterateEnd);
 	}
 
 	/*mat4f transform = sfz::identityMatrix4<float>();

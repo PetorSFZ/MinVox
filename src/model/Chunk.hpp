@@ -59,6 +59,12 @@ struct ChunkIndex final {
 	inline vec3f part2Offset() const noexcept;
 	inline vec3f voxelOffset() const noexcept;
 
+	//inline void plusPart8() noexcept { mIndex }
+	inline void plusPart8() noexcept { mIndex += (uint16_t(1 << 9)); }
+	inline void plusPart4() noexcept { mIndex += (uint16_t(1 << 6)); }
+	inline void plusPart2() noexcept { mIndex += (uint16_t(1 << 3)); }
+	inline void plusVoxel() noexcept { mIndex++; };
+
 	inline void operator++ (int) noexcept { mIndex++; }
 	inline ChunkIndex& operator-- () noexcept { mIndex--; return *this; }
 	inline bool operator== (const ChunkIndex& o) const noexcept { return mIndex == o.mIndex; }
@@ -123,60 +129,27 @@ struct Chunk {
 // Chunk AABB calculators
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-inline void calculateChunkAABB(AABB& aabb, const vec3i& chunkOffset) noexcept
-{
-	static vec3f chunkSize{16.0f, 16.0f, 16.0f};
-	vec3i minTemp = chunkOffset*16;
-	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
-	aabb.min(minPos);
-	aabb.max(minPos + chunkSize);
-}
+inline void calculateChunkAABB(AABB& aabb, const vec3f& chunkPos) noexcept;
+inline void calculateChunkPart8AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
+inline void calculateChunkPart4AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
+inline void calculateChunkPart2AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
+inline void calculateVoxelAABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
 
+inline void calculateChunkAABB(AABB& aabb, const vec3i& chunkOffset) noexcept;
 inline void calculateChunkPart8AABB(AABB& aabb, const vec3i& chunkOffset,
-                                                const vec3i& part8Offset) noexcept
-{
-	static vec3f chunkPart8Size{8.0f, 8.0f, 8.0f};
-	vec3i minTemp = chunkOffset*16 + part8Offset*8;
-	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
-	aabb.min(minPos);
-	aabb.max(minPos + chunkPart8Size);
-}
-
+                                                const vec3i& part8Offset) noexcept;
 inline void calculateChunkPart4AABB(AABB& aabb, const vec3i& chunkOffset,
                                                 const vec3i& part8Offset,
-                                                const vec3i& part4Offset) noexcept
-{
-	static vec3f chunkPart4Size{4.0f, 4.0f, 4.0f};
-	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4;
-	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
-	aabb.min(minPos);
-	aabb.max(minPos + chunkPart4Size);
-}
-
+                                                const vec3i& part4Offset) noexcept;
 inline void calculateChunkPart2AABB(AABB& aabb, const vec3i& chunkOffset,
                                                 const vec3i& part8Offset,
                                                 const vec3i& part4Offset,
-                                                const vec3i& part2Offset) noexcept
-{
-	static vec3f chunkPart2Size{2.0f, 2.0f, 2.0f};
-	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4 + part2Offset*2;
-	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
-	aabb.min(minPos);
-	aabb.max(minPos + chunkPart2Size);
-}
-
+                                                const vec3i& part2Offset) noexcept;
 inline void calculateVoxelAABB(AABB& aabb, const vec3i& chunkOffset,
                                            const vec3i& part8Offset,
                                            const vec3i& part4Offset,
                                            const vec3i& part2Offset,
-                                           const vec3i& voxelOffset) noexcept
-{
-	static vec3f voxelSize{1.0f, 1.0f, 1.0f};
-	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4 + part2Offset*2 + voxelOffset;
-	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
-	aabb.min(minPos);
-	aabb.max(minPos + voxelSize);
-}
+                                           const vec3i& voxelOffset) noexcept;
 
 } // namespace vox
 

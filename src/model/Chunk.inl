@@ -208,6 +208,103 @@ inline void Chunk::setVoxel(const vec3i& offset, Voxel voxel) noexcept
 	setVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2], voxel);
 }
 
+// Chunk AABB calculators
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+inline void calculateChunkAABB(AABB& aabb, const vec3f& chunkPos) noexcept
+{
+	static const vec3f chunkSize{16.0f, 16.0f, 16.0f};
+	aabb.min(chunkPos);
+	aabb.max(chunkPos + chunkSize);
+}
+
+inline void calculateChunkPart8AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept
+{
+	static const vec3f chunkPart8Size{8.0f, 8.0f, 8.0f};
+	vec3f minPos = chunkPos + index.part8Offset();
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart8Size);
+}
+
+inline void calculateChunkPart4AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept
+{
+	static const vec3f chunkPart4Size{4.0f, 4.0f, 4.0f};
+	vec3f minPos = chunkPos + index.part4Offset();
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart4Size);
+}
+
+inline void calculateChunkPart2AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept
+{
+	static const vec3f chunkPart2Size{2.0f, 2.0f, 2.0f};
+	vec3f minPos = chunkPos + index.part2Offset();
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart2Size);
+}
+
+inline void calculateVoxelAABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept
+{
+	static const vec3f voxelSize{1.0f, 1.0f, 1.0f};
+	vec3f minPos = chunkPos + index.voxelOffset();
+	aabb.min(minPos);
+	aabb.max(minPos + voxelSize);
+}
+
+inline void calculateChunkAABB(AABB& aabb, const vec3i& chunkOffset) noexcept
+{
+	static vec3f chunkSize{16.0f, 16.0f, 16.0f};
+	vec3i minTemp = chunkOffset*16;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkSize);
+}
+
+inline void calculateChunkPart8AABB(AABB& aabb, const vec3i& chunkOffset,
+                                                const vec3i& part8Offset) noexcept
+{
+	static vec3f chunkPart8Size{8.0f, 8.0f, 8.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart8Size);
+}
+
+inline void calculateChunkPart4AABB(AABB& aabb, const vec3i& chunkOffset,
+                                                const vec3i& part8Offset,
+                                                const vec3i& part4Offset) noexcept
+{
+	static vec3f chunkPart4Size{4.0f, 4.0f, 4.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart4Size);
+}
+
+inline void calculateChunkPart2AABB(AABB& aabb, const vec3i& chunkOffset,
+                                                const vec3i& part8Offset,
+                                                const vec3i& part4Offset,
+                                                const vec3i& part2Offset) noexcept
+{
+	static vec3f chunkPart2Size{2.0f, 2.0f, 2.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4 + part2Offset*2;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + chunkPart2Size);
+}
+
+inline void calculateVoxelAABB(AABB& aabb, const vec3i& chunkOffset,
+                                           const vec3i& part8Offset,
+                                           const vec3i& part4Offset,
+                                           const vec3i& part2Offset,
+                                           const vec3i& voxelOffset) noexcept
+{
+	static vec3f voxelSize{1.0f, 1.0f, 1.0f};
+	vec3i minTemp = chunkOffset*16 + part8Offset*8 + part4Offset*4 + part2Offset*2 + voxelOffset;
+	vec3f minPos{(float)minTemp[0], (float)minTemp[1], (float)minTemp[2]};
+	aabb.min(minPos);
+	aabb.max(minPos + voxelSize);
+}
+
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>
