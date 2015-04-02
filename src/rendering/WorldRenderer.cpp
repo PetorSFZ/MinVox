@@ -52,37 +52,15 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				index.plusPart8();
 				continue;
 			}
-			for (unsigned int part4i = 0; part4i < 8; part4i++) {
+
+			// More culling version
+			/*for (unsigned int part4i = 0; part4i < 8; part4i++) {
 				calculateChunkPart4AABB(aabb, offsetVec, index);
 				if (!cam.isVisible(aabb)) {
 					index.plusPart4();
 					continue;
 				}
-
-				for (unsigned int part2i = 0; part2i < 8; part2i++) {
-					calculateChunkPart2AABB(aabb, offsetVec, index);
-					if (!cam.isVisible(aabb)) {
-						index.plusPart2();
-						continue;
-					}
-					for (unsigned int voxeli = 0; voxeli < 8; voxeli++) {
-						Voxel v = chunkPtr->getVoxel(index);
-						if (v.type() == vox::VoxelType::AIR) {
-							index++;
-							continue;
-						}
-
-						sfz::translation(transform, offsetVec + index.voxelOffset());
-						gl::setUniform(shaderProgram, "modelMatrix", transform);
-
-						glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
-						mCubeObj.render();
-
-						index++;
-					}
-				}
-
-				/*for (unsigned int voxeli = 0; voxeli < 64; voxeli++) {
+				for (unsigned int voxeli = 0; voxeli < 64; voxeli++) {
 
 					Voxel v = chunkPtr->getVoxel(index);
 					if (v.type() == vox::VoxelType::AIR) {
@@ -97,8 +75,25 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 					mCubeObj.render();
 
 					index++;
-				}*/
-			} 
+				}
+			}*/ 
+
+			// Less culling version
+			for (unsigned int voxeli = 0; voxeli < 512; voxeli++) {
+				Voxel v = chunkPtr->getVoxel(index);
+				if (v.type() == vox::VoxelType::AIR) {
+					index++;
+					continue;
+				}
+
+				sfz::translation(transform, offsetVec + index.voxelOffset());
+				gl::setUniform(shaderProgram, "modelMatrix", transform);
+
+				glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
+				mCubeObj.render();
+
+				index++;
+			}
 		}
 		sfz_assert_debug(index == ChunkIterateEnd);
 	}
