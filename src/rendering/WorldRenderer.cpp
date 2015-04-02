@@ -9,11 +9,6 @@ namespace vox {
 
 namespace {
 
-vec3f offsetToVector(const vec3i& offset) noexcept
-{
-	return vec3f{(float)offset[0], (float)offset[1], (float)offset[2]};
-}
-
 } // anonymous namespace
 
 // Constructors & destructors
@@ -52,8 +47,6 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 				index.plusPart8();
 				continue;
 			}
-
-			// More culling version
 			for (unsigned int part4i = 0; part4i < 8; part4i++) {
 				calculateChunkPart4AABB(aabb, offsetVec, index);
 				if (!cam.isVisible(aabb)) {

@@ -59,7 +59,6 @@ struct ChunkIndex final {
 	inline vec3f part2Offset() const noexcept;
 	inline vec3f voxelOffset() const noexcept;
 
-	//inline void plusPart8() noexcept { mIndex }
 	inline void plusPart8() noexcept { mIndex += (uint16_t(1 << 9)); }
 	inline void plusPart4() noexcept { mIndex += (uint16_t(1 << 6)); }
 	inline void plusPart2() noexcept { mIndex += (uint16_t(1 << 3)); }
