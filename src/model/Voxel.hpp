@@ -4,6 +4,8 @@
 
 #include <cstdint> // uint8_t
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 using std::uint8_t;
@@ -22,16 +24,19 @@ enum class VoxelType : uint8_t {
 struct Voxel final {
 	uint8_t mData;
 
-	inline Voxel();
-	inline Voxel(VoxelType type, uint8_t data);
+	inline Voxel() noexcept;
+	inline Voxel(uint8_t rawVoxel) noexcept;
+	inline Voxel(VoxelType type) noexcept;
+	inline Voxel(VoxelType type, uint8_t data) noexcept;
 
-	inline VoxelType type() const;
-	inline uint8_t extraData() const;
-	inline void setType(VoxelType type);
-	inline void setExtraData(uint8_t data);
+	inline VoxelType type() const noexcept;
+	inline uint8_t extraData() const noexcept;
+	inline void setType(VoxelType type) noexcept;
+	inline void setExtraData(uint8_t data) noexcept;
 };
 
 } // namespace vox
 
+#include <sfz/MSVC12HackOFF.hpp>
 #include "model/Voxel.inl"
 #endif

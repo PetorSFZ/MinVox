@@ -36,6 +36,64 @@ inline vec3f ChunkIndex::voxelOffset() const noexcept
 // ChunkPart2: Getters & setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+#ifdef COMPACT_CHUNK_PART_2
+inline Voxel voxelFromUint8_t(uint8_t data, uint8_t z) noexcept
+{
+	return static_cast<Voxel>((data >> (4*z)) & uint8_t(0x0F));
+}
+
+inline void voxelToUint8_t(uint8_t& data, uint8_t z, Voxel voxel) noexcept
+{
+	uint8_t rawVoxel = static_cast<uint8_t>(voxel.type());
+	rawVoxel = rawVoxel << (4*z);
+	uint8_t mask = ~(uint8_t(0x0F) << (4*z));
+	data = (data & mask) | rawVoxel;
+}
+
+inline Voxel ChunkPart2::getVoxel(size_t x, size_t y, size_t z) const noexcept
+{
+	sfz_assert_debug(x < 2);
+	sfz_assert_debug(y < 2);
+	sfz_assert_debug(z < 2);
+	return voxelFromUint8_t(mVoxelData[x][y], z);
+}
+
+inline Voxel ChunkPart2::getVoxel(const vec3i& offset) const noexcept
+{
+	sfz_assert_debug(0 <= offset[0]);
+	sfz_assert_debug(0 <= offset[1]);
+	sfz_assert_debug(0 <= offset[2]);
+	return getVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2]);
+}
+
+inline Voxel ChunkPart2::getVoxel(ChunkIndex index) const noexcept
+{
+	return voxelFromUint8_t(mVoxelData[index.voxelX()][index.voxelY()], index.voxelZ());
+}
+
+inline void ChunkPart2::setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept
+{
+	sfz_assert_debug(x < 2);
+	sfz_assert_debug(y < 2);
+	sfz_assert_debug(z < 2);
+	voxelToUint8_t(mVoxelData[x][y], z, voxel);
+}
+
+inline void ChunkPart2::setVoxel(const vec3i& offset, Voxel voxel) noexcept
+{
+	sfz_assert_debug(0 <= offset[0]);
+	sfz_assert_debug(0 <= offset[1]);
+	sfz_assert_debug(0 <= offset[2]);
+	setVoxel((size_t)offset[0], (size_t)offset[1], (size_t)offset[2], voxel);
+}
+
+inline void ChunkPart2::setVoxel(ChunkIndex index, Voxel voxel) noexcept
+{
+	voxelToUint8_t(mVoxelData[index.voxelX()][index.voxelY()], index.voxelZ(), voxel);
+}
+
+#else
+
 inline Voxel ChunkPart2::getVoxel(size_t x, size_t y, size_t z) const noexcept
 {
 	sfz_assert_debug(x < 2);
@@ -78,16 +136,18 @@ inline void ChunkPart2::setVoxel(ChunkIndex index, Voxel voxel) noexcept
 	mVoxel[index.voxelX()][index.voxelY()][index.voxelZ()] = voxel;
 }
 
+#endif
+
 // Chunk: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 inline Chunk::Chunk() noexcept
 {
 	static_assert(sizeof(Voxel) == 1, "Voxel is padded.");
-	static_assert(sizeof(ChunkPart2) == 8, "ChunkPart2 is padded.");
+	/*static_assert(sizeof(ChunkPart2) == 8, "ChunkPart2 is padded.");
 	static_assert(sizeof(ChunkPart4) == 64, "ChunkPart4 is padded.");
 	static_assert(sizeof(ChunkPart8) == 512, "ChunkPart8 is padded.");
-	static_assert(sizeof(Chunk) == 4096, "Chunk is padded.");
+	static_assert(sizeof(Chunk) == 4096, "Chunk is padded.");*/
 }
 
 // Chunk: Getters & setters

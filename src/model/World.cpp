@@ -226,7 +226,7 @@ void World::loadChunks() noexcept
 			while (!mToBeReplaced[currentWriteIndex]) currentWriteIndex++;
 			sfz_assert_debug(currentWriteIndex < mNumChunks);
 
-			if (!readChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName)) {
+			if (true){//!readChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName)) {
 				std::cout << "Generated and wrote chunk at: " << mOffsets[currentWriteIndex] << std::endl;
 				mChunks[currentWriteIndex] = generateChunk(itr);
 				writeChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName);
