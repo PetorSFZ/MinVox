@@ -11,7 +11,7 @@
 namespace vox {
 
 struct BigFramebuffer final {
-	GLuint mFrameBufferObject, mColorTexture, mNormalTexture, mDepthTexture;
+	GLuint mFrameBufferObject, mColorTexture, mNormalTexture, mDepthTexture, mPositionTexture;
 	int mWidth, mHeight;
 
 	BigFramebuffer() = delete;

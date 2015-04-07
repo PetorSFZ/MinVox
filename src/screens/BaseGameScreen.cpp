@@ -215,6 +215,10 @@ void BaseGameScreen::render(float delta)
 	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mDepthTexture);
 	gl::setUniform(mPostProcessShaderProgram, "depthTexture", 2);
 
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mPositionTexture);
+	gl::setUniform(mPostProcessShaderProgram, "positionTexture", 3);
+
 	mFullscreenQuad.render();
 
 	glUseProgram(0);

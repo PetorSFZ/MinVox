@@ -40,8 +40,16 @@ BigFramebuffer::BigFramebuffer(int width, int height) noexcept
 	glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_RECTANGLE, mDepthTexture, 0);
 
-	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-	glDrawBuffers(2, drawBuffers);
+	// Position texture
+	glGenTextures(1, &mPositionTexture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, mPositionTexture);
+	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_RECTANGLE, mPositionTexture, 0);
+
+	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+	glDrawBuffers(3, drawBuffers);
 
 	// Check that framebuffer is okay
 	sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
@@ -67,6 +75,7 @@ BigFramebuffer::~BigFramebuffer() noexcept
 	glDeleteTextures(1, &mColorTexture);
 	glDeleteTextures(1, &mDepthTexture);
 	glDeleteTextures(1, &mNormalTexture);
+	glDeleteTextures(1, &mPositionTexture);
 	glDeleteFramebuffers(1, &mFrameBufferObject);
 }
 

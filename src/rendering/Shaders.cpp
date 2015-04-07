@@ -57,6 +57,7 @@ GLuint compileStandardShaderProgram()
 
 		layout(location = 0) out vec4 fragmentColor;
 		layout(location = 1) out vec4 fragmentNormal;
+		layout(location = 2) out vec4 fragmentPosition;
 
 		uniform sampler2D tex;
 		uniform sampler2DShadow shadowMap;
@@ -93,6 +94,7 @@ GLuint compileStandardShaderProgram()
 
 			fragmentColor = vec4(shading, 1.0);
 			fragmentNormal = vec4(vsNormal, 1.0);
+			fragmentPosition = vec4(vsPos, 1.0);
 		}
 	)");
 
@@ -108,6 +110,7 @@ GLuint compileStandardShaderProgram()
 	glBindAttribLocation(shaderProgram, 2, "normalIn");
 	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
 	glBindFragDataLocation(shaderProgram, 1, "fragmentNormal");
+	glBindFragDataLocation(shaderProgram, 2, "fragmentPosition");
 
 	gl::linkProgram(shaderProgram);
 
@@ -190,6 +193,7 @@ GLuint compilePostProcessShaderProgram()
 		uniform sampler2DRect colorTexture;
 		uniform sampler2DRect normalTexture;
 		uniform sampler2DRect depthTexture;
+		uniform sampler2DRect positionTexture;
 		
 		float linearizeDepth(float depth)
 		{
@@ -210,6 +214,7 @@ GLuint compilePostProcessShaderProgram()
 			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
 			float depth = texture(depthTexture, textureCoord).r;
 			float linearDepth = linearizeDepth(depth);
+			vec4 vsPos = texture(positionTexture, textureCoord);
 
 			int kernelSize = 16;
 			vec3 kernel[16] = vec3[]( vec3(0.53812504, 0.18565957, -0.43192),
@@ -229,14 +234,17 @@ GLuint compilePostProcessShaderProgram()
 			                          vec3(0.035267662, -0.063188605, 0.54602677),
 			                          vec3(-0.47761092, 0.2847911, -0.0271716) );
 
+			float occlusion = 0.0f;
+
+			fragmentColor = vsPos;
 
 			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
 				fragmentColor = vec4(vec3(linearDepth), 1.0);
 			} else if (textureCoord.x > 600 && textureCoord.y < 600) {
 				fragmentColor = vec4(normal, 1.0);
-			} else {*/
+			} else {
 				fragmentColor = color;
-			//}
+			}*/
 		}
 	)");
 
