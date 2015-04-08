@@ -239,7 +239,7 @@ GLuint compilePostProcessShaderProgram()
 			float occlusion = 0.0f;
 
 			for (int i = 0; i < kernelSize; i++) {
-				vec3 samplePos = vsPos + kernel[i];
+				vec3 samplePos = vsPos + kernel[i] * 10.0;
 				
 				vec4 sampleOffset = vec4(samplePos, 1.0);
 				sampleOffset = projectionMatrix * sampleOffset;
@@ -252,7 +252,8 @@ GLuint compilePostProcessShaderProgram()
 				occlusion += (sampleLinearDepth <= samplePos.z ? 1.0 : 0.0) * (1.0/16.0) * 2.0;
 			}
 
-			fragmentColor = occlusion * color;
+			if (textureCoord.x > 600) fragmentColor = vec4(vec3(occlusion), 1.0);
+			else fragmentColor = occlusion * color;
 
 			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
 				fragmentColor = vec4(vec3(linearDepth), 1.0);
