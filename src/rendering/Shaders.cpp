@@ -195,6 +195,8 @@ GLuint compilePostProcessShaderProgram()
 		uniform sampler2DRect depthTexture;
 		uniform sampler2DRect positionTexture;
 		
+		uniform mat4 projectionMatrix;
+
 		float linearizeDepth(float depth)
 		{
 			float near = 0.25; // camera z-near
@@ -214,7 +216,7 @@ GLuint compilePostProcessShaderProgram()
 			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
 			float depth = texture(depthTexture, textureCoord).r;
 			float linearDepth = linearizeDepth(depth);
-			vec4 vsPos = texture(positionTexture, textureCoord);
+			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
 
 			int kernelSize = 16;
 			vec3 kernel[16] = vec3[]( vec3(0.53812504, 0.18565957, -0.43192),
@@ -236,7 +238,21 @@ GLuint compilePostProcessShaderProgram()
 
 			float occlusion = 0.0f;
 
-			fragmentColor = vsPos;
+			for (int i = 0; i < kernelSize; i++) {
+				vec3 samplePos = vsPos + kernel[i];
+				
+				vec4 sampleOffset = vec4(samplePos, 1.0);
+				sampleOffset = projectionMatrix * sampleOffset;
+				sampleOffset.xy /= sampleOffset.w;
+				sampleOffset.xy = sampleOffset.xy * 0.5 + 0.5;
+
+				float sampleDepth = texture(depthTexture, sampleOffset.xy).r;
+				float sampleLinearDepth = linearizeDepth(sampleDepth);
+
+				occlusion += (sampleLinearDepth <= samplePos.z ? 1.0 : 0.0) * (1.0/16.0) * 2.0;
+			}
+
+			fragmentColor = occlusion * color;
 
 			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
 				fragmentColor = vec4(vec3(linearDepth), 1.0);

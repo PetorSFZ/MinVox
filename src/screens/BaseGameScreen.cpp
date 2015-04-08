@@ -203,6 +203,8 @@ void BaseGameScreen::render(float delta)
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// Texture buffer uniforms
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mColorTexture);
 	gl::setUniform(mPostProcessShaderProgram, "colorTexture", 0);
@@ -218,6 +220,10 @@ void BaseGameScreen::render(float delta)
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mPositionTexture);
 	gl::setUniform(mPostProcessShaderProgram, "positionTexture", 3);
+
+	// Other uniforms
+
+	gl::setUniform(mPostProcessShaderProgram, "projectionMatrix", mCam.mProjMatrix);
 
 	mFullscreenQuad.render();
 
