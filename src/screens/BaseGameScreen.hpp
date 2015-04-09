@@ -66,6 +66,7 @@ protected:
 	ShadowMap mShadowMap;
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
+	SSAO mSSAO;
 
 	bool mOldWorldRenderer = false;
 
@@ -88,7 +89,6 @@ private:
 
 	IScreen* mNewScreenPtr = nullptr;
 	bool mQuit = false;
-	SSAO mSSAO;
 };
 
 } // namespace vox

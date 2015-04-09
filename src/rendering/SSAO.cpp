@@ -27,13 +27,20 @@ GLuint compileSSAOShaderProgram()
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
 
+		// Output
 		out vec4 fragmentColor;
 
+		// Constants
+		const int MAX_KERNEL_SIZE = 128;
+
+		// Uniforms
 		uniform sampler2DRect colorTexture;
 		uniform sampler2DRect depthTexture;		
 		uniform sampler2DRect normalTexture;
 		uniform sampler2DRect positionTexture;
 		
+		uniform int kernelSize;
+		uniform vec3 kernel[MAX_KERNEL_SIZE];
 		uniform mat4 projectionMatrix;
 
 		float linearizeDepth(float depth)
@@ -57,7 +64,7 @@ GLuint compileSSAOShaderProgram()
 			float linearDepth = linearizeDepth(depth);
 			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
 
-			int kernelSize = 16;
+			/*int kernelSize = 16;
 			vec3 kernel[16] = vec3[]( vec3(0.53812504, 0.18565957, -0.43192),
 			                          vec3(0.13790712, 0.24864247, 0.44301823),
 			                          vec3(0.33715037, 0.56794053, -0.005789503),
@@ -73,7 +80,7 @@ GLuint compileSSAOShaderProgram()
 			                          vec3(0.7119986, -0.0154690035, -0.09183723),
 			                          vec3(-0.053382345, 0.059675813, -0.5411899),
 			                          vec3(0.035267662, -0.063188605, 0.54602677),
-			                          vec3(-0.47761092, 0.2847911, -0.0271716) );
+			                          vec3(-0.47761092, 0.2847911, -0.0271716) );*/
 
 			float occlusion = 0.0f;
 
@@ -122,14 +129,45 @@ GLuint compileSSAOShaderProgram()
 	return shaderProgram;
 }
 
+// Lerp function from wikipedia: http://en.wikipedia.org/wiki/Lerp_%28computing%29
+// Precise method which guarantees v = v1 when t = 1.
+float lerp(float v0, float v1, float t)
+{
+	return (1-t)*v0 + t*v1;
+}
+
+vector<vec3f> generateKernel(size_t kernelSize)
+{
+	std::random_device rd;
+	std::mt19937_64 gen{rd()};
+	std::uniform_real_distribution<float> distr1{-1.0f, 1.0f};
+	std::uniform_real_distribution<float> distr2{0.0f, 1.0f};
+
+	vector<vec3f> kernel{kernelSize};
+	for (size_t i = 0; i < kernelSize; i++) {
+		// Random vector in z+ hemisphere.
+		kernel[i] = vec3f{distr1(gen), distr1(gen), distr2(gen)}.normalize();
+		// Scale it so it has length between 0 and 1.
+		//kernel[i] *= distr2(gen); // Naive solution
+		// More points closer to base, see: http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
+		float scale = (float)i / (float)kernelSize;
+		scale = lerp(0.1f, 1.0f, scale*scale);
+		kernel[i] *= scale;
+	}
+
+	return std::move(kernel);
+}
+
 } // anonymous namespace
 
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO() noexcept
+SSAO::SSAO(size_t kernelSize) noexcept
 :
-	mSSAOProgram{compileSSAOShaderProgram()}
+	mSSAOProgram{compileSSAOShaderProgram()},
+	mKernelSize{kernelSize > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : kernelSize},
+	mKernel{std::move(generateKernel(mKernelSize))}
 { }
 
 SSAO::~SSAO() noexcept
@@ -171,6 +209,9 @@ void SSAO::apply(GLuint targetFramebuffer, int framebufferWidth, int framebuffer
 	// Other uniforms
 
 	gl::setUniform(mSSAOProgram, "projectionMatrix", projectionMatrix);
+
+	gl::setUniform(mSSAOProgram, "kernelSize", static_cast<int>(mKernelSize));
+	gl::setUniform(mSSAOProgram, "kernel", static_cast<vec3f*>(mKernel.data()), mKernelSize);
 
 	mFullscreenQuad.render();
 }
