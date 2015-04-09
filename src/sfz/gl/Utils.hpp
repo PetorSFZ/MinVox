@@ -8,24 +8,30 @@
 #include <string>
 #include <exception> // std::terminate()
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace gl {
+
+using sfz::mat4f;
+using sfz::vec3f;
+using std::string;
 
 /**
  * @brief Checks the latest error returned by glGetError().
  * @return whether an error was found or not
  */
-bool checkGLError();
+bool checkGLError() noexcept;
 
 /**
  * @brief Checks all errors returned by glGetError() until GL_NO_ERROR is returned.
  * @return whether any errors where found or not
  */
-bool checkAllGLErrors();
+bool checkAllGLErrors() noexcept;
 
 /**
  * @brief Prints the error log returned by glShaderInfoLog().
  */
-void printShaderInfoLog(GLuint program);
+void printShaderInfoLog(GLuint program) noexcept;
 
 /**
  * @brief Creates and compiles a vertex shader with the specified source.
@@ -33,7 +39,7 @@ void printShaderInfoLog(GLuint program);
  * @param shaderSource the source code of the vertex shader
  * @return the newly created and compiled vertex shader object
  */
-GLuint compileVertexShader(const std::string& shaderSource);
+GLuint compileVertexShader(const std::string& shaderSource) noexcept; 
 
 /**
  * @brief Creates and compiles a fragment shader with the specified source.
@@ -41,30 +47,39 @@ GLuint compileVertexShader(const std::string& shaderSource);
  * @param shaderSource the source code of the fragment shader
  * @return the newly created and compiled fragment shader object
  */
-GLuint compileFragmentShader(const std::string& shaderSource);
+GLuint compileFragmentShader(const std::string& shaderSource) noexcept;
 
 /**
  * @brief Links the specified program.
  * Terminates program if linking failed.
  * @param program the program
  */
-void linkProgram(GLuint program);
+void linkProgram(GLuint program) noexcept;
 
 // Uniform setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void setUniform(int location, const sfz::mat4f& matrix);
-void setUniform(GLuint shaderProgram, const std::string& name, const sfz::mat4f& matrix);
+void setUniform(int location, const mat4f& matrix) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const mat4f& matrix) noexcept;
+void setUniform(int location, const mat4f* matrixArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const mat4f* matrixArray, size_t count) noexcept;
 
-void setUniform(int location, const sfz::vec3f& vector);
-void setUniform(GLuint shaderProgram, const std::string& name, const sfz::vec3f& vector);
+void setUniform(int location, const vec3f& vector) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec3f& vector) noexcept;
+void setUniform(int location, const vec3f* vectorArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec3f* vectorArray, size_t count) noexcept;
 
-void setUniform(int location, float f);
-void setUniform(GLuint shaderProgram, const std::string& name, float f);
+void setUniform(int location, float f) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, float f) noexcept;
+void setUniform(int location, const float* floatArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const float* floatArray, size_t count) noexcept;
 
-void setUniform(int location, int i);
-void setUniform(GLuint shaderProgram, const std::string& name, int i);
+void setUniform(int location, int i) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, int i) noexcept;
+void setUniform(int location, const int* intArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const int* intArray, size_t count) noexcept;
 
 } // namespace gl
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif

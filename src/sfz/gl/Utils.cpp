@@ -1,8 +1,10 @@
 #include "sfz/gl/Utils.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace gl {
 
-bool checkGLError()
+bool checkGLError() noexcept
 {
 	GLenum errorCode = glGetError();
 	if (errorCode != GL_NO_ERROR) {
@@ -13,7 +15,7 @@ bool checkGLError()
 	return false;
 }
 
-bool checkAllGLErrors()
+bool checkAllGLErrors() noexcept
 {
 	bool foundError = false;
 	GLenum errorCode = glGetError();
@@ -26,7 +28,7 @@ bool checkAllGLErrors()
 	return foundError;
 }
 
-void printShaderInfoLog(GLuint program)
+void printShaderInfoLog(GLuint program) noexcept
 {
 	int logLength;
 	glGetShaderiv(program, GL_INFO_LOG_LENGTH, &logLength);
@@ -36,7 +38,7 @@ void printShaderInfoLog(GLuint program)
 	delete[] log;
 }
 
-GLuint compileVertexShader(const std::string& shaderSource)
+GLuint compileVertexShader(const std::string& shaderSource) noexcept
 {
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	const char* shaderSourcePtr = shaderSource.c_str();
@@ -55,7 +57,7 @@ GLuint compileVertexShader(const std::string& shaderSource)
 	return vertexShader;
 }
 
-GLuint compileFragmentShader(const std::string& shaderSource)
+GLuint compileFragmentShader(const std::string& shaderSource) noexcept
 {
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	const char* shaderSourcePtr = shaderSource.c_str();
@@ -74,7 +76,7 @@ GLuint compileFragmentShader(const std::string& shaderSource)
 	return fragmentShader;
 }
 
-void linkProgram(GLuint program)
+void linkProgram(GLuint program) noexcept
 {
 	glLinkProgram(program);
 	{
@@ -92,48 +94,97 @@ void linkProgram(GLuint program)
 // Uniform setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void setUniform(int location, const sfz::mat4f& matrix)
+void setUniform(int location, const mat4f& matrix) noexcept
 {
 	glUniformMatrix4fv(location, 1, false, matrix.glPtr());
 }
 
-void setUniform(GLuint shaderProgram, const std::string& name, const sfz::mat4f& matrix)
+void setUniform(GLuint shaderProgram, const string& name, const mat4f& matrix) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
 	setUniform(loc, matrix);
 }
 
-void setUniform(int location, const sfz::vec3f& vector)
+void setUniform(int location, const mat4f* matrixArray, size_t count) noexcept
+{
+	glUniformMatrix4fv(location, count, false, matrixArray[0].glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const mat4f* matrixArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, matrixArray, count);
+}
+
+
+void setUniform(int location, const vec3f& vector) noexcept
 {
 	glUniform3fv(location, 1, vector.glPtr());
 }
 
-void setUniform(GLuint shaderProgram, const std::string& name, const sfz::vec3f& vector)
+void setUniform(GLuint shaderProgram, const string& name, const vec3f& vector) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
 	setUniform(loc, vector);
 }
 
-void setUniform(int location, float f)
+void setUniform(int location, const vec3f* vectorArray, size_t count) noexcept
+{
+	glUniform3fv(location, count, vectorArray[0].glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const vec3f* vectorArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, vectorArray, count);
+}
+
+
+void setUniform(int location, float f) noexcept
 {
 	glUniform1f(location, f);
 }
 
-void setUniform(GLuint shaderProgram, const std::string& name, float f)
+void setUniform(GLuint shaderProgram, const string& name, float f) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
 	setUniform(loc, f);
 }
 
-void setUniform(int location, int i)
+void setUniform(int location, const float* floatArray, size_t count) noexcept
+{
+	glUniform1fv(location, count, floatArray);
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const float* floatArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, floatArray, count);
+}
+
+
+void setUniform(int location, int i) noexcept
 {
 	glUniform1i(location, i);
 }
 
-void setUniform(GLuint shaderProgram, const std::string& name, int i)
+void setUniform(GLuint shaderProgram, const string& name, int i) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
 	setUniform(loc, i);
 }
 
+void setUniform(int location, const int* intArray, size_t count) noexcept
+{
+	glUniform1iv(location, count, intArray);
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const int* intArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, intArray, count);
+}
+
 } // namespace gl
+
+#include <sfz/MSVC12HackOFF.hpp>
