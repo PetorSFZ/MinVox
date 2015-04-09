@@ -47,7 +47,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	mShaderProgram{vox::compileStandardShaderProgram()},
 	mShadowMapShaderProgram{vox::compileShadowMapShaderProgram()},
-	mPostProcessShaderProgram{vox::compilePostProcessShaderProgram()},
 	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
 	mWorldRenderer{mWorld, mAssets},
 	
@@ -197,35 +196,18 @@ void BaseGameScreen::render(float delta)
 	// Applying post-process effects
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	glUseProgram(mPostProcessShaderProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessedFramebuffer.mFrameBufferObject);
-	glViewport(0, 0, mPostProcessedFramebuffer.mWidth, mPostProcessedFramebuffer.mHeight);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Texture buffer uniforms
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mColorTexture);
-	gl::setUniform(mPostProcessShaderProgram, "colorTexture", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mNormalTexture);
-	gl::setUniform(mPostProcessShaderProgram, "normalTexture", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mDepthTexture);
-	gl::setUniform(mPostProcessShaderProgram, "depthTexture", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_RECTANGLE, mBaseFramebuffer.mPositionTexture);
-	gl::setUniform(mPostProcessShaderProgram, "positionTexture", 3);
-
-	// Other uniforms
-
-	gl::setUniform(mPostProcessShaderProgram, "projectionMatrix", mCam.mProjMatrix);
-
-	mFullscreenQuad.render();
+	GLuint ssaoTargetFBO = mPostProcessedFramebuffer.mFrameBufferObject;
+	int ssaoTargetFBOWidth = mPostProcessedFramebuffer.mWidth;
+	int ssaoTargetFBOHeight = mPostProcessedFramebuffer.mHeight;
+	GLuint ssaoColorTex = mBaseFramebuffer.mColorTexture;
+	GLuint ssaoDepthTex = mBaseFramebuffer.mDepthTexture;
+	GLuint ssaoNormalTex = mBaseFramebuffer.mNormalTexture;
+	GLuint ssaoPosTex = mBaseFramebuffer.mPositionTexture;
+	const mat4f& ssaoProjMatrix = mCam.mProjMatrix;
+	
+	mSSAO.apply(ssaoTargetFBO, ssaoTargetFBOWidth, ssaoTargetFBOHeight,
+	            ssaoColorTex, ssaoDepthTex, ssaoNormalTex, ssaoPosTex,
+	            ssaoProjMatrix);
 
 	glUseProgram(0);
 

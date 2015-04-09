@@ -99,6 +99,8 @@ set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/Shaders.cpp
 	${SRC_DIR}/rendering/ShadowMap.hpp
 	${SRC_DIR}/rendering/ShadowMap.cpp
+	${SRC_DIR}/rendering/SSAO.hpp
+	${SRC_DIR}/rendering/SSAO.cpp
 	${SRC_DIR}/rendering/WorldRenderer.hpp
 	${SRC_DIR}/rendering/WorldRenderer.cpp)
 source_group(vox_rendering FILES ${SOURCE_RENDERING_FILES})

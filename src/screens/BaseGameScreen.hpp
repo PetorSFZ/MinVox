@@ -60,7 +60,7 @@ protected:
 	sdl::Window& mWindow;
 	Assets mAssets;
 
-	GLuint mShaderProgram, mShadowMapShaderProgram, mPostProcessShaderProgram;
+	GLuint mShaderProgram, mShadowMapShaderProgram;
 	BigFramebuffer mBaseFramebuffer;
 	Framebuffer mPostProcessedFramebuffer;
 	ShadowMap mShadowMap;
@@ -88,6 +88,7 @@ private:
 
 	IScreen* mNewScreenPtr = nullptr;
 	bool mQuit = false;
+	SSAO mSSAO;
 };
 
 } // namespace vox
