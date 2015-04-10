@@ -59,20 +59,23 @@ GLuint compileSSAOShaderProgram()
 		{
 			vec2 textureCoord = gl_FragCoord.xy;
 			vec4 color = texture(colorTexture, textureCoord);
-			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
 			float depth = texture(depthTexture, textureCoord).r;
 			float linearDepth = linearizeDepth(depth);
+			
+			// TODO: Very unsure how to read vectors from textures correctly.
+			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
+			//vec3 vsPos = (texture(positionTexture, textureCoord).rgb * 2.0) - 1.0;
 			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
 
 			
-			vec3 noiseVec = vec3(1,0,0); // Note, should really come from tiled noise texture.
+			vec3 noiseVec = vec3(0.5,0.5,0); // Note, should really come from tiled noise texture.
 
 			// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 			vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
 			vec3 bitangent = cross(normal, tangent);
 			mat3 tbn = mat3(tangent, bitangent, normal);
 
-			float radius = 0.25;
+			float radius = 1;
 			float occlusion = 0.0;
 			for (int i = 0; i < kernelSize; i++) {
 				vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
@@ -86,6 +89,8 @@ GLuint compileSSAOShaderProgram()
 				float rangeCheck = abs(vsPos.z - sampleLinDepth) < radius ? 1.0 : 0.0;
 				occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
 			}
+			
+			occlusion /= kernelSize;
 
 
 			/*float occlusion = 0.0;
@@ -104,8 +109,10 @@ GLuint compileSSAOShaderProgram()
 				occlusion += (sampleLinearDepth <= samplePos.z ? 1.0 : 0.0) * (1.0/16.0);
 			}*/
 
-			if (textureCoord.x > 300) fragmentColor = occlusion * color;
-			else fragmentColor = vec4(vec3(occlusion), 1.0);
+			if (textureCoord.x < 225) fragmentColor = vec4(vec3(occlusion), 1.0);
+			else if (textureCoord.x < 450) fragmentColor = vec4(vsPos, 1.0);
+			else if (textureCoord.x < 675) fragmentColor = vec4(normal, 1.0);
+			else fragmentColor = occlusion * color;
 
 			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
 				fragmentColor = vec4(vec3(linearDepth), 1.0);
