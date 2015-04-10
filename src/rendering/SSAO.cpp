@@ -64,8 +64,32 @@ GLuint compileSSAOShaderProgram()
 			float linearDepth = linearizeDepth(depth);
 			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
 
-			float occlusion = 0.0;
+			
+			vec3 noiseVec = vec3(1,0,0); // Note, should really come from tiled noise texture.
 
+			// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
+			vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
+			vec3 bitangent = cross(normal, tangent);
+			mat3 tbn = mat3(tangent, bitangent, normal);
+
+			float radius = 0.1;
+			float occlusion = 0.0;
+			for (int i = 0; i < kernelSize; i++) {
+				vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
+				
+				vec4 offset = projectionMatrix * vec4(samplePos, 1.0);
+				offset.xy /= offset.w;
+				offset.xy = offset.xy * 0.5 + 0.5;
+
+				float sampleLinDepth = linearizeDepth(texture(depthTexture, offset.xy).r);
+				
+				float rangeCheck = abs(vsPos.z - sampleLinDepth) < radius ? 1.0 : 0.0;
+				occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
+			}
+
+
+			/*float occlusion = 0.0;
+			
 			for (int i = 0; i < kernelSize; i++) {
 				vec3 samplePos = vsPos + kernel[i] * 0.1;
 				
@@ -78,7 +102,7 @@ GLuint compileSSAOShaderProgram()
 				float sampleLinearDepth = linearizeDepth(sampleDepth);
 
 				occlusion += (sampleLinearDepth <= samplePos.z ? 1.0 : 0.0) * (1.0/16.0);
-			}
+			}*/
 
 			if (textureCoord.x > 600) fragmentColor = vec4(vec3(occlusion), 1.0);
 			else fragmentColor = occlusion * color;
