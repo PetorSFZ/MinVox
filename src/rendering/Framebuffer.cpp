@@ -63,8 +63,9 @@ BigFramebuffer& BigFramebuffer::operator= (BigFramebuffer&& other) noexcept
 {
 	std::swap(mFrameBufferObject, other.mFrameBufferObject);
 	std::swap(mColorTexture, other.mColorTexture);
-	std::swap(mNormalTexture, other.mNormalTexture);
 	std::swap(mDepthTexture, other.mDepthTexture);
+	std::swap(mNormalTexture, other.mNormalTexture);
+	std::swap(mPositionTexture, other.mPositionTexture);
 	std::swap(mWidth, other.mWidth);
 	std::swap(mHeight, other.mHeight);
 	return *this;

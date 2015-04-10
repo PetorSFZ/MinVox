@@ -255,8 +255,8 @@ void BaseGameScreen::changeScreen(IScreen* newScreen)
 
 void BaseGameScreen::reloadFramebuffers(int width, int height)
 {
-	mBaseFramebuffer = BigFramebuffer{width, height};
-	mPostProcessedFramebuffer = Framebuffer{width, height};
+	mBaseFramebuffer = std::move(BigFramebuffer{width, height});
+	mPostProcessedFramebuffer = std::move(Framebuffer{width, height});
 }
 
 } // namespace vox

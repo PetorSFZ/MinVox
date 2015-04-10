@@ -72,7 +72,7 @@ GLuint compileSSAOShaderProgram()
 			vec3 bitangent = cross(normal, tangent);
 			mat3 tbn = mat3(tangent, bitangent, normal);
 
-			float radius = 0.1;
+			float radius = 0.25;
 			float occlusion = 0.0;
 			for (int i = 0; i < kernelSize; i++) {
 				vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
@@ -104,8 +104,8 @@ GLuint compileSSAOShaderProgram()
 				occlusion += (sampleLinearDepth <= samplePos.z ? 1.0 : 0.0) * (1.0/16.0);
 			}*/
 
-			if (textureCoord.x > 600) fragmentColor = vec4(vec3(occlusion), 1.0);
-			else fragmentColor = occlusion * color;
+			if (textureCoord.x > 300) fragmentColor = occlusion * color;
+			else fragmentColor = vec4(vec3(occlusion), 1.0);
 
 			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
 				fragmentColor = vec4(vec3(linearDepth), 1.0);
