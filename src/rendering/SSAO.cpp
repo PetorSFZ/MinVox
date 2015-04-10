@@ -45,9 +45,15 @@ GLuint compileSSAOShaderProgram()
 
 		float linearizeDepth(float depth)
 		{
-			float near = 0.25; // camera z-near
+			/*float near = 0.5; // camera z-near
 			float far = 1000.0; // camera z-far
-			return (2.0 * near) / (far + near - (depth*(far-near)));
+			return (2.0 * near) / (far + near - (depth*(far-near)));*/
+			
+			// http://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/16597492#16597492
+			vec4 unprojected = vec4(0, 0, depth * 2.0 - 1.0, 1.0);
+			vec4 projected = inverse(projectionMatrix) * unprojected;
+			projected /= projected.w;
+			return projected.z;
 		}
 
 		// http://stackoverflow.com/questions/12964279/whats-the-origin-of-this-glsl-rand-one-liner
@@ -64,8 +70,8 @@ GLuint compileSSAOShaderProgram()
 			
 			// TODO: Very unsure how to read vectors from textures correctly.
 			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
-			//vec3 vsPos = (texture(positionTexture, textureCoord).rgb * 2.0) - 1.0;
-			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
+			vec3 vsPos = (texture(positionTexture, textureCoord).rgb * 2.0) - 1.0;
+			//vec3 vsPos = texture(positionTexture, textureCoord).rgb;
 
 			
 			vec3 noiseVec = vec3(0.5,0.5,0); // Note, should really come from tiled noise texture.
@@ -112,6 +118,7 @@ GLuint compileSSAOShaderProgram()
 			if (textureCoord.x < 225) fragmentColor = vec4(vec3(occlusion), 1.0);
 			else if (textureCoord.x < 450) fragmentColor = vec4(vsPos, 1.0);
 			else if (textureCoord.x < 675) fragmentColor = vec4(normal, 1.0);
+			else if (textureCoord.x < 900) fragmentColor = vec4(vec3(linearDepth), 1.0);
 			else fragmentColor = occlusion * color;
 
 			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
