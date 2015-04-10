@@ -9,13 +9,15 @@
 #include <cstring> // std::memcpy
 #include <iostream>
 #include <exception> // std::terminate
+#include <algorithm> // std::swap
 #include "sfz/gl/Utils.hpp"
+
+#include <sfz/MSVC12HackON.hpp>
 
 namespace gl {
 
 class Texture final {
 public:
-	
 	// Public members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	
@@ -23,24 +25,17 @@ public:
 	
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	
-	// No default constructor.
-	Texture() = delete;
-	
-	// No copy constructor.
-	Texture(const Texture&) = delete;
-	
-	Texture(const std::string& path);
-	
-	~Texture();
-	
-	// Operators
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	// No assignment operator.
+	Texture() = delete;
+	Texture(const Texture&) = delete;
 	Texture& operator= (const Texture&) = delete;
+	
+	Texture(const std::string& path) noexcept;
+	Texture& operator= (Texture&& other) noexcept;
+	~Texture() noexcept;
 };
 
 } // namespace gl
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif

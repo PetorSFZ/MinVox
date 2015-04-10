@@ -1,11 +1,13 @@
 #include "sfz/gl/Texture.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace gl {
 	
 namespace {
 
 // Simple function that flips a surface by byte-level manipulation.
-void flipSurface(SDL_Surface* surface)
+void flipSurface(SDL_Surface* surface) noexcept
 {
 	// Locking the surface
 	if (SDL_LockSurface(surface) < 0) {
@@ -43,7 +45,7 @@ void flipSurface(SDL_Surface* surface)
 	SDL_UnlockSurface(surface);
 }
 
-GLuint loadTexture(const std::string& path)
+GLuint loadTexture(const std::string& path) noexcept
 {
 	// Load specified surface.
 	SDL_Surface* surface = NULL;
@@ -71,7 +73,7 @@ GLuint loadTexture(const std::string& path)
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface->w, surface->h, 0,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0,
 	             GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 	SDL_FreeSurface(surface);
 
@@ -96,16 +98,24 @@ GLuint loadTexture(const std::string& path)
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Texture::Texture(const std::string& path)
+Texture::Texture(const std::string& path) noexcept
 :
 	mHandle(loadTexture(path))
 {
 	// Initialization complete.
 }
-	
-Texture::~Texture()
+
+Texture& Texture::operator= (Texture&& other) noexcept
+{
+	std::swap(mHandle, other.mHandle);
+	return *this;
+}
+
+Texture::~Texture() noexcept
 {
 	glDeleteTextures(1, &mHandle);
 }
 	
 } // namespace gl
+
+#include <sfz/MSVC12HackOFF.hpp>
