@@ -57,74 +57,75 @@ GLuint compileSSAOShaderProgram()
 		}
 
 		// http://stackoverflow.com/questions/12964279/whats-the-origin-of-this-glsl-rand-one-liner
-		float rand(vec2 co){
+		float rand(vec2 co)
+		{
 			return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+		}
+
+		float vsPosToLinearDepth(vec3 vsPos)
+		{
+			float depth = vsPos.z;
+			//if (depth >= 0) depth = -1000000.0;
+			return depth;
+		}
+
+		bool approxEqual(float lhs, float rhs, float epsilon)
+		{
+			return lhs <= rhs + epsilon && lhs >= rhs - epsilon;
 		}
 
 		void main()
 		{
 			vec2 textureCoord = gl_FragCoord.xy;
 			vec4 color = texture(colorTexture, textureCoord);
-			float depth = texture(depthTexture, textureCoord).r;
-			float linearDepth = linearizeDepth(depth);
+			//float depth = texture(depthTexture, textureCoord).r;
+			//float linearDepth = linearizeDepth(depth);
 			vec3 normal = normalize(texture(normalTexture, textureCoord).rgb);
 			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
+			//float linearDepth = vsPosToLinearDepth(vsPos);
 			
-			
-			vec3 noiseVec = vec3(0.5,0.5,0); // Note, should really come from tiled noise texture.
+			vec3 noiseVec = vec3(1.0, 0.0, 0); // Note, should really come from tiled noise texture.
 
 			// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 			vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
-			vec3 bitangent = cross(normal, tangent);
+			vec3 bitangent = cross(tangent, normal);
 			mat3 tbn = mat3(tangent, bitangent, normal);
 
-			float radius = 1;
+			float radius = 0.1;
 			float occlusion = 0.0;
-			for (int i = 0; i < kernelSize; i++) {
-				vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
-				
+			/*for (int i = 0; i < kernelSize; i++) {
+				//vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
+				vec3 samplePos = vsPos;// + kernel[i] * radius;
+
 				vec4 offset = projectionMatrix * vec4(samplePos, 1.0);
 				offset.xy /= offset.w;
 				offset.xy = offset.xy * 0.5 + 0.5;
+	
+				vec3 sampleFragPos = texture(positionTexture, offset.xy).xyz;
+				occlusion += ((sampleFragPos.z - 0.0001) <= samplePos.z ? 1.0 : 0.0);
 
-				float sampleLinDepth = linearizeDepth(texture(depthTexture, offset.xy).r);
-				
-				float rangeCheck = abs(vsPos.z - sampleLinDepth) < radius ? 1.0 : 0.0;
-				occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
+				//float sampleLinDepth = linearizeDepth(texture(depthTexture, offset.xy).r);
+				//float sampleLinDepth = vsPosToLinearDepth(texture(positionTexture, offset.xy).xyz);				
+
+				//float rangeCheck = abs(vsPos.z - sampleLinDepth) < radius ? 1.0 : 0.0;
+				//occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
+				//occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0);
 			}
 			
-			occlusion /= kernelSize;
+			occlusion /= kernelSize;*/
 
+			vec4 offset = projectionMatrix * vec4(vsPos, 1.0);
+			offset.xy /= offset.w;
+			offset.xy = offset.xy * 0.5 + 0.5;
 
-			/*float occlusion = 0.0;
+			if (approxEqual(offset.x, gl_FragCoord.x, 0.2) &&
+			    approxEqual(offset.y, gl_FragCoord.y, 0.2)) occlusion = 1.0;
+			else occlusion = 0.0;
 			
-			for (int i = 0; i < kernelSize; i++) {
-				vec3 samplePos = vsPos + kernel[i] * 0.1;
-				
-				vec4 sampleOffset = vec4(samplePos, 1.0);
-				sampleOffset = projectionMatrix * sampleOffset;
-				sampleOffset.xy /= sampleOffset.w;
-				sampleOffset.xy = sampleOffset.xy * 0.5 + 0.5;
-
-				float sampleDepth = texture(depthTexture, sampleOffset.xy).r;
-				float sampleLinearDepth = linearizeDepth(sampleDepth);
-
-				occlusion += (sampleLinearDepth <= samplePos.z ? 1.0 : 0.0) * (1.0/16.0);
-			}*/
-
-			if (textureCoord.x < 225) fragmentColor = vec4(vec3(occlusion), 1.0);
-			else if (textureCoord.x < 450) fragmentColor = vec4(vsPos, 1.0);
-			else if (textureCoord.x < 675) fragmentColor = vec4(normal, 1.0);
-			else if (textureCoord.x < 900) fragmentColor = vec4(vec3(linearDepth), 1.0);
+			if (textureCoord.x < 225) fragmentColor = color;
+			//else if (textureCoord.x < 450) fragmentColor = vec4(vec3(linearDepth*0.2), 1.0);
+			else if (textureCoord.x < /*675*/ 450) fragmentColor = vec4(vec3(occlusion), 1.0);
 			else fragmentColor = occlusion * color;
-
-			/*if (textureCoord.x > 600 && textureCoord.y > 600) {
-				fragmentColor = vec4(vec3(linearDepth), 1.0);
-			} else if (textureCoord.x > 600 && textureCoord.y < 600) {
-				fragmentColor = vec4(normal, 1.0);
-			} else {
-				fragmentColor = color;
-			}*/
 		}
 	)");
 
