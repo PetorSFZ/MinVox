@@ -67,12 +67,9 @@ GLuint compileSSAOShaderProgram()
 			vec4 color = texture(colorTexture, textureCoord);
 			float depth = texture(depthTexture, textureCoord).r;
 			float linearDepth = linearizeDepth(depth);
+			vec3 normal = normalize(texture(normalTexture, textureCoord).rgb);
+			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
 			
-			// TODO: Very unsure how to read vectors from textures correctly.
-			vec3 normal = normalize((texture(normalTexture, textureCoord).xyz * 2.0) - 1.0);
-			vec3 vsPos = (texture(positionTexture, textureCoord).rgb * 2.0) - 1.0;
-			//vec3 vsPos = texture(positionTexture, textureCoord).rgb;
-
 			
 			vec3 noiseVec = vec3(0.5,0.5,0); // Note, should really come from tiled noise texture.
 
