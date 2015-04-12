@@ -96,7 +96,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
-		vec3 bitangent = cross(tangent, normal);
+		vec3 bitangent = cross(normal, tangent);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
 
 		float occlusion = 0.0;
