@@ -169,6 +169,12 @@ vector<vec3f> generateKernel(size_t kernelSize) noexcept
 		kernel[i] *= scale;
 	}
 
+	std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
+	for (auto& val : kernel) {
+		std::cout << val << "\n";
+	}
+	std::cout << std::endl;
+
 	return std::move(kernel);
 }
 
@@ -185,6 +191,12 @@ GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 	for (size_t i = 0; i < numNoiseValues; i++) {
 		noise[i] = vec3f{distr(gen), distr(gen), 0.0f};
 	}
+
+	std::cout << "Generated SSAO noise texture (width = " << noiseTexWidth << ") with values: \n";
+	for (auto& val : noise) {
+		std::cout << val << "\n";
+	}
+	std::cout << std::endl;
 
 	GLuint noiseTex;
 	glGenTextures(1, &noiseTex);
@@ -208,9 +220,9 @@ SSAO::SSAO(size_t numSamples, size_t noiseTexWidth, float radius) noexcept
 	mSSAOProgram{compileSSAOShaderProgram()},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
 	mKernel{std::move(generateKernel(mKernelSize))},
-	mRadius{radius},
 	mNoiseTexWidth{noiseTexWidth > MAX_NOISE_TEX_WIDTH ? MAX_NOISE_TEX_WIDTH : noiseTexWidth},
-	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)}
+	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
+	mRadius{radius}
 { }
 
 SSAO::~SSAO() noexcept
