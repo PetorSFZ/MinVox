@@ -91,54 +91,33 @@ void linkProgram(GLuint program) noexcept
 	checkAllGLErrors();
 }
 
-// Uniform setters
+// Uniform setters: int
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void setUniform(int location, const mat4f& matrix) noexcept
+void setUniform(int location, int i) noexcept
 {
-	glUniformMatrix4fv(location, 1, false, matrix.glPtr());
+	glUniform1i(location, i);
 }
 
-void setUniform(GLuint shaderProgram, const string& name, const mat4f& matrix) noexcept
-{
-	int loc = glGetUniformLocation(shaderProgram, name.c_str());
-	setUniform(loc, matrix);
-}
-
-void setUniform(int location, const mat4f* matrixArray, size_t count) noexcept
-{
-	glUniformMatrix4fv(location, count, false, matrixArray[0].glPtr());
-}
-
-void setUniform(GLuint shaderProgram, const string& name, const mat4f* matrixArray, size_t count) noexcept
+void setUniform(GLuint shaderProgram, const string& name, int i) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
-	setUniform(loc, matrixArray, count);
+	setUniform(loc, i);
 }
 
-
-void setUniform(int location, const vec3f& vector) noexcept
+void setUniform(int location, const int* intArray, size_t count) noexcept
 {
-	glUniform3fv(location, 1, vector.glPtr());
+	glUniform1iv(location, count, intArray);
 }
 
-void setUniform(GLuint shaderProgram, const string& name, const vec3f& vector) noexcept
-{
-	int loc = glGetUniformLocation(shaderProgram, name.c_str());
-	setUniform(loc, vector);
-}
-
-void setUniform(int location, const vec3f* vectorArray, size_t count) noexcept
-{
-	glUniform3fv(location, count, vectorArray[0].glPtr());
-}
-
-void setUniform(GLuint shaderProgram, const string& name, const vec3f* vectorArray, size_t count) noexcept
+void setUniform(GLuint shaderProgram, const string& name, const int* intArray, size_t count) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
-	setUniform(loc, vectorArray, count);
+	setUniform(loc, intArray, count);
 }
 
+// Uniform setters: float
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 void setUniform(int location, float f) noexcept
 {
@@ -162,27 +141,82 @@ void setUniform(GLuint shaderProgram, const string& name, const float* floatArra
 	setUniform(loc, floatArray, count);
 }
 
+// Uniform setters: vec2f
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void setUniform(int location, int i) noexcept
+void setUniform(int location, const vec2f& vector) noexcept
 {
-	glUniform1i(location, i);
+	glUniform2fv(location, 1, vector.glPtr());
 }
 
-void setUniform(GLuint shaderProgram, const string& name, int i) noexcept
+void setUniform(GLuint shaderProgram, const string& name, const vec2f& vector) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
-	setUniform(loc, i);
+	setUniform(loc, vector);
 }
 
-void setUniform(int location, const int* intArray, size_t count) noexcept
+void setUniform(int location, const vec2f* vectorArray, size_t count) noexcept
 {
-	glUniform1iv(location, count, intArray);
+	static_assert(sizeof(vec2f) == sizeof(float)*2, "vec2f is padded");
+	glUniform2fv(location, count, vectorArray[0].glPtr());
 }
 
-void setUniform(GLuint shaderProgram, const string& name, const int* intArray, size_t count) noexcept
+void setUniform(GLuint shaderProgram, const string& name, const vec2f* vectorArray, size_t count) noexcept
 {
 	int loc = glGetUniformLocation(shaderProgram, name.c_str());
-	setUniform(loc, intArray, count);
+	setUniform(loc, vectorArray, count);
+}
+
+// Uniform setters: vec3f
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void setUniform(int location, const vec3f& vector) noexcept
+{
+	glUniform3fv(location, 1, vector.glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const vec3f& vector) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, vector);
+}
+
+void setUniform(int location, const vec3f* vectorArray, size_t count) noexcept
+{
+	static_assert(sizeof(vec3f) == sizeof(float)*3, "vec3f is padded");
+	glUniform3fv(location, count, vectorArray[0].glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const vec3f* vectorArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, vectorArray, count);
+}
+
+// Uniform setters: mat4f
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void setUniform(int location, const mat4f& matrix) noexcept
+{
+	glUniformMatrix4fv(location, 1, false, matrix.glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const mat4f& matrix) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, matrix);
+}
+
+void setUniform(int location, const mat4f* matrixArray, size_t count) noexcept
+{
+	static_assert(sizeof(mat4f) == sizeof(float)*16, "mat4f is padded");
+	glUniformMatrix4fv(location, count, false, matrixArray[0].glPtr());
+}
+
+void setUniform(GLuint shaderProgram, const string& name, const mat4f* matrixArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(shaderProgram, name.c_str());
+	setUniform(loc, matrixArray, count);
 }
 
 } // namespace gl

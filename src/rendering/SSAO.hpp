@@ -2,6 +2,7 @@
 #ifndef VOX_RENDERING_SSAO_HPP
 #define VOX_RENDERING_SSAO_HPP
 
+#include <algorithm> // std::swap
 #include <random>
 #include <vector>
 #include <cstddef> // size_t
@@ -14,12 +15,13 @@
 
 namespace vox {
 
+using sfz::vec2f;
 using sfz::vec3f;
 using sfz::mat4f;
 using std::vector;
 using std::size_t;
 
-class SSAO {
+class SSAO final {
 public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -28,7 +30,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(size_t numSamples, float radius) noexcept;
+	SSAO(size_t numSamples, size_t noiseTexWidth, float radius) noexcept;
 	~SSAO() noexcept;
 
 	// Public methods
@@ -44,9 +46,13 @@ private:
 	GLuint mSSAOProgram;
 	FullscreenQuadObject mFullscreenQuad;
 
-	static const size_t MAX_KERNEL_SIZE = 128;
+	static const size_t MAX_KERNEL_SIZE = 256;
 	size_t mKernelSize;
 	vector<vec3f> mKernel;
+
+	static const size_t MAX_NOISE_TEX_WIDTH = 64;
+	size_t mNoiseTexWidth;
+	GLuint mNoiseTexture;
 
 	float mRadius;
 };
