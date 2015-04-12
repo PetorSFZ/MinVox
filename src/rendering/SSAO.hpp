@@ -28,7 +28,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(size_t kernelSize) noexcept;
+	SSAO(size_t numSamples, float radius) noexcept;
 	~SSAO() noexcept;
 
 	// Public methods
@@ -47,6 +47,8 @@ private:
 	static const size_t MAX_KERNEL_SIZE = 128;
 	size_t mKernelSize;
 	vector<vec3f> mKernel;
+
+	float mRadius;
 };
 
 } // namespace vox

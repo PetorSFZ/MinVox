@@ -41,14 +41,16 @@ GLuint compileSSAOShaderProgram()
 		const int MAX_KERNEL_SIZE = 128;
 
 		// Uniforms
-		uniform sampler2D colorTexture;
-		uniform sampler2D depthTexture;
-		uniform sampler2D normalTexture;
-		uniform sampler2D positionTexture;
+		uniform sampler2D uColorTexture;
+		uniform sampler2D uDepthTexture;
+		uniform sampler2D uNormalTexture;
+		uniform sampler2D uPositionTexture;
 		
-		uniform int kernelSize;
-		uniform vec3 kernel[MAX_KERNEL_SIZE];
-		uniform mat4 projectionMatrix;
+		uniform int uKernelSize;
+		uniform vec3 uKernel[MAX_KERNEL_SIZE];
+		uniform mat4 uProjectionMatrix;
+
+		uniform float uRadius;
 
 		float linearizeDepth(float depth)
 		{
@@ -58,12 +60,12 @@ GLuint compileSSAOShaderProgram()
 			
 			// http://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/16597492#16597492
 			vec4 unprojected = vec4(0, 0, depth * 2.0 - 1.0, 1.0);
-			vec4 projected = inverse(projectionMatrix) * unprojected;
+			vec4 projected = inverse(uProjectionMatrix) * unprojected;
 			projected /= projected.w;
 			return projected.z;
 		}
 
-		float vsPosToLinearDepth(vec3 vsPos)
+		float vsPosToDepth(vec3 vsPos)
 		{
 			float depth = vsPos.z;
 			//if (depth >= 0) depth = -1000000.0;
@@ -72,7 +74,7 @@ GLuint compileSSAOShaderProgram()
 
 		vec2 texCoordFromVSPos(vec3 vsPos)
 		{
-			vec4 offset = projectionMatrix * vec4(vsPos, 1.0);
+			vec4 offset = uProjectionMatrix * vec4(vsPos, 1.0);
 			offset.xy /= offset.w;
 			offset.xy = offset.xy * 0.5 + 0.5;
 			return offset.xy;
@@ -80,39 +82,30 @@ GLuint compileSSAOShaderProgram()
 
 		void main()
 		{
-			vec2 textureCoord = texCoord;//gl_FragCoord.xy;
-			vec4 color = texture(colorTexture, textureCoord);
-			//float depth = texture(depthTexture, textureCoord).r;
-			//float linearDepth = linearizeDepth(depth);
-			vec3 normal = normalize(texture(normalTexture, textureCoord).rgb);
-			vec3 vsPos = texture(positionTexture, textureCoord).rgb;
-			//float linearDepth = vsPosToLinearDepth(vsPos);
-			
-			vec3 noiseVec = vec3(1.0, 0.0, 0); // Note, should really come from tiled noise texture.
+			vec2 textureCoord = texCoord;
+			vec4 color = texture(uColorTexture, textureCoord);
+			vec3 normal = normalize(texture(uNormalTexture, textureCoord).rgb);
+			vec3 vsPos = texture(uPositionTexture, textureCoord).rgb;
+			float depth = vsPosToDepth(vsPos);
+			//float depth = linearizeDepth(texture(depthTexture, textureCoord).r);
+
+			vec3 noiseVec = vec3(0.0, 1.0, 0); // Note, should really come from tiled noise texture.
 
 			// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 			vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
 			vec3 bitangent = cross(tangent, normal);
-			mat3 tbn = mat3(tangent, bitangent, normal);
+			mat3 kernelRot = mat3(tangent, bitangent, normal);
 
-			float radius = 1.0;
 			float occlusion = 0.0;
-			for (int i = 0; i < kernelSize; i++) {
-				vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
+			for (int i = 0; i < uKernelSize; i++) {
+				vec3 samplePos = vsPos + uRadius * (kernelRot * uKernel[i]);
 				vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
+				float sampleDepth = vsPosToDepth(texture(uPositionTexture, sampleTexCoord).xyz);
 
-				vec3 sampleFragPos = texture(positionTexture, sampleTexCoord).xyz;
-				occlusion += ((sampleFragPos.z - 0.0001) <= samplePos.z ? 1.0 : 0.0);
-
-				//float sampleLinDepth = linearizeDepth(texture(depthTexture, offset.xy).r);
-				//float sampleLinDepth = vsPosToLinearDepth(texture(positionTexture, offset.xy).xyz);				
-
-				//float rangeCheck = abs(vsPos.z - sampleLinDepth) < radius ? 1.0 : 0.0;
-				//occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
-				//occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0);
+				float rangeCheck = abs(vsPos.z - sampleDepth) < uRadius ? 1.0 : 0.0;
+				occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
 			}
-			
-			occlusion /= kernelSize;
+			occlusion /= uKernelSize;
 			
 			if (textureCoord.x < 0.3) fragmentColor = color;
 			else if (textureCoord.x < 0.6) fragmentColor = vec4(vec3(occlusion), 1.0);
@@ -173,11 +166,12 @@ vector<vec3f> generateKernel(size_t kernelSize)
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(size_t kernelSize) noexcept
+SSAO::SSAO(size_t numSamples, float radius) noexcept
 :
 	mSSAOProgram{compileSSAOShaderProgram()},
-	mKernelSize{kernelSize > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : kernelSize},
-	mKernel{std::move(generateKernel(mKernelSize))}
+	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
+	mKernel{std::move(generateKernel(mKernelSize))},
+	mRadius{radius}
 { }
 
 SSAO::~SSAO() noexcept
@@ -202,26 +196,28 @@ void SSAO::apply(GLuint targetFramebuffer, int framebufferWidth, int framebuffer
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colorTex);
-	gl::setUniform(mSSAOProgram, "colorTexture", 0);
+	gl::setUniform(mSSAOProgram, "uColorTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, depthTex);
-	gl::setUniform(mSSAOProgram, "depthTexture", 1);
+	gl::setUniform(mSSAOProgram, "uDepthTexture", 1);
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, normalTex);
-	gl::setUniform(mSSAOProgram, "normalTexture", 2);
+	gl::setUniform(mSSAOProgram, "uNormalTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, posTex);
-	gl::setUniform(mSSAOProgram, "positionTexture", 3);
+	gl::setUniform(mSSAOProgram, "uPositionTexture", 3);
 
 	// Other uniforms
 
-	gl::setUniform(mSSAOProgram, "projectionMatrix", projectionMatrix);
+	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projectionMatrix);
 
-	gl::setUniform(mSSAOProgram, "kernelSize", static_cast<int>(mKernelSize));
-	gl::setUniform(mSSAOProgram, "kernel", static_cast<vec3f*>(mKernel.data()), mKernelSize);
+	gl::setUniform(mSSAOProgram, "uKernelSize", static_cast<int>(mKernelSize));
+	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3f*>(mKernel.data()), mKernelSize);
+
+	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
 
 	mFullscreenQuad.render();
 }
