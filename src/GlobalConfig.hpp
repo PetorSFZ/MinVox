@@ -13,6 +13,7 @@ using std::size_t;
 struct GlobalConfig {
 	bool mVSync, mPrintFPS;
 	int mWindowResolutionX, mWindowResolutionY;
+	bool mRetinaAware;
 
 	size_t mVerticalRange, mHorizontalRange;
 

@@ -14,7 +14,7 @@
 // Variables
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-vox::GlobalConfig& config = vox::getGlobalConfig();
+vox::GlobalConfig& cfg = vox::getGlobalConfig();
 
 // Controllers
 SDL_GameController* controllerPtrs[4];
@@ -129,13 +129,15 @@ void pollEventsUpdateControllers(std::vector<SDL_Event>& events)
 
 int main()
 {
+	using namespace sdl;
+
 	// Initialization
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	sdl::Session sdlSession{{sdl::InitFlags::EVENTS, sdl::InitFlags::VIDEO,
-	                         sdl::InitFlags::GAMECONTROLLER}, {sdl::ImgInitFlags::PNG}};
-	sdl::Window window{"MinVox", config.mWindowResolutionX, config.mWindowResolutionY,
-	    {sdl::WindowFlags::OPENGL, sdl::WindowFlags::RESIZABLE, sdl::WindowFlags::ALLOW_HIGHDPI}};
+	Session sdlSession{{InitFlags::EVENTS, InitFlags::VIDEO, InitFlags::GAMECONTROLLER},
+	                   {ImgInitFlags::PNG}};
+	Window window{"MinVox", cfg.mWindowResolutionX, cfg.mWindowResolutionY, {WindowFlags::OPENGL,
+	 WindowFlags::RESIZABLE, cfg.mRetinaAware ? WindowFlags::ALLOW_HIGHDPI : WindowFlags::OPENGL}};
 
 	// Enable SDL Events for controllers
 	SDL_GameControllerEventState(SDL_ENABLE);
@@ -153,7 +155,7 @@ int main()
 	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
 
 	// Enable/disable vsync
-	if (!config.mVSync) SDL_GL_SetSwapInterval(0);
+	if (!cfg.mVSync) SDL_GL_SetSwapInterval(0);
 
 	// Game loop
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -179,7 +181,7 @@ int main()
 			float fpsTotal = (fpsMean * (float)fpsSamples) + fps;
 			fpsSamples++;
 			fpsMean = fpsTotal / (float)fpsSamples;
-			if (config.mPrintFPS) std::cout << "FPS: " << fps << ", Mean: " << fpsMean << "\n";
+			if (cfg.mPrintFPS) std::cout << "FPS: " << fps << ", Mean: " << fpsMean << "\n";
 		}
 
 		currentScreen->update(events, controllers[currentController], delta);

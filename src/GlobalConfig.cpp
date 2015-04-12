@@ -10,6 +10,7 @@ GlobalConfig::GlobalConfig() noexcept
 	mPrintFPS = true;
 	mWindowResolutionX = 800;
 	mWindowResolutionY = 800;
+	mRetinaAware = true;
 
 	mHorizontalRange = 2;
 	mVerticalRange = 1;
