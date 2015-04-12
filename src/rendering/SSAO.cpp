@@ -15,10 +15,14 @@ GLuint compileSSAOShaderProgram()
 		#version 330
 
 		in vec2 position;
+		in vec2 texCoordIn;
+
+		out vec2 texCoord;
 
 		void main()
 		{
 			gl_Position = vec4(position, 0.0, 1.0);
+			texCoord = texCoordIn;
 		}
 	)");
 
@@ -27,6 +31,9 @@ GLuint compileSSAOShaderProgram()
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
 
+		// Input
+		in vec2 texCoord;
+
 		// Output
 		out vec4 fragmentColor;
 
@@ -34,10 +41,10 @@ GLuint compileSSAOShaderProgram()
 		const int MAX_KERNEL_SIZE = 128;
 
 		// Uniforms
-		uniform sampler2DRect colorTexture;
-		uniform sampler2DRect depthTexture;		
-		uniform sampler2DRect normalTexture;
-		uniform sampler2DRect positionTexture;
+		uniform sampler2D colorTexture;
+		uniform sampler2D depthTexture;
+		uniform sampler2D normalTexture;
+		uniform sampler2D positionTexture;
 		
 		uniform int kernelSize;
 		uniform vec3 kernel[MAX_KERNEL_SIZE];
@@ -56,12 +63,6 @@ GLuint compileSSAOShaderProgram()
 			return projected.z;
 		}
 
-		// http://stackoverflow.com/questions/12964279/whats-the-origin-of-this-glsl-rand-one-liner
-		float rand(vec2 co)
-		{
-			return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-		}
-
 		float vsPosToLinearDepth(vec3 vsPos)
 		{
 			float depth = vsPos.z;
@@ -69,14 +70,17 @@ GLuint compileSSAOShaderProgram()
 			return depth;
 		}
 
-		bool approxEqual(float lhs, float rhs, float epsilon)
+		vec2 texCoordFromVSPos(vec3 vsPos)
 		{
-			return lhs <= rhs + epsilon && lhs >= rhs - epsilon;
+			vec4 offset = projectionMatrix * vec4(vsPos, 1.0);
+			offset.xy /= offset.w;
+			offset.xy = offset.xy * 0.5 + 0.5;
+			return offset.xy;
 		}
 
 		void main()
 		{
-			vec2 textureCoord = gl_FragCoord.xy;
+			vec2 textureCoord = texCoord;//gl_FragCoord.xy;
 			vec4 color = texture(colorTexture, textureCoord);
 			//float depth = texture(depthTexture, textureCoord).r;
 			//float linearDepth = linearizeDepth(depth);
@@ -91,17 +95,13 @@ GLuint compileSSAOShaderProgram()
 			vec3 bitangent = cross(tangent, normal);
 			mat3 tbn = mat3(tangent, bitangent, normal);
 
-			float radius = 0.1;
+			float radius = 1.0;
 			float occlusion = 0.0;
-			/*for (int i = 0; i < kernelSize; i++) {
-				//vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
-				vec3 samplePos = vsPos;// + kernel[i] * radius;
+			for (int i = 0; i < kernelSize; i++) {
+				vec3 samplePos = vsPos + radius * (tbn * kernel[i]);
+				vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
 
-				vec4 offset = projectionMatrix * vec4(samplePos, 1.0);
-				offset.xy /= offset.w;
-				offset.xy = offset.xy * 0.5 + 0.5;
-	
-				vec3 sampleFragPos = texture(positionTexture, offset.xy).xyz;
+				vec3 sampleFragPos = texture(positionTexture, sampleTexCoord).xyz;
 				occlusion += ((sampleFragPos.z - 0.0001) <= samplePos.z ? 1.0 : 0.0);
 
 				//float sampleLinDepth = linearizeDepth(texture(depthTexture, offset.xy).r);
@@ -112,19 +112,10 @@ GLuint compileSSAOShaderProgram()
 				//occlusion += (sampleLinDepth <= samplePos.z ? 1.0 : 0.0);
 			}
 			
-			occlusion /= kernelSize;*/
-
-			vec4 offset = projectionMatrix * vec4(vsPos, 1.0);
-			offset.xy /= offset.w;
-			offset.xy = offset.xy * 0.5 + 0.5;
-
-			if (approxEqual(offset.x, gl_FragCoord.x, 0.2) &&
-			    approxEqual(offset.y, gl_FragCoord.y, 0.2)) occlusion = 1.0;
-			else occlusion = 0.0;
+			occlusion /= kernelSize;
 			
-			if (textureCoord.x < 225) fragmentColor = color;
-			//else if (textureCoord.x < 450) fragmentColor = vec4(vec3(linearDepth*0.2), 1.0);
-			else if (textureCoord.x < /*675*/ 450) fragmentColor = vec4(vec3(occlusion), 1.0);
+			if (textureCoord.x < 0.3) fragmentColor = color;
+			else if (textureCoord.x < 0.6) fragmentColor = vec4(vec3(occlusion), 1.0);
 			else fragmentColor = occlusion * color;
 		}
 	)");
@@ -136,6 +127,7 @@ GLuint compileSSAOShaderProgram()
 	glDeleteShader(fragmentShader);
 
 	glBindAttribLocation(shaderProgram, 0, "position");
+	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
 	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
 
 	gl::linkProgram(shaderProgram);
@@ -209,19 +201,19 @@ void SSAO::apply(GLuint targetFramebuffer, int framebufferWidth, int framebuffer
 	// Texture buffer uniforms
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_RECTANGLE, colorTex);
+	glBindTexture(GL_TEXTURE_2D, colorTex);
 	gl::setUniform(mSSAOProgram, "colorTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_RECTANGLE, depthTex);
+	glBindTexture(GL_TEXTURE_2D, depthTex);
 	gl::setUniform(mSSAOProgram, "depthTexture", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_RECTANGLE, normalTex);
+	glBindTexture(GL_TEXTURE_2D, normalTex);
 	gl::setUniform(mSSAOProgram, "normalTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_RECTANGLE, posTex);
+	glBindTexture(GL_TEXTURE_2D, posTex);
 	gl::setUniform(mSSAOProgram, "positionTexture", 3);
 
 	// Other uniforms
