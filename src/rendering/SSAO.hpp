@@ -21,6 +21,26 @@ using sfz::mat4f;
 using std::vector;
 using std::size_t;
 
+// Occlusion Framebuffer
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+struct OcclusionFramebuffer final {
+	GLuint mFBO, mTexture;
+	int mWidth, mHeight;
+
+	OcclusionFramebuffer() = delete;
+	OcclusionFramebuffer(const OcclusionFramebuffer&) = delete;
+	OcclusionFramebuffer& operator= (const OcclusionFramebuffer&) = delete;
+
+	OcclusionFramebuffer(int width, int height) noexcept;
+	OcclusionFramebuffer(OcclusionFramebuffer&& other) noexcept;
+	OcclusionFramebuffer& operator= (OcclusionFramebuffer&& other) noexcept;
+	~OcclusionFramebuffer() noexcept;
+};
+
+// SSAO
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 class SSAO final {
 public:
 	// Constructors & destructors
@@ -30,21 +50,26 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(size_t numSamples, size_t noiseTexWidth, float radius) noexcept;
+	SSAO(int width, int height, size_t numSamples, size_t noiseTexWidth, float radius) noexcept;
 	~SSAO() noexcept;
 
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void apply(GLuint targetFramebuffer, int framebufferWidth, int framebufferHeight,
+	void apply(GLuint targetFramebuffer,
 	           GLuint colorTex, GLuint depthTex, GLuint normalTex, GLuint posTex,
 	           const mat4f& projectionMatrix) noexcept;
+
+	void setSize(int width, int height) noexcept;
 
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 private:
-	GLuint mSSAOProgram;
+	int mWidth, mHeight;
+
+	GLuint mSSAOProgram, mBlurProgram;
 	FullscreenQuadObject mFullscreenQuad;
+	OcclusionFramebuffer mOcclusionFBO;
 
 	static const size_t MAX_KERNEL_SIZE = 256;
 	size_t mKernelSize;

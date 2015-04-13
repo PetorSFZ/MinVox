@@ -9,10 +9,10 @@ namespace vox {
 
 namespace {
 
-// SSAO shader source
+// Common vertex shader
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-const char* SSAO_VERTEX_SHADER = R"(
+const char* VERTEX_SHADER = R"(
 	#version 330
 
 	in vec2 position;
@@ -27,6 +27,9 @@ const char* SSAO_VERTEX_SHADER = R"(
 	}
 )";
 
+// SSAO shader
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 const char* SSAO_FRAGMENT_SHADER = R"(
 	#version 330
 
@@ -36,7 +39,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	in vec2 texCoord;
 
 	// Output
-	out vec4 fragmentColor;
+	out vec4 occlusionOut;
 
 	// Constants
 	const int MAX_KERNEL_SIZE = 256;
@@ -105,14 +108,37 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 			vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
 			float sampleDepth = vsPosToDepth(texture(uPositionTexture, sampleTexCoord).xyz);
 
-			float rangeCheck = abs(vsPos.z - sampleDepth) < uRadius ? 1.0 : 0.0;
-			occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
+			//float rangeCheck = abs(vsPos.z - sampleDepth) < uRadius ? 1.0 : 0.0;
+			occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0);// * rangeCheck;
 		}
 		occlusion /= uKernelSize;
-			
-		if (texCoord.x < 0.3) fragmentColor = color;
-		else if (texCoord.x < 0.6) fragmentColor = vec4(vec3(occlusion), 1.0);
-		else fragmentColor = occlusion * color;
+		occlusion = pow(occlusion, 2.0);
+
+		occlusionOut = vec4(occlusion, 0.0, 0.0, 1.0);
+	}
+)";
+
+// SSAO blur shader
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
+	#version 330
+
+	precision highp float; // required by GLSL spec Sect 4.5.3
+
+	// Input
+	in vec2 texCoord;
+	
+	// Output
+	out vec4 fragmentColor;
+
+	// Uniforms
+	uniform sampler2D uOcclusionTexture;
+
+	void main()
+	{
+		float occlusion = texture(uOcclusionTexture, texCoord).r;
+		fragmentColor = vec4(vec3(occlusion), 1.0);
 	}
 )";
 
@@ -121,8 +147,32 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 GLuint compileSSAOShaderProgram() noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(SSAO_VERTEX_SHADER);
+	GLuint vertexShader = gl::compileVertexShader(VERTEX_SHADER);
 	GLuint fragmentShader = gl::compileFragmentShader(SSAO_FRAGMENT_SHADER);
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glBindAttribLocation(shaderProgram, 0, "position");
+	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+	glBindFragDataLocation(shaderProgram, 0, "occlusionOut");
+
+	gl::linkProgram(shaderProgram);
+
+	if (gl::checkAllGLErrors()) {
+		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
+	}
+
+	return shaderProgram;
+}
+
+GLuint compileBlurShaderProgram() noexcept
+{
+	GLuint vertexShader = gl::compileVertexShader(VERTEX_SHADER);
+	GLuint fragmentShader = gl::compileFragmentShader(SSAO_BLUR_FRAGMENT_SHADER);
 
 	GLuint shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
@@ -212,12 +262,74 @@ GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 
 } // anonymous namespace
 
-// Constructors & destructors
+// Occlusion Framebuffer
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(size_t numSamples, size_t noiseTexWidth, float radius) noexcept
+OcclusionFramebuffer::OcclusionFramebuffer(int width, int height) noexcept
 :
+	mWidth{width},
+	mHeight{height}
+{
+	// Generate framebuffer
+	glGenFramebuffers(1, &mFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+
+	// Color texture
+	glGenTextures(1, &mTexture);
+	glBindTexture(GL_TEXTURE_2D, mTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexture, 0);
+
+	// Check that framebuffer is okay
+	sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
+
+	// Cleanup
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+OcclusionFramebuffer::OcclusionFramebuffer(OcclusionFramebuffer&& other) noexcept
+{
+	glGenFramebuffers(1, &mFBO);
+	glGenTextures(1, &mTexture);
+
+	std::swap(mFBO, other.mFBO);
+	std::swap(mTexture, other.mTexture);
+	std::swap(mWidth, other.mWidth);
+	std::swap(mHeight, other.mHeight);
+}
+
+OcclusionFramebuffer& OcclusionFramebuffer::operator= (OcclusionFramebuffer&& other) noexcept
+{
+	std::swap(mFBO, other.mFBO);
+	std::swap(mTexture, other.mTexture);
+	std::swap(mWidth, other.mWidth);
+	std::swap(mHeight, other.mHeight);
+	return *this;
+}
+
+OcclusionFramebuffer::~OcclusionFramebuffer() noexcept
+{
+	glDeleteTextures(1, &mTexture);
+	glDeleteFramebuffers(1, &mFBO);
+}
+
+
+// SSAO
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+// SSAO: Constructors & destructors
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+SSAO::SSAO(int width, int height, size_t numSamples, size_t noiseTexWidth, float radius) noexcept
+:
+	mWidth{width},
+	mHeight{height},
 	mSSAOProgram{compileSSAOShaderProgram()},
+	mBlurProgram{compileBlurShaderProgram()},
+	mOcclusionFBO{mWidth, mHeight},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
 	mKernel{std::move(generateKernel(mKernelSize))},
 	mNoiseTexWidth{noiseTexWidth > MAX_NOISE_TEX_WIDTH ? MAX_NOISE_TEX_WIDTH : noiseTexWidth},
@@ -231,16 +343,21 @@ SSAO::~SSAO() noexcept
 	glDeleteTextures(1, &mNoiseTexture);
 }
 
-// Public methods
+// SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void SSAO::apply(GLuint targetFramebuffer, int framebufferWidth, int framebufferHeight,
+void SSAO::apply(GLuint targetFramebuffer,
                  GLuint colorTex, GLuint depthTex, GLuint normalTex, GLuint posTex,
                  const mat4f& projectionMatrix) noexcept
 {
+
+	// Render occlusion texture
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 	glUseProgram(mSSAOProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, targetFramebuffer);
-	glViewport(0, 0, framebufferWidth, framebufferHeight);
+	//glBindFramebuffer(GL_FRAMEBUFFER, targetFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.mFBO);
+	glViewport(0, 0, mOcclusionFBO.mWidth, mOcclusionFBO.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -274,10 +391,32 @@ void SSAO::apply(GLuint targetFramebuffer, int framebufferWidth, int framebuffer
 	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3f*>(mKernel.data()), mKernelSize);
 
 	gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale",
-	     vec2f{(float)framebufferWidth, (float)framebufferHeight} / (float)mNoiseTexWidth);
+	     vec2f{(float)mWidth, (float)mHeight} / (float)mNoiseTexWidth);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
 
 	mFullscreenQuad.render();
+
+	// Blur occlusion texture
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	glUseProgram(mBlurProgram);
+	glBindFramebuffer(GL_FRAMEBUFFER, targetFramebuffer);
+	glViewport(0, 0, mWidth, mHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.mTexture);
+	gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
+
+	mFullscreenQuad.render();
+}
+
+void SSAO::setSize(int width, int height) noexcept
+{
+	mWidth = width;
+	mHeight = height;
+	mOcclusionFBO = OcclusionFramebuffer{mWidth, mHeight};
 }
 
 } // namespace vox

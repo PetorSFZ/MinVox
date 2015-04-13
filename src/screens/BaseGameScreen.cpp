@@ -48,11 +48,10 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mShaderProgram{vox::compileStandardShaderProgram()},
 	mShadowMapShaderProgram{vox::compileShadowMapShaderProgram()},
 	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
-	mWorldRenderer{mWorld, mAssets},
-	mSSAO{16, 4, 2.0f},
-	
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
+	mWorldRenderer{mWorld, mAssets},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 4, 2.0f},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
@@ -88,6 +87,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				float h = static_cast<float>(event.window.data2);
 				mCam.mAspectRatio = w/h;
 				reloadFramebuffers(event.window.data1, event.window.data2);
+				mSSAO.setSize(event.window.data1, event.window.data2);
 				break;
 			}
 			break;
@@ -198,15 +198,13 @@ void BaseGameScreen::render(float delta)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	GLuint ssaoTargetFBO = mPostProcessedFramebuffer.mFrameBufferObject;
-	int ssaoTargetFBOWidth = mPostProcessedFramebuffer.mWidth;
-	int ssaoTargetFBOHeight = mPostProcessedFramebuffer.mHeight;
 	GLuint ssaoColorTex = mBaseFramebuffer.mColorTexture;
 	GLuint ssaoDepthTex = mBaseFramebuffer.mDepthTexture;
 	GLuint ssaoNormalTex = mBaseFramebuffer.mNormalTexture;
 	GLuint ssaoPosTex = mBaseFramebuffer.mPositionTexture;
 	const mat4f& ssaoProjMatrix = mCam.mProjMatrix;
 	
-	mSSAO.apply(ssaoTargetFBO, ssaoTargetFBOWidth, ssaoTargetFBOHeight,
+	mSSAO.apply(ssaoTargetFBO,
 	            ssaoColorTex, ssaoDepthTex, ssaoNormalTex, ssaoPosTex,
 	            ssaoProjMatrix);
 
