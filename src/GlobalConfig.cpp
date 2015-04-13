@@ -7,7 +7,7 @@ namespace vox {
 GlobalConfig::GlobalConfig() noexcept
 {
 	mVSync = false;
-	mPrintFPS = true;
+	mPrintFPS = false;
 	mWindowResolutionX = 800;
 	mWindowResolutionY = 800;
 	mRetinaAware = false;
