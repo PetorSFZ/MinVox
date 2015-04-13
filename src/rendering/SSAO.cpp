@@ -132,13 +132,35 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 	// Output
 	out vec4 fragmentColor;
 
+	// Constants
+	const int blurWidth = 4;
+	const float blurWidthFloat = 4.0;
+
 	// Uniforms
 	uniform sampler2D uOcclusionTexture;
 
 	void main()
 	{
-		float occlusion = texture(uOcclusionTexture, texCoord).r;
-		fragmentColor = vec4(vec3(occlusion), 1.0);
+		// Blur shader from: http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
+		// Used to blur away the noise applied during the first stage.
+
+		vec2 texelSize = 1.0 / vec2(textureSize(uOcclusionTexture, 0));
+
+		// Offset to the offset so we sample values around the current texcoord.
+		vec2 offsetOffset = vec2(-blurWidthFloat * 0.5 + 0.5);
+
+		float blur = 0.0;
+		for (int x = 0; x < blurWidth; x++) {
+			for (int y = 0; y < blurWidth; y++) {
+				vec2 offset = vec2(float(x), float(y));
+				offset += offsetOffset;
+				offset *= texelSize;
+				blur += texture(uOcclusionTexture, texCoord + offset).r;
+			}
+		}
+		blur /= (blurWidthFloat*blurWidthFloat);
+		
+		fragmentColor = vec4(vec3(blur), 1.0);
 	}
 )";
 
@@ -323,16 +345,17 @@ OcclusionFramebuffer::~OcclusionFramebuffer() noexcept
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(int width, int height, size_t numSamples, size_t noiseTexWidth, float radius) noexcept
+SSAO::SSAO(int width, int height, size_t numSamples, float radius) noexcept
 :
 	mWidth{width},
 	mHeight{height},
 	mSSAOProgram{compileSSAOShaderProgram()},
 	mBlurProgram{compileBlurShaderProgram()},
 	mOcclusionFBO{mWidth, mHeight},
+	mBlurredFBO{mWidth, mHeight},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
 	mKernel{std::move(generateKernel(mKernelSize))},
-	mNoiseTexWidth{noiseTexWidth > MAX_NOISE_TEX_WIDTH ? MAX_NOISE_TEX_WIDTH : noiseTexWidth},
+	mNoiseTexWidth{4},
 	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
 	mRadius{radius}
 { }
@@ -417,6 +440,7 @@ void SSAO::setSize(int width, int height) noexcept
 	mWidth = width;
 	mHeight = height;
 	mOcclusionFBO = OcclusionFramebuffer{mWidth, mHeight};
+	mBlurredFBO = OcclusionFramebuffer{mWidth, mHeight};
 }
 
 } // namespace vox

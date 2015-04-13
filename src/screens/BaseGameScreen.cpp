@@ -51,7 +51,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mWorldRenderer{mWorld, mAssets},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 4, 2.0f},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}

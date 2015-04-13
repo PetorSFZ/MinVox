@@ -50,7 +50,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(int width, int height, size_t numSamples, size_t noiseTexWidth, float radius) noexcept;
+	SSAO(int width, int height, size_t numSamples, float radius) noexcept;
 	~SSAO() noexcept;
 
 	// Public methods
@@ -69,7 +69,7 @@ private:
 
 	GLuint mSSAOProgram, mBlurProgram;
 	FullscreenQuadObject mFullscreenQuad;
-	OcclusionFramebuffer mOcclusionFBO;
+	OcclusionFramebuffer mOcclusionFBO, mBlurredFBO;
 
 	static const size_t MAX_KERNEL_SIZE = 256;
 	size_t mKernelSize;
