@@ -51,7 +51,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mWorldRenderer{mWorld, mAssets},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f, 2.0},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 1.0f, 1.5f},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
@@ -91,7 +91,30 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				break;
 			}
 			break;
+		case SDL_KEYDOWN:
+			switch (event.key.keysym.sym) {
+			case 'r':
+				mSSAO.radius(mSSAO.radius() - 0.1f);
+				break;
+			case 't':
+				mSSAO.radius(mSSAO.radius() + 0.1f);
+				break;
+			case 'f':
+				mSSAO.occlusionExp(mSSAO.occlusionExp() - 0.1f);
+				break;
+			case 'g':
+				mSSAO.occlusionExp(mSSAO.occlusionExp() + 0.1f);
+				break;
+			case 'v':
+				mSSAO.numSamples(mSSAO.numSamples() - 8);
+				break;
+			case 'b':
+				mSSAO.numSamples(mSSAO.numSamples() + 8);
+				break;
+			}
+			break;
 		}
+		
 	}
 
 	updateSpecific(events, ctrl, delta);
@@ -105,6 +128,8 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 	mCam.updateMatrices();
 	mCam.updatePlanes();
 	mWorld.update(mCam.mPos);
+
+	std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
 }
 
 void BaseGameScreen::render(float delta)

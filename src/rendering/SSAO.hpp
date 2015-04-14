@@ -67,10 +67,13 @@ public:
 	inline int textureHeight() const noexcept { return mHeight; }
 	void textureSize(int width, int height) noexcept;
 
+	inline size_t numSamples() const noexcept { return mKernelSize; }
+	void numSamples(size_t numSamples) noexcept;
+
 	inline float radius() const noexcept { return mRadius; }
 	void radius(float radius) noexcept;
 
-	inline float occlusionExp() const noexcept { return mOcclusionExp; }
+	inline float occlusionExp() const noexcept { return mOcclusionExp; }
 	void occlusionExp(float occlusionExp) noexcept;
 
 	// Private members

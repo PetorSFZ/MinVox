@@ -74,12 +74,15 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 	void main()
 	{
+		// SSAO implementation using normal oriented hemisphere, inspired by this tutorial:
+		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
+
 		vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
 		vec3 normal = normalize(texture(uNormalTexture, texCoord).xyz);	
 		float depth = vsPosToDepth(vsPos);
 		vec3 noiseVec = texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
 
-		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
+		// Calculates matrix to rotate kernel into normal hemisphere using Gram–Schmidt process
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
 		vec3 bitangent = cross(tangent, normal);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
@@ -90,8 +93,11 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 			vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
 			float sampleDepth = vsPosToDepth(texture(uPositionTexture, sampleTexCoord).xyz);
 
-			//float rangeCheck = abs(vsPos.z - sampleDepth) < uRadius ? 1.0 : 0.0;
-			occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0);// * rangeCheck;
+			//float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
+			//occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
+			
+			float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(depth - sampleDepth));
+			occlusion += (step(sampleDepth, samplePos.z) * rangeCheck);
 		}
 		occlusion /= uKernelSize;
 		occlusion = pow(occlusion, uOcclusionExp);
@@ -223,11 +229,11 @@ vector<vec3f> generateKernel(size_t kernelSize) noexcept
 		kernel[i] *= scale;
 	}
 
-	std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
+	/*std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
 	for (auto& val : kernel) {
 		std::cout << val << "\n";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 	return std::move(kernel);
 }
@@ -246,11 +252,11 @@ GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 		noise[i] = vec3f{distr(gen), distr(gen), 0.0f};
 	}
 
-	std::cout << "Generated SSAO noise texture (width = " << noiseTexWidth << ") with values: \n";
+	/*std::cout << "Generated SSAO noise texture (width = " << noiseTexWidth << ") with values: \n";
 	for (auto& val : noise) {
 		std::cout << val << "\n";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 	GLuint noiseTex;
 	glGenTextures(1, &noiseTex);
@@ -420,6 +426,13 @@ void SSAO::textureSize(int width, int height) noexcept
 	mHeight = height;
 	mOcclusionFBO = OcclusionFramebuffer{mWidth, mHeight};
 	mBlurredFBO = OcclusionFramebuffer{mWidth, mHeight};
+}
+
+void SSAO::numSamples(size_t numSamples) noexcept
+{
+	if (numSamples > MAX_KERNEL_SIZE) return;
+	mKernelSize = numSamples;
+	mKernel = generateKernel(mKernelSize);
 }
 
 void SSAO::radius(float radius) noexcept
