@@ -50,7 +50,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(int width, int height, size_t numSamples, float radius) noexcept;
+	SSAO(int width, int height, size_t numSamples, float radius, float occlusionExp) noexcept;
 	~SSAO() noexcept;
 
 	// Public methods
@@ -60,7 +60,18 @@ public:
 	           GLuint colorTex, GLuint depthTex, GLuint normalTex, GLuint posTex,
 	           const mat4f& projectionMatrix) noexcept;
 
-	void setSize(int width, int height) noexcept;
+	// Getters / setters
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	inline int textureWidth() const noexcept { return mWidth; }
+	inline int textureHeight() const noexcept { return mHeight; }
+	void textureSize(int width, int height) noexcept;
+
+	inline float radius() const noexcept { return mRadius; }
+	void radius(float radius) noexcept;
+
+	inline float occlusionExp() const noexcept { return mOcclusionExp; }
+	void occlusionExp(float occlusionExp) noexcept;
 
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -79,7 +90,7 @@ private:
 	size_t mNoiseTexWidth;
 	GLuint mNoiseTexture;
 
-	float mRadius;
+	float mRadius, mOcclusionExp;
 };
 
 } // namespace vox

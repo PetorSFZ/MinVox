@@ -51,7 +51,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mWorldRenderer{mWorld, mAssets},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f, 2.0},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
@@ -87,7 +87,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				float h = static_cast<float>(event.window.data2);
 				mCam.mAspectRatio = w/h;
 				reloadFramebuffers(event.window.data1, event.window.data2);
-				mSSAO.setSize(event.window.data1, event.window.data2);
+				mSSAO.textureSize(event.window.data1, event.window.data2);
 				break;
 			}
 			break;

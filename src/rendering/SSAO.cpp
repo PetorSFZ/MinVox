@@ -55,6 +55,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 	uniform vec2 uNoiseTexCoordScale;
 	uniform float uRadius;
+	uniform float uOcclusionExp;
 
 	float vsPosToDepth(vec3 vsPos)
 	{
@@ -93,7 +94,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 			occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0);// * rangeCheck;
 		}
 		occlusion /= uKernelSize;
-		occlusion = pow(occlusion, 2.0);
+		occlusion = pow(occlusion, uOcclusionExp);
 
 		occlusionOut = vec4(occlusion, 0.0, 0.0, 1.0);
 	}
@@ -326,7 +327,7 @@ OcclusionFramebuffer::~OcclusionFramebuffer() noexcept
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(int width, int height, size_t numSamples, float radius) noexcept
+SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusionExp) noexcept
 :
 	mWidth{width},
 	mHeight{height},
@@ -338,7 +339,8 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius) noexcept
 	mKernel{std::move(generateKernel(mKernelSize))},
 	mNoiseTexWidth{4},
 	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
-	mRadius{radius}
+	mRadius{radius},
+	mOcclusionExp{occlusionExp}
 { }
 
 SSAO::~SSAO() noexcept
@@ -389,6 +391,7 @@ void SSAO::apply(GLuint targetFramebuffer,
 	gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale",
 	     vec2f{(float)mWidth, (float)mHeight} / (float)mNoiseTexWidth);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
+	gl::setUniform(mSSAOProgram, "uOcclusionExp", mOcclusionExp);
 
 	mFullscreenQuad.render();
 
@@ -408,12 +411,27 @@ void SSAO::apply(GLuint targetFramebuffer,
 	mFullscreenQuad.render();
 }
 
-void SSAO::setSize(int width, int height) noexcept
+// SSAO: Getters / setters
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void SSAO::textureSize(int width, int height) noexcept
 {
 	mWidth = width;
 	mHeight = height;
 	mOcclusionFBO = OcclusionFramebuffer{mWidth, mHeight};
 	mBlurredFBO = OcclusionFramebuffer{mWidth, mHeight};
+}
+
+void SSAO::radius(float radius) noexcept
+{
+	if (radius <= 0.0f) return;
+	mRadius = radius;
+}
+
+void SSAO::occlusionExp(float occlusionExp) noexcept
+{
+	if (occlusionExp <= 0.0f) return;
+	mOcclusionExp = occlusionExp;
 }
 
 } // namespace vox
