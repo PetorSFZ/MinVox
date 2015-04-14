@@ -161,7 +161,7 @@ void BaseGameScreen::render(float delta)
 	glViewport(0, 0, mBaseFramebuffer.mWidth, mBaseFramebuffer.mHeight);
 
 	// Clearing screen
-	glClearColor(0.98f, 0.98f, 0.94f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set view and projection matrix uniforms
