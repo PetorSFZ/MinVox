@@ -45,10 +45,8 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	const int MAX_KERNEL_SIZE = 256;
 
 	// Uniforms
-	uniform sampler2D uColorTexture;
-	uniform sampler2D uDepthTexture;
-	uniform sampler2D uNormalTexture;
 	uniform sampler2D uPositionTexture;
+	uniform sampler2D uNormalTexture;
 	uniform sampler2D uNoiseTexture;
 		
 	uniform int uKernelSize;
@@ -57,19 +55,6 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 	uniform vec2 uNoiseTexCoordScale;
 	uniform float uRadius;
-
-	float linearizeDepth(float depth)
-	{
-		/*float near = 0.5; // camera z-near
-		float far = 1000.0; // camera z-far
-		return (2.0 * near) / (far + near - (depth*(far-near)));*/
-			
-		// http://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/16597492#16597492
-		vec4 unprojected = vec4(0, 0, depth * 2.0 - 1.0, 1.0);
-		vec4 projected = inverse(uProjectionMatrix) * unprojected;
-		projected /= projected.w;
-		return projected.z;
-	}
 
 	float vsPosToDepth(vec3 vsPos)
 	{
@@ -88,18 +73,14 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 	void main()
 	{
-		vec4 color = texture(uColorTexture, texCoord);
-		vec3 normal = normalize(texture(uNormalTexture, texCoord).rgb);
 		vec3 vsPos = texture(uPositionTexture, texCoord).rgb;
+		vec3 normal = normalize(texture(uNormalTexture, texCoord).rgb);	
 		float depth = vsPosToDepth(vsPos);
-		//float depth = linearizeDepth(texture(depthTexture, texCoord).r);
-
-		//vec3 noiseVec = vec3(0.0, 1.0, 0); // Note, should really come from tiled noise texture.
 		vec3 noiseVec = texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
 
 		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
-		vec3 bitangent = cross(normal, tangent);
+		vec3 bitangent = cross(tangent, normal);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
 
 		float occlusion = 0.0;
@@ -387,24 +368,16 @@ void SSAO::apply(GLuint targetFramebuffer,
 	// Texture buffer uniforms
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, colorTex);
-	gl::setUniform(mSSAOProgram, "uColorTexture", 0);
+	glBindTexture(GL_TEXTURE_2D, posTex);
+	gl::setUniform(mSSAOProgram, "uPositionTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, depthTex);
-	gl::setUniform(mSSAOProgram, "uDepthTexture", 1);
+	glBindTexture(GL_TEXTURE_2D, normalTex);
+	gl::setUniform(mSSAOProgram, "uNormalTexture", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, normalTex);
-	gl::setUniform(mSSAOProgram, "uNormalTexture", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, posTex);
-	gl::setUniform(mSSAOProgram, "uPositionTexture", 3);
-
-	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, mNoiseTexture);
-	gl::setUniform(mSSAOProgram, "uNoiseTexture", 4);
+	gl::setUniform(mSSAOProgram, "uNoiseTexture", 2);
 
 	// Other uniforms
 
