@@ -73,8 +73,8 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 	void main()
 	{
-		vec3 vsPos = texture(uPositionTexture, texCoord).rgb;
-		vec3 normal = normalize(texture(uNormalTexture, texCoord).rgb);	
+		vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
+		vec3 normal = normalize(texture(uNormalTexture, texCoord).xyz);	
 		float depth = vsPosToDepth(vsPos);
 		vec3 noiseVec = texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
 

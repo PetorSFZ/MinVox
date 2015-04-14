@@ -93,7 +93,7 @@ GLuint compileStandardShaderProgram()
 			             + materialEmissive;
 
 			fragmentColor = vec4(shading, 1.0);
-			fragmentNormal = vec4(vsNormal, 0.0);
+			fragmentNormal = vec4(vsNormal, 1.0);
 			fragmentPosition = vec4(vsPos, 1.0);
 		}
 	)");

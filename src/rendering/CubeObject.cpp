@@ -122,7 +122,7 @@ CubeObject::CubeObject()
 		0.0f, 0.0f, 1.0f, // 22, right-bottom-front
 		0.0f, 0.0f, 1.0f  // 23, right-top-front
 	};
-	const float val = 1.0f / std::sqrtf(3.0f);
+	/*const float val = 1.0f / std::sqrtf(3.0f);
 	const float sphereNormals[] = {
 		// x, y, z
 		// Left
@@ -160,7 +160,7 @@ CubeObject::CubeObject()
 		-val, val, val, // 21, left-top-front
 		val, -val, val, // 22, right-bottom-front
 		val, val, val, // 23, right-top-front
-	};
+	};*/
 	const unsigned int indices[] = {
 		// Left
 		0, 1, 2,
