@@ -47,8 +47,9 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWindow{window},
 	mAssets{},
 
-	mShaderProgram{vox::compileStandardShaderProgram()},
-	mShadowMapShaderProgram{vox::compileShadowMapShaderProgram()},
+	mShaderProgram{compileStandardShaderProgram()},
+	mShadowMapShaderProgram{compileShadowMapShaderProgram()},
+	mPostProcessShaderProgram{compilePostProcessShaderProgram()},
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
@@ -118,6 +119,16 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case 'b':
 				mSSAO.numSamples(mSSAO.numSamples() + 8);
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				break;
+
+			case '1':
+				mRenderMode = 0;
+				break;
+			case '2':
+				mRenderMode = 1;
+				break;
+			case '3':
+				mRenderMode = 2;
 				break;
 			}
 			break;
@@ -228,16 +239,27 @@ void BaseGameScreen::render(float delta)
 	// Applying post-process effects
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint ssaoTargetFBO = mPostProcessedFramebuffer.mFrameBufferObject;
-	GLuint ssaoColorTex = mBaseFramebuffer.mColorTexture;
-	GLuint ssaoDepthTex = mBaseFramebuffer.mDepthTexture;
-	GLuint ssaoNormalTex = mBaseFramebuffer.mNormalTexture;
-	GLuint ssaoPosTex = mBaseFramebuffer.mPositionTexture;
-	const mat4f& ssaoProjMatrix = mCam.mProjMatrix;
-	
-	mSSAO.apply(ssaoTargetFBO,
-	            ssaoColorTex, ssaoDepthTex, ssaoNormalTex, ssaoPosTex,
-	            ssaoProjMatrix);
+	GLuint occlusionTex = mSSAO.calculate(mBaseFramebuffer.mPositionTexture,
+	                                      mBaseFramebuffer.mNormalTexture,
+	                                      mCam.mProjMatrix);
+
+	glUseProgram(mPostProcessShaderProgram);
+	glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessedFramebuffer.mFrameBufferObject);
+	glViewport(0, 0, mPostProcessedFramebuffer.mWidth, mPostProcessedFramebuffer.mHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mBaseFramebuffer.mColorTexture);
+	gl::setUniform(mPostProcessShaderProgram, "uColorTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, occlusionTex);
+	gl::setUniform(mPostProcessShaderProgram, "uOcclusionTexture", 1);
+
+	gl::setUniform(mPostProcessShaderProgram, "uRenderMode", mRenderMode);
+
+	mFullscreenQuad.render();
 
 	glUseProgram(0);
 

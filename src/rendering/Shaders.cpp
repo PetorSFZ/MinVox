@@ -1,8 +1,10 @@
 #include "rendering/Shaders.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
-GLuint compileStandardShaderProgram()
+GLuint compileStandardShaderProgram() noexcept
 {
 	GLuint vertexShader = gl::compileVertexShader(R"(
 		#version 330
@@ -120,7 +122,7 @@ GLuint compileStandardShaderProgram()
 	return shaderProgram;
 }
 
-GLuint compileShadowMapShaderProgram()
+GLuint compileShadowMapShaderProgram() noexcept
 {
 	GLuint vertexShader = gl::compileVertexShader(R"(
 		#version 330
@@ -169,4 +171,71 @@ GLuint compileShadowMapShaderProgram()
 	return shaderProgram;
 }
 
+GLuint compilePostProcessShaderProgram() noexcept
+{
+	GLuint vertexShader = gl::compileVertexShader(R"(
+		#version 330
+
+		in vec2 position;
+		in vec2 texCoordIn;
+
+		out vec2 texCoord;
+
+		void main()
+		{
+			gl_Position = vec4(position, 0.0, 1.0);
+			texCoord = texCoordIn;
+		}
+	)");
+
+
+	GLuint fragmentShader = gl::compileFragmentShader(R"(
+		#version 330
+
+		precision highp float; // required by GLSL spec Sect 4.5.3
+
+		// Input
+		in vec2 texCoord;
+
+		// Output
+		out vec4 fragmentColor;
+
+		// Uniform
+		uniform sampler2D uColorTexture;
+		uniform sampler2D uOcclusionTexture;
+
+		uniform int uRenderMode;
+
+		void main()
+		{
+			vec3 color = texture(uColorTexture, texCoord).rgb;
+			float occlusion = texture(uOcclusionTexture, texCoord).r;
+
+			if (uRenderMode == 0) color = (0.5 + 0.5*occlusion)*color;
+			else if (uRenderMode == 1) color = vec3(occlusion);
+
+			fragmentColor = vec4(color, 1.0);
+		}
+	)");
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glBindAttribLocation(shaderProgram, 0, "position");
+	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
+
+	gl::linkProgram(shaderProgram);
+
+	if (gl::checkAllGLErrors()) {
+		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
+	}
+	return shaderProgram;
+}
+
 } // namespace vox
+
+#include <sfz/MSVC12HackOFF.hpp>

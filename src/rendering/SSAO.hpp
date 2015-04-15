@@ -56,9 +56,8 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void apply(GLuint targetFramebuffer,
-	           GLuint colorTex, GLuint depthTex, GLuint normalTex, GLuint posTex,
-	           const mat4f& projectionMatrix) noexcept;
+	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept;
+	GLuint calculateClean(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

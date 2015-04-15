@@ -62,7 +62,7 @@ protected:
 	sdl::Window& mWindow;
 	Assets mAssets;
 
-	GLuint mShaderProgram, mShadowMapShaderProgram;
+	GLuint mShaderProgram, mShadowMapShaderProgram, mPostProcessShaderProgram;
 	BigFramebuffer mBaseFramebuffer;
 	Framebuffer mPostProcessedFramebuffer;
 	ShadowMap mShadowMap;
@@ -71,6 +71,7 @@ protected:
 	SSAO mSSAO;
 
 	bool mOldWorldRenderer = false;
+	int mRenderMode = 0;
 
 	Camera mSunCam;
 	vec3f mLightPosSpherical, mLightTarget, mLightColor;

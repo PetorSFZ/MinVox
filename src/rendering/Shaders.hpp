@@ -4,6 +4,8 @@
 
 #include "sfz/GL.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 /**
@@ -13,12 +15,13 @@ namespace vox {
  * one object file and not the whole Main.cpp when shaders are changed.
  */
 
-GLuint compileStandardShaderProgram();
+GLuint compileStandardShaderProgram() noexcept;
 
-GLuint compileShadowMapShaderProgram();
+GLuint compileShadowMapShaderProgram() noexcept;
 
-GLuint compilePostProcessShaderProgram();
+GLuint compilePostProcessShaderProgram() noexcept;
 
 } // namespace vox
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif

@@ -360,16 +360,12 @@ SSAO::~SSAO() noexcept
 // SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void SSAO::apply(GLuint targetFramebuffer,
-                 GLuint colorTex, GLuint depthTex, GLuint normalTex, GLuint posTex,
-                 const mat4f& projectionMatrix) noexcept
+GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept
 {
-
 	// Render occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mSSAOProgram);
-	//glBindFramebuffer(GL_FRAMEBUFFER, targetFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.mFBO);
 	glViewport(0, 0, mOcclusionFBO.mWidth, mOcclusionFBO.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -391,7 +387,7 @@ void SSAO::apply(GLuint targetFramebuffer,
 
 	// Other uniforms
 
-	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projectionMatrix);
+	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projMatrix);
 
 	gl::setUniform(mSSAOProgram, "uKernelSize", static_cast<int>(mKernelSize));
 	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3f*>(mKernel.data()), mKernelSize);
@@ -407,8 +403,8 @@ void SSAO::apply(GLuint targetFramebuffer,
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mBlurProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, targetFramebuffer);
-	glViewport(0, 0, mWidth, mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.mFBO);
+	glViewport(0, 0, mBlurredFBO.mWidth, mBlurredFBO.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -417,6 +413,13 @@ void SSAO::apply(GLuint targetFramebuffer,
 	gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
 
 	mFullscreenQuad.render();
+
+	return mBlurredFBO.mTexture;
+}
+
+GLuint SSAO::calculateClean(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept
+{
+	calculate(posTex, normalTex, projMatrix);
 }
 
 // SSAO: Getters / setters
