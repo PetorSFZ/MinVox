@@ -82,7 +82,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 		float depth = vsPosToDepth(vsPos);
 		vec3 noiseVec = texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
 
-		// Calculates matrix to rotate kernel into normal hemisphere using Gram–Schmidt process
+		// Calculates matrix to rotate kernel into normal hemisphere using Gram Schmidt process
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
 		vec3 bitangent = cross(tangent, normal);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
@@ -96,8 +96,8 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 			//float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
 			//occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
 			
-			float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(depth - sampleDepth));
-			occlusion += (step(sampleDepth, samplePos.z) * rangeCheck);
+			//float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(depth - sampleDepth));
+			occlusion += (step(sampleDepth, samplePos.z)); // * rangeCheck);
 		}
 		occlusion /= uKernelSize;
 		occlusion = pow(occlusion, uOcclusionExp);
