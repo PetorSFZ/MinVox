@@ -9,6 +9,7 @@
 #include "rendering/FullscreenQuadObject.hpp"
 #include "rendering/Shaders.hpp"
 #include "rendering/ShadowMap.hpp"
+#include "rendering/SkyCubeObject.hpp"
 #include "rendering/SSAO.hpp"
 #include "rendering/WorldRenderer.hpp"
 

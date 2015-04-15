@@ -19,16 +19,29 @@ vec3f sphericalToCartesian(const vec3f& spherical)
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
-void drawLight(const vox::Assets& assets, GLuint shader, const vec3f& lightPos)
+void drawLight(const Assets& assets, GLuint shader, const vec3f& lightPos)
 {
-	static vox::CubeObject cubeObj;
-	sfz::mat4f transform = sfz::identityMatrix4<float>();
+	static CubeObject cubeObj;
+	mat4f transform = sfz::identityMatrix4<float>();
 
 	// Render sun
 	sfz::translation(transform, lightPos);
 	gl::setUniform(shader, "modelMatrix", transform);
 	glBindTexture(GL_TEXTURE_2D, assets.YELLOW.mHandle);
 	cubeObj.render();
+}
+
+void drawSkyCube(const Assets& assets, GLuint shader, const Camera& cam)
+{
+	static SkyCubeObject skyCubeObj;
+	static const vec3f halfSkyCubeSize{400.0f, 400.0f, 400.0f};
+	mat4f transform = sfz::scalingMatrix4(800.0f, 800.0f, 800.0f);
+
+	// Render skycube
+	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
+	gl::setUniform(shader, "modelMatrix", transform);
+	glBindTexture(GL_TEXTURE_2D, assets.VANILLA.mHandle);
+	skyCubeObj.render();
 }
 
 } // anonymous namespace
@@ -149,7 +162,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 	mWorld.update(mCam.mPos);
 }
 
-void BaseGameScreen::render(float delta)
+void BaseGameScreen::render(float)
 {
 	// Enable blending
 	glEnable(GL_BLEND);
@@ -203,7 +216,7 @@ void BaseGameScreen::render(float delta)
 	glViewport(0, 0, mBaseFramebuffer.mWidth, mBaseFramebuffer.mHeight);
 
 	// Clearing screen
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set view and projection matrix uniforms
@@ -232,6 +245,7 @@ void BaseGameScreen::render(float delta)
 	glActiveTexture(GL_TEXTURE0);
 
 	// Drawing objects
+	drawSkyCube(mAssets, mShaderProgram, mCam);
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, mShaderProgram);
 	else mWorldRenderer.drawWorldOld(mCam, mShaderProgram);
 	drawLight(mAssets, mShaderProgram, mSunCam.mPos);
