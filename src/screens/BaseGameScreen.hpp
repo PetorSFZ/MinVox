@@ -54,6 +54,8 @@ protected:
 	// Protected members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	GlobalConfig& mCfg;
+
 	World mWorld;
 	Camera mCam;
 

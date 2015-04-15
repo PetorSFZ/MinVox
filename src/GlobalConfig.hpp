@@ -14,6 +14,9 @@ struct GlobalConfig {
 	bool mVSync, mPrintFPS;
 	int mWindowResolutionX, mWindowResolutionY;
 	bool mRetinaAware;
+	
+	size_t mSSAONumSamples;
+	float mSSAORadius, mSSAOExp;
 
 	size_t mVerticalRange, mHorizontalRange;
 

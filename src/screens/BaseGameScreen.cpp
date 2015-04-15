@@ -38,7 +38,8 @@ void drawLight(const vox::Assets& assets, GLuint shader, const vec3f& lightPos)
 
 BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName)
 :
-	mWorld{worldName, vec3f{-3.0f, 1.2f, 0.2f}, getGlobalConfig().mHorizontalRange, getGlobalConfig().mVerticalRange},
+	mCfg{getGlobalConfig()},
+	mWorld{worldName, vec3f{-3.0f, 1.2f, 0.2f}, mCfg.mHorizontalRange, mCfg.mVerticalRange},
 	mCam{vec3f{-3.0f, 1.2f, 0.2f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.5f, 1000.0f},
 
@@ -51,7 +52,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mWorldRenderer{mWorld, mAssets},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 1.0f, 1.5f},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
