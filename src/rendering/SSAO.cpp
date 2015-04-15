@@ -261,7 +261,8 @@ GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 	GLuint noiseTex;
 	glGenTextures(1, &noiseTex);
 	glBindTexture(GL_TEXTURE_2D, noiseTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, noiseTexWidth, noiseTex, 0, GL_RGB, GL_FLOAT, noise.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, static_cast<GLsizei>(noiseTexWidth), noiseTex, 0,
+	             GL_RGB, GL_FLOAT, noise.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -419,7 +420,8 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix)
 
 GLuint SSAO::calculateClean(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept
 {
-	calculate(posTex, normalTex, projMatrix);
+	// TODO: Implement
+	return calculate(posTex, normalTex, projMatrix);
 }
 
 // SSAO: Getters / setters
