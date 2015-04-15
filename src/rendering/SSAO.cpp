@@ -290,6 +290,8 @@ OcclusionFramebuffer::OcclusionFramebuffer(int width, int height) noexcept
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // TODO: Dunno?
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexture, 0);
 
 	// Check that framebuffer is okay
@@ -342,7 +344,7 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusi
 	mOcclusionFBO{mWidth, mHeight},
 	mBlurredFBO{mWidth, mHeight},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
-	mKernel{std::move(generateKernel(mKernelSize))},
+	mKernel{std::move(generateKernel(MAX_KERNEL_SIZE))},
 	mNoiseTexWidth{4},
 	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
 	mRadius{radius},
@@ -432,7 +434,6 @@ void SSAO::numSamples(size_t numSamples) noexcept
 {
 	if (numSamples > MAX_KERNEL_SIZE) return;
 	mKernelSize = numSamples;
-	mKernel = generateKernel(mKernelSize);
 }
 
 void SSAO::radius(float radius) noexcept
