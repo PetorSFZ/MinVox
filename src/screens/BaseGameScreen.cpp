@@ -69,6 +69,9 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWorldRenderer{mWorld, mAssets},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 
+	mGBufferGenShader{compileGBufferGenShaderProgram()},
+	mGBuffer{window.drawableWidth(), window.drawableHeight()},
+
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
 {
@@ -208,7 +211,32 @@ void BaseGameScreen::render(float)
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// Draw base framebuffer (before post-processing)
+	// Draw GBuffer
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	glUseProgram(mGBufferGenShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, mGBuffer.mFBO);
+	glViewport(0, 0, mGBuffer.mWidth, mGBuffer.mHeight);
+
+	// Clearing screen
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Set view and projection matrix uniforms
+	gl::setUniform(mGBufferGenShader, "uViewMatrix", mCam.mViewMatrix);
+	gl::setUniform(mGBufferGenShader, "uProjectionMatrix", mCam.mProjMatrix);
+
+	// Prepare for binding the diffuse textures
+	gl::setUniform(mGBufferGenShader, "uDiffuseTexture", 0);
+	glActiveTexture(GL_TEXTURE0);
+
+	// Drawing objects
+	drawSkyCube(mAssets, mGBufferGenShader, mCam);
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, mGBufferGenShader);
+	else mWorldRenderer.drawWorldOld(mCam, mGBufferGenShader);
+	drawLight(mAssets, mGBufferGenShader, mSunCam.mPos);
+
+	/*// Draw base framebuffer (before post-processing)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mShaderProgram);
@@ -248,13 +276,13 @@ void BaseGameScreen::render(float)
 	drawSkyCube(mAssets, mShaderProgram, mCam);
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, mShaderProgram);
 	else mWorldRenderer.drawWorldOld(mCam, mShaderProgram);
-	drawLight(mAssets, mShaderProgram, mSunCam.mPos);
+	drawLight(mAssets, mShaderProgram, mSunCam.mPos);*/
 
 	// Applying post-process effects
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint occlusionTex = mSSAO.calculate(mBaseFramebuffer.mPositionTexture,
-	                                      mBaseFramebuffer.mNormalTexture,
+	GLuint occlusionTex = mSSAO.calculate(mGBuffer.mPositionTexture,
+	                                      mGBuffer.mNormalTexture,
 	                                      mCam.mProjMatrix);
 
 	glUseProgram(mPostProcessShaderProgram);
@@ -264,7 +292,7 @@ void BaseGameScreen::render(float)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mBaseFramebuffer.mColorTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
 	gl::setUniform(mPostProcessShaderProgram, "uColorTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -320,6 +348,7 @@ void BaseGameScreen::changeScreen(IScreen* newScreen)
 
 void BaseGameScreen::reloadFramebuffers(int width, int height)
 {
+	mGBuffer = GBuffer(width, height);
 	mBaseFramebuffer = std::move(BigFramebuffer{width, height});
 	mPostProcessedFramebuffer = std::move(Framebuffer{width, height});
 }

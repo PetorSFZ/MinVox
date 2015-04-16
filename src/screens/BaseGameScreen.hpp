@@ -70,6 +70,9 @@ protected:
 	WorldRenderer mWorldRenderer;
 	SSAO mSSAO;
 
+	GLuint mGBufferGenShader;
+	GBuffer mGBuffer;
+
 	bool mOldWorldRenderer = false;
 	int mRenderMode = 0;
 

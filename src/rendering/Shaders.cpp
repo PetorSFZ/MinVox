@@ -236,6 +236,89 @@ GLuint compilePostProcessShaderProgram() noexcept
 	return shaderProgram;
 }
 
+GLuint compileGBufferGenShaderProgram() noexcept
+{
+	GLuint vertexShader = gl::compileVertexShader(R"(
+		#version 330
+
+		// Input
+		in vec3 positionIn;
+		in vec2 texCoordIn;
+		in vec3 normalIn;
+
+		// Output
+		out vec2 texCoord;
+		out vec3 vsPos;
+		out vec3 vsNormal;
+
+		// Uniforms
+		uniform mat4 uModelMatrix;
+		uniform mat4 uViewMatrix;
+		uniform mat4 uProjectionMatrix;
+
+		void main()
+		{
+			mat4 modelView = uViewMatrix * uModelMatrix;
+			mat4 modelViewProj = uProjectionMatrix * modelView;
+			mat4 normalMatrix = inverse(transpose(modelView)); // Needed for non-uniform scaling.
+
+			// Output
+			gl_Position = modelViewProj * vec4(positionIn, 1);
+			texCoord = texCoordIn;
+			vsPos = vec3(modelView * vec4(positionIn, 1));
+			vsNormal = normalize((normalMatrix * vec4(normalIn, 0)).xyz);
+		}
+	)");
+
+
+	GLuint fragmentShader = gl::compileFragmentShader(R"(
+		#version 330
+
+		precision highp float; // Required by GLSL spec Sect 4.5.3
+
+		// Input
+		in vec2 texCoord;
+		in vec3 vsPos;
+		in vec3 vsNormal;
+
+		// Output
+		layout(location = 0) out vec4 fragmentDiffuse;
+		layout(location = 1) out vec4 fragmentPosition;
+		layout(location = 2) out vec4 fragmentNormal;
+
+		// Uniforms
+		uniform sampler2D uDiffuseTexture;
+
+		void main()
+		{
+			fragmentDiffuse = vec4(texture(uDiffuseTexture, texCoord).rgb, 1.0);
+			fragmentPosition = vec4(vsPos, 1.0);
+			fragmentNormal = vec4(vsNormal, 1.0);
+		}
+	)");
+
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glBindAttribLocation(shaderProgram, 0, "positionIn");
+	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+	glBindAttribLocation(shaderProgram, 2, "normalIn");
+	glBindFragDataLocation(shaderProgram, 0, "fragmentDiffuse");
+	glBindFragDataLocation(shaderProgram, 1, "fragmentPosition");
+	glBindFragDataLocation(shaderProgram, 2, "fragmentNormal");
+
+	gl::linkProgram(shaderProgram);
+
+	if (gl::checkAllGLErrors()) {
+		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
+	}
+	return shaderProgram;
+}
+
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>

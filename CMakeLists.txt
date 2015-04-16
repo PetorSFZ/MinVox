@@ -95,6 +95,8 @@ set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/Framebuffer.cpp
 	${SRC_DIR}/rendering/FullscreenQuadObject.hpp
 	${SRC_DIR}/rendering/FullscreenQuadObject.cpp
+	${SRC_DIR}/rendering/GBuffer.hpp
+	${SRC_DIR}/rendering/GBuffer.cpp
 	${SRC_DIR}/rendering/Shaders.hpp
 	${SRC_DIR}/rendering/Shaders.cpp
 	${SRC_DIR}/rendering/ShadowMap.hpp
