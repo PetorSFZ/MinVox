@@ -10,20 +10,6 @@
 
 namespace vox {
 
-struct BigFramebuffer final {
-	GLuint mFrameBufferObject, mColorTexture, mNormalTexture, mDepthTexture, mPositionTexture;
-	int mWidth, mHeight;
-
-	BigFramebuffer() = delete;
-	BigFramebuffer(const BigFramebuffer&) = delete;
-	BigFramebuffer(BigFramebuffer&&) = delete;
-	BigFramebuffer& operator= (const BigFramebuffer&) = delete;
-
-	BigFramebuffer(int width, int height) noexcept;
-	BigFramebuffer& operator= (BigFramebuffer&& other) noexcept;
-	~BigFramebuffer() noexcept;
-};
-
 struct PostProcessFramebuffer final {
 	GLuint mFBO, mTexture;
 	int mWidth, mHeight;

@@ -62,18 +62,14 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWindow{window},
 	mAssets{},
 
-	mShaderProgram{compileStandardShaderProgram()},
-	mShadowMapShaderProgram{compileShadowMapShaderProgram()},
-	mPostProcessShaderProgram{compilePostProcessShaderProgram()},
-	mBaseFramebuffer{window.drawableWidth(), window.drawableHeight()},
-	mPostProcessedFramebuffer{window.drawableWidth(), window.drawableHeight()},
-	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
-	mWorldRenderer{mWorld, mAssets},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-
+	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
 	mLightingShader{compileLightingShaderProgram()},
+	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
+	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
+	mWorldRenderer{mWorld, mAssets},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
@@ -184,7 +180,7 @@ void BaseGameScreen::render(float)
 	// Draw shadow map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	glUseProgram(mShadowMapShaderProgram);
+	glUseProgram(mShadowMapShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
 	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
 
@@ -194,8 +190,8 @@ void BaseGameScreen::render(float)
 	mSunCam.updateMatrices();
 	mSunCam.updatePlanes();
 	
-	gl::setUniform(mShadowMapShaderProgram, "viewMatrix", mSunCam.mViewMatrix);
-	gl::setUniform(mShadowMapShaderProgram, "projectionMatrix", mSunCam.mProjMatrix);
+	gl::setUniform(mShadowMapShader, "viewMatrix", mSunCam.mViewMatrix);
+	gl::setUniform(mShadowMapShader, "projectionMatrix", mSunCam.mProjMatrix);
 
 	// Clear shadow map
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -207,7 +203,7 @@ void BaseGameScreen::render(float)
 	glPolygonOffset(5.0f, 25.0f);
 
 	// Draw shadow casters
-	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShaderProgram, "uModelMatrix");
+	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSunCam, modelMatrixLocShadowMap);
 	else mWorldRenderer.drawWorldOld(mSunCam, modelMatrixLocShadowMap);
 
@@ -241,73 +237,56 @@ void BaseGameScreen::render(float)
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
 	drawLight(mAssets, modelMatrixLocGBufferGen, mSunCam.mPos);
 
-	/*// Draw base framebuffer (before post-processing)
+	// Lighting
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	glUseProgram(mShaderProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, mBaseFramebuffer.mFrameBufferObject);
-	glViewport(0, 0, mBaseFramebuffer.mWidth, mBaseFramebuffer.mHeight);
+	GLuint occlusionTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
+	                                      mCam.mProjMatrix);
 
-	// Clearing screen
+	glUseProgram(mLightingShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, mLightingFramebuffer.mFBO);
+	glViewport(0, 0, mLightingFramebuffer.mWidth, mLightingFramebuffer.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set view and projection matrix uniforms
-	gl::setUniform(mShaderProgram, "viewMatrix", mCam.mViewMatrix);
-	gl::setUniform(mShaderProgram, "projectionMatrix", mCam.mProjMatrix);
+	// Texture uniforms
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+	gl::setUniform(mLightingShader, "uDiffuseTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
+	gl::setUniform(mLightingShader, "uPositionTexture", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
+	gl::setUniform(mLightingShader, "uNormalTexture", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, occlusionTex);
+	gl::setUniform(mLightingShader, "uOcclusionTexture", 3);
+
+	// Shadow map uniform
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
+	gl::setUniform(mLightingShader, "uShadowMap", 4);
+
+	// Set view matrix uniform
+	gl::setUniform(mLightingShader, "uViewMatrix", mCam.mViewMatrix);
 
 	// Calculate and set lightMatrix
 	mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
 	                  * sfz::scalingMatrix4(0.5f)
 	                  * mSunCam.mProjMatrix
-	                  * mSunCam.mViewMatrix; // * inverse(viewMatrix), done in vertex shader.
-	
-	gl::setUniform(mShaderProgram, "lightMatrix", lightMatrix);
+	                  * mSunCam.mViewMatrix; // * inverse(viewMatrix), done in shader.
+	gl::setUniform(mLightingShader, "uLightMatrix", lightMatrix);
 
 	// Set light position uniform
-	gl::setUniform(mShaderProgram, "msLightPos", mSunCam.mPos);
-	gl::setUniform(mShaderProgram, "lightColor", mLightColor);
-	
-	// Set shadow map uniforms and textures
-	gl::setUniform(mShaderProgram, "shadowMap", 1);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
-
-	// Only one texture is used when rendering SnakeTiles
-	gl::setUniform(mShaderProgram, "tex", 0);
-	glActiveTexture(GL_TEXTURE0);
-
-	// Drawing objects
-	drawSkyCube(mAssets, mShaderProgram, mCam);
-	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, mShaderProgram);
-	else mWorldRenderer.drawWorldOld(mCam, mShaderProgram);
-	drawLight(mAssets, mShaderProgram, mSunCam.mPos);*/
-
-	// Applying post-process effects
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	GLuint occlusionTex = mSSAO.calculate(mGBuffer.mPositionTexture,
-	                                      mGBuffer.mNormalTexture,
-	                                      mCam.mProjMatrix);
-
-	glUseProgram(mPostProcessShaderProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessedFramebuffer.mFBO);
-	glViewport(0, 0, mPostProcessedFramebuffer.mWidth, mPostProcessedFramebuffer.mHeight);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
-	gl::setUniform(mPostProcessShaderProgram, "uColorTexture", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, occlusionTex);
-	gl::setUniform(mPostProcessShaderProgram, "uOcclusionTexture", 1);
-
-	gl::setUniform(mPostProcessShaderProgram, "uRenderMode", mRenderMode);
+	gl::setUniform(mLightingShader, "uLightPos", mSunCam.mPos);
+	gl::setUniform(mLightingShader, "uLightColor", mLightColor);
 
 	mFullscreenQuad.render();
-
+	
 	glUseProgram(0);
 
 	// Blitting post-processed framebuffer to screen
@@ -319,8 +298,8 @@ void BaseGameScreen::render(float)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, mPostProcessedFramebuffer.mFBO);
-	glBlitFramebuffer(0, 0, mPostProcessedFramebuffer.mWidth, mPostProcessedFramebuffer.mHeight,
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mLightingFramebuffer.mFBO);
+	glBlitFramebuffer(0, 0, mLightingFramebuffer.mWidth, mLightingFramebuffer.mHeight,
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
@@ -353,9 +332,8 @@ void BaseGameScreen::changeScreen(IScreen* newScreen) noexcept
 
 void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {
-	mGBuffer = GBuffer(width, height);
-	mBaseFramebuffer = std::move(BigFramebuffer{width, height});
-	mPostProcessedFramebuffer = PostProcessFramebuffer{width, height};
+	mGBuffer = GBuffer{width, height};
+	mLightingFramebuffer = PostProcessFramebuffer{width, height};
 }
 
 } // namespace vox

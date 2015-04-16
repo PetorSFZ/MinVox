@@ -52,126 +52,8 @@ GLuint compilePostProcessShaderProgram(const char* vertexShaderSource) noexcept
 
 } // anoynous namespace
 
-// Shaders
+// Shader programs
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-GLuint compileStandardShaderProgram() noexcept
-{
-	GLuint vertexShader = gl::compileVertexShader(R"(
-		#version 330
-
-		in vec3 position;
-		in vec2 texCoordIn;
-		in vec3 normalIn;
-
-		out vec2 texCoord;
-		out vec3 vsNormal;
-		out vec3 vsLightPos;
-		out vec3 vsPos;
-		out vec4 shadowMapCoord;
-
-		uniform mat4 modelMatrix;
-		uniform mat4 viewMatrix;
-		uniform mat4 projectionMatrix;
-		uniform mat4 lightMatrix;
-		uniform vec3 msLightPos;
-		uniform vec3 lightColor;
-
-		void main()
-		{
-			mat4 modelView = viewMatrix * modelMatrix;
-			mat4 modelViewProj = projectionMatrix * modelView;
-			mat4 normalMatrix = inverse(transpose(modelView)); // Needed for non-uniform scaling.
-
-			// This step needs to be done in shader since I don't have function to inverse 4x4 matrix in SFZ Common yet.
-			mat4 lightMatrixComplete = lightMatrix * inverse(viewMatrix);
-
-			// Output
-			gl_Position = modelViewProj * vec4(position, 1);
-			texCoord = texCoordIn;
-			vsNormal = normalize((normalMatrix * vec4(normalIn, 0)).xyz);
-			vsLightPos = (viewMatrix * vec4(msLightPos, 1)).xyz;
-			vsPos = vec3(modelView * vec4(position, 1));
-			shadowMapCoord = lightMatrixComplete * vec4(vsPos, 1.0);
-		}
-	)");
-
-
-	GLuint fragmentShader = gl::compileFragmentShader(R"(
-		#version 330
-
-		precision highp float; // required by GLSL spec Sect 4.5.3
-
-		in vec2 texCoord;
-		in vec3 vsNormal;
-		in vec3 vsLightPos;
-		in vec3 vsPos;
-		in vec4 shadowMapCoord;
-
-		layout(location = 0) out vec4 fragmentColor;
-		layout(location = 1) out vec4 fragmentNormal;
-		layout(location = 2) out vec4 fragmentPosition;
-
-		uniform sampler2D tex;
-		uniform sampler2DShadow shadowMap;
-		uniform vec3 lightColor;
-
-		void main()
-		{
-			// Texture and materials
-			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
-			vec3 diffuseTexture = texture(tex, texCoord.xy).xyz;
-			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseTexture;
-			vec3 materialDiffuse = vec3(0.5, 0.5, 0.5) * diffuseTexture;
-			vec3 materialSpecular = vec3(0.35, 0.35, 0.35);
-			vec3 materialEmissive = vec3(0, 0, 0);
-			float materialShininess = 8;
-
-			// Variables used to calculate scaling factors for different components
-			vec3 toLight = normalize(vsLightPos - vsPos);
-			float lightDistance = length(vsLightPos - vsPos);
-			vec3 toCam = normalize(-vsPos);
-			vec3 halfVec = normalize(toLight + toCam);
-			float specularNormalization = ((materialShininess + 2.0) / 8.0);
-			float lightVisibility = textureProj(shadowMap, shadowMapCoord);
-
-			// Scaling factors for different components
-			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
-			float specularFactor = specularNormalization * pow(clamp(dot(vsNormal, halfVec), 0, 1), materialShininess);
-
-			// Calculate shading
-			vec3 shading = ambientLight * materialAmbient
-			             + diffuseFactor * materialDiffuse * lightColor * lightVisibility
-			             + specularFactor * materialSpecular * lightColor * lightVisibility
-			             + materialEmissive;
-
-			fragmentColor = vec4(shading, 1.0);
-			fragmentNormal = vec4(vsNormal, 1.0);
-			fragmentPosition = vec4(vsPos, 1.0);
-		}
-	)");
-
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "position");
-	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-	glBindAttribLocation(shaderProgram, 2, "normalIn");
-	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-	glBindFragDataLocation(shaderProgram, 1, "fragmentNormal");
-	glBindFragDataLocation(shaderProgram, 2, "fragmentPosition");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-	return shaderProgram;
-}
 
 GLuint compileShadowMapShaderProgram() noexcept
 {
@@ -220,38 +102,6 @@ GLuint compileShadowMapShaderProgram() noexcept
 		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
 	}
 	return shaderProgram;
-}
-
-GLuint compilePostProcessShaderProgram() noexcept
-{
-	return compilePostProcessShaderProgram(R"(
-		#version 330
-
-		precision highp float; // required by GLSL spec Sect 4.5.3
-
-		// Input
-		in vec2 texCoord;
-
-		// Output
-		out vec4 fragmentColor;
-
-		// Uniform
-		uniform sampler2D uColorTexture;
-		uniform sampler2D uOcclusionTexture;
-
-		uniform int uRenderMode;
-
-		void main()
-		{
-			vec3 color = texture(uColorTexture, texCoord).rgb;
-			float occlusion = texture(uOcclusionTexture, texCoord).r;
-
-			if (uRenderMode == 0) color = (0.5 + 0.5*occlusion)*color;
-			else if (uRenderMode == 1) color = vec3(occlusion);
-
-			fragmentColor = vec4(color, 1.0);
-		}
-	)");
 }
 
 GLuint compileGBufferGenShaderProgram() noexcept
@@ -343,28 +193,45 @@ GLuint compileLightingShaderProgram() noexcept
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
-
+		
+		// Input
 		in vec2 texCoord;
-		in vec3 vsNormal;
-		in vec3 vsLightPos;
-		in vec3 vsPos;
-		in vec4 shadowMapCoord;
 
-		layout(location = 0) out vec4 fragmentColor;
-		layout(location = 1) out vec4 fragmentNormal;
-		layout(location = 2) out vec4 fragmentPosition;
+		// Output
+		out vec4 fragmentColor;
 
-		uniform sampler2D tex;
-		uniform sampler2DShadow shadowMap;
-		uniform vec3 lightColor;
+		// Uniforms
+		uniform sampler2D uDiffuseTexture;
+		uniform sampler2D uPositionTexture;
+		uniform sampler2D uNormalTexture;
+		uniform sampler2D uOcclusionTexture;
+		uniform sampler2DShadow uShadowMap;
+
+		uniform mat4 uViewMatrix;
+
+		uniform mat4 uLightMatrix;
+		uniform vec3 uLightPos;
+		uniform vec3 uLightColor;
 
 		void main()
 		{
+			// Values from textures
+			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
+			vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
+			vec3 vsNormal = normalize(texture(uNormalTexture, texCoord).xyz);
+			float occlusion = texture(uOcclusionTexture, texCoord).r;
+
+
+			// This step needs to be done in shader since I don't have function to inverse 4x4 matrix in SFZ Common yet.
+			mat4 lightMatrixComplete = uLightMatrix * inverse(uViewMatrix);
+
+			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
+			vec4 shadowMapCoord = lightMatrixComplete * vec4(vsPos, 1.0);
+
 			// Texture and materials
 			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
-			vec3 diffuseTexture = texture(tex, texCoord.xy).xyz;
-			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseTexture;
-			vec3 materialDiffuse = vec3(0.5, 0.5, 0.5) * diffuseTexture;
+			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseColor;
+			vec3 materialDiffuse = vec3(0.5, 0.5, 0.5) * diffuseColor;
 			vec3 materialSpecular = vec3(0.35, 0.35, 0.35);
 			vec3 materialEmissive = vec3(0, 0, 0);
 			float materialShininess = 8;
@@ -375,21 +242,51 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 toCam = normalize(-vsPos);
 			vec3 halfVec = normalize(toLight + toCam);
 			float specularNormalization = ((materialShininess + 2.0) / 8.0);
-			float lightVisibility = textureProj(shadowMap, shadowMapCoord);
+			float lightVisibility = textureProj(uShadowMap, shadowMapCoord);
 
 			// Scaling factors for different components
 			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
 			float specularFactor = specularNormalization * pow(clamp(dot(vsNormal, halfVec), 0, 1), materialShininess);
 
 			// Calculate shading
-			vec3 shading = ambientLight * materialAmbient
-			             + diffuseFactor * materialDiffuse * lightColor * lightVisibility
-			             + specularFactor * materialSpecular * lightColor * lightVisibility
+			vec3 shading = ambientLight * materialAmbient * occlusion
+			             + diffuseFactor * materialDiffuse * uLightColor * lightVisibility
+			             + specularFactor * materialSpecular * uLightColor * lightVisibility
 			             + materialEmissive;
 
 			fragmentColor = vec4(shading, 1.0);
-			fragmentNormal = vec4(vsNormal, 1.0);
-			fragmentPosition = vec4(vsPos, 1.0);
+		}
+	)");
+}
+
+GLuint compilePostProcessShaderProgram() noexcept
+{
+	return compilePostProcessShaderProgram(R"(
+		#version 330
+
+		precision highp float; // required by GLSL spec Sect 4.5.3
+
+		// Input
+		in vec2 texCoord;
+
+		// Output
+		out vec4 fragmentColor;
+
+		// Uniform
+		uniform sampler2D uColorTexture;
+		uniform sampler2D uOcclusionTexture;
+
+		uniform int uRenderMode;
+
+		void main()
+		{
+			vec3 color = texture(uColorTexture, texCoord).rgb;
+			float occlusion = texture(uOcclusionTexture, texCoord).r;
+
+			if (uRenderMode == 0) color = (0.5 + 0.5*occlusion)*color;
+			else if (uRenderMode == 1) color = vec3(occlusion);
+
+			fragmentColor = vec4(color, 1.0);
 		}
 	)");
 }

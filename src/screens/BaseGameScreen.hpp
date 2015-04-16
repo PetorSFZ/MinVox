@@ -64,17 +64,14 @@ protected:
 	sdl::Window& mWindow;
 	Assets mAssets;
 
-	GLuint mShaderProgram, mShadowMapShaderProgram, mPostProcessShaderProgram;
-	BigFramebuffer mBaseFramebuffer;
-	PostProcessFramebuffer mPostProcessedFramebuffer;
+	GLuint  mShadowMapShader, mGBufferGenShader, mLightingShader;
 	ShadowMap mShadowMap;
+	GBuffer mGBuffer;
+	PostProcessFramebuffer mLightingFramebuffer;
+	SSAO mSSAO;
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
-	SSAO mSSAO;
-
-	GLuint mGBufferGenShader, mLightingShader;
-	GBuffer mGBuffer;
-
+	
 	bool mOldWorldRenderer = false;
 	int mRenderMode = 0;
 
