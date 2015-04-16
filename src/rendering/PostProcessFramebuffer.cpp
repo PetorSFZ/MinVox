@@ -1,4 +1,4 @@
-#include "rendering/Framebuffer.hpp"
+#include "rendering/PostProcessFramebuffer.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -83,19 +83,19 @@ BigFramebuffer::~BigFramebuffer() noexcept
 // Framebuffer
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Framebuffer::Framebuffer(int width, int height) noexcept
+PostProcessFramebuffer::PostProcessFramebuffer(int width, int height) noexcept
 :
 	mWidth{width},
 	mHeight{height}
 {
 	// Generate framebuffer
-	glGenFramebuffers(1, &mFrameBufferObject);
-	glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferObject);
+	glGenFramebuffers(1, &mFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
 
 	// Color texture
 	glGenTextures(1, &mTexture);
 	glBindTexture(GL_TEXTURE_2D, mTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexture, 0);
@@ -108,19 +108,29 @@ Framebuffer::Framebuffer(int width, int height) noexcept
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-Framebuffer& Framebuffer::operator= (Framebuffer&& other) noexcept
+PostProcessFramebuffer::PostProcessFramebuffer(PostProcessFramebuffer&& other) noexcept
 {
-	std::swap(mFrameBufferObject, other.mFrameBufferObject);
+	glGenFramebuffers(1, &mFBO);
+	glGenTextures(1, &mTexture);
+	std::swap(mFBO, other.mFBO);
+	std::swap(mTexture, other.mTexture);
+	std::swap(mWidth, other.mWidth);
+	std::swap(mHeight, other.mHeight);
+}
+
+PostProcessFramebuffer& PostProcessFramebuffer::operator= (PostProcessFramebuffer&& other) noexcept
+{
+	std::swap(mFBO, other.mFBO);
 	std::swap(mTexture, other.mTexture);
 	std::swap(mWidth, other.mWidth);
 	std::swap(mHeight, other.mHeight);
 	return *this;
 }
 
-Framebuffer::~Framebuffer() noexcept
+PostProcessFramebuffer::~PostProcessFramebuffer() noexcept
 {
 	glDeleteTextures(1, &mTexture);
-	glDeleteFramebuffers(1, &mFrameBufferObject);
+	glDeleteFramebuffers(1, &mFBO);
 }
 
 } // namespace vox

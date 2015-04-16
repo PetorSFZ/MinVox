@@ -66,13 +66,13 @@ protected:
 
 	GLuint mShaderProgram, mShadowMapShaderProgram, mPostProcessShaderProgram;
 	BigFramebuffer mBaseFramebuffer;
-	Framebuffer mPostProcessedFramebuffer;
+	PostProcessFramebuffer mPostProcessedFramebuffer;
 	ShadowMap mShadowMap;
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 	SSAO mSSAO;
 
-	GLuint mGBufferGenShader;
+	GLuint mGBufferGenShader, mLightingShader;
 	GBuffer mGBuffer;
 
 	bool mOldWorldRenderer = false;

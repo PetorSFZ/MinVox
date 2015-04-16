@@ -72,6 +72,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
+	mLightingShader{compileLightingShaderProgram()},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
@@ -290,7 +291,7 @@ void BaseGameScreen::render(float)
 	                                      mCam.mProjMatrix);
 
 	glUseProgram(mPostProcessShaderProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessedFramebuffer.mFrameBufferObject);
+	glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessedFramebuffer.mFBO);
 	glViewport(0, 0, mPostProcessedFramebuffer.mWidth, mPostProcessedFramebuffer.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -318,7 +319,7 @@ void BaseGameScreen::render(float)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, mPostProcessedFramebuffer.mFrameBufferObject);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mPostProcessedFramebuffer.mFBO);
 	glBlitFramebuffer(0, 0, mPostProcessedFramebuffer.mWidth, mPostProcessedFramebuffer.mHeight,
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -354,7 +355,7 @@ void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {
 	mGBuffer = GBuffer(width, height);
 	mBaseFramebuffer = std::move(BigFramebuffer{width, height});
-	mPostProcessedFramebuffer = std::move(Framebuffer{width, height});
+	mPostProcessedFramebuffer = PostProcessFramebuffer{width, height};
 }
 
 } // namespace vox

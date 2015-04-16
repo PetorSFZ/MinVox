@@ -23,6 +23,8 @@ GLuint compilePostProcessShaderProgram() noexcept;
 
 GLuint compileGBufferGenShaderProgram() noexcept;
 
+GLuint compileLightingShaderProgram() noexcept;
+
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>

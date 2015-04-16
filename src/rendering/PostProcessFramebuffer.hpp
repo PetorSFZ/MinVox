@@ -1,6 +1,6 @@
 #pragma once
-#ifndef VOX_RENDERING_FRAMEBUFFER_HPP
-#define VOX_RENDERING_FRAMEBUFFER_HPP
+#ifndef VOX_RENDERING_POST_PROCESS_FRAMEBUFFER_HPP
+#define VOX_RENDERING_POST_PROCESS_FRAMEBUFFER_HPP
 
 #include <algorithm> // std::swap
 
@@ -24,18 +24,18 @@ struct BigFramebuffer final {
 	~BigFramebuffer() noexcept;
 };
 
-struct Framebuffer final {
-	GLuint mFrameBufferObject, mTexture;
+struct PostProcessFramebuffer final {
+	GLuint mFBO, mTexture;
 	int mWidth, mHeight;
 
-	Framebuffer() = delete;
-	Framebuffer(const Framebuffer&) = delete;
-	Framebuffer(Framebuffer&&) = delete;
-	Framebuffer& operator= (const Framebuffer&) = delete;
+	PostProcessFramebuffer() = delete;
+	PostProcessFramebuffer(const PostProcessFramebuffer&) = delete;
+	PostProcessFramebuffer& operator= (const PostProcessFramebuffer&) = delete;
 
-	Framebuffer(int width, int height) noexcept;
-	Framebuffer& operator= (Framebuffer&& other) noexcept;
-	~Framebuffer() noexcept;
+	PostProcessFramebuffer(int width, int height) noexcept;
+	PostProcessFramebuffer(PostProcessFramebuffer&& other) noexcept;
+	PostProcessFramebuffer& operator= (PostProcessFramebuffer&& other) noexcept;
+	~PostProcessFramebuffer() noexcept;
 };
 
 } // namespace vox
