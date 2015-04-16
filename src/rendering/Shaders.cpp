@@ -129,13 +129,13 @@ GLuint compileShadowMapShaderProgram() noexcept
 
 		in vec3 position;
 
-		uniform mat4 modelMatrix;
+		uniform mat4 uModelMatrix;
 		uniform mat4 viewMatrix;
 		uniform mat4 projectionMatrix;
 
 		void main()
 		{
-			mat4 modelViewProj = projectionMatrix * viewMatrix * modelMatrix;
+			mat4 modelViewProj = projectionMatrix * viewMatrix * uModelMatrix;
 			gl_Position = modelViewProj * vec4(position, 1.0);
 		}
 	)");

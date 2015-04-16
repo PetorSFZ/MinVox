@@ -33,8 +33,8 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void drawWorld(const Camera& cam, GLuint shaderProgram) noexcept;
-	void drawWorldOld(const Camera& cam, GLuint shaderProgram) noexcept;
+	void drawWorld(const Camera& cam, int modelMatrixLoc) noexcept;
+	void drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept;
 
 private:
 	// Private members

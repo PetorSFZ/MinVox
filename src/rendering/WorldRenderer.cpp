@@ -25,7 +25,7 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 // Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
+void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
@@ -62,7 +62,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 					}
 
 					sfz::translation(transform, offsetVec + index.voxelOffset());
-					gl::setUniform(shaderProgram, "modelMatrix", transform);
+					gl::setUniform(modelMatrixLoc, transform);
 
 					glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
 					mCubeObj.render();
@@ -75,7 +75,7 @@ void WorldRenderer::drawWorld(const Camera& cam, GLuint shaderProgram) noexcept
 	}
 }
 
-void WorldRenderer::drawWorldOld(const Camera& cam, GLuint shaderProgram) noexcept
+void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	// Old naive loop
 	mat4f transform = sfz::identityMatrix4<float>();
@@ -101,7 +101,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, GLuint shaderProgram) noexce
 					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
 					                                                   static_cast<float>(y),
 					                                                   static_cast<float>(z)});
-					gl::setUniform(shaderProgram, "modelMatrix", transform);
+					gl::setUniform(modelMatrixLoc, transform);
 
 					glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
 					mCubeObj.render();

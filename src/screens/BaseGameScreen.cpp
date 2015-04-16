@@ -1,5 +1,7 @@
 #include "screens/BaseGameScreen.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 // Anonymous functions
@@ -7,31 +9,31 @@ namespace vox {
 
 namespace {
 
-vec3f sphericalToCartesian(float r, float theta, float phi)
+vec3f sphericalToCartesian(float r, float theta, float phi) noexcept
 {
 	using std::sinf;
 	using std::cosf;
 	return vec3f{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
 }
 
-vec3f sphericalToCartesian(const vec3f& spherical)
+vec3f sphericalToCartesian(const vec3f& spherical) noexcept
 {
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
-void drawLight(const Assets& assets, GLuint shader, const vec3f& lightPos)
+void drawLight(const Assets& assets, int modelMatrixLoc, const vec3f& lightPos) noexcept
 {
 	static CubeObject cubeObj;
 	mat4f transform = sfz::identityMatrix4<float>();
 
 	// Render sun
 	sfz::translation(transform, lightPos);
-	gl::setUniform(shader, "modelMatrix", transform);
+	gl::setUniform(modelMatrixLoc, transform);
 	glBindTexture(GL_TEXTURE_2D, assets.YELLOW.mHandle);
 	cubeObj.render();
 }
 
-void drawSkyCube(const Assets& assets, GLuint shader, const Camera& cam)
+void drawSkyCube(const Assets& assets, int modelMatrixLoc, const Camera& cam) noexcept
 {
 	static SkyCubeObject skyCubeObj;
 	static const vec3f halfSkyCubeSize{400.0f, 400.0f, 400.0f};
@@ -39,7 +41,7 @@ void drawSkyCube(const Assets& assets, GLuint shader, const Camera& cam)
 
 	// Render skycube
 	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
-	gl::setUniform(shader, "modelMatrix", transform);
+	gl::setUniform(modelMatrixLoc, transform);
 	glBindTexture(GL_TEXTURE_2D, assets.VANILLA.mHandle);
 	skyCubeObj.render();
 }
@@ -204,8 +206,9 @@ void BaseGameScreen::render(float)
 	glPolygonOffset(5.0f, 25.0f);
 
 	// Draw shadow casters
-	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSunCam, mShadowMapShaderProgram);
-	else mWorldRenderer.drawWorldOld(mSunCam, mShadowMapShaderProgram);
+	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShaderProgram, "uModelMatrix");
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSunCam, modelMatrixLocShadowMap);
+	else mWorldRenderer.drawWorldOld(mSunCam, modelMatrixLocShadowMap);
 
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -231,10 +234,11 @@ void BaseGameScreen::render(float)
 	glActiveTexture(GL_TEXTURE0);
 
 	// Drawing objects
-	drawSkyCube(mAssets, mGBufferGenShader, mCam);
-	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, mGBufferGenShader);
-	else mWorldRenderer.drawWorldOld(mCam, mGBufferGenShader);
-	drawLight(mAssets, mGBufferGenShader, mSunCam.mPos);
+	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader, "uModelMatrix");
+	drawSkyCube(mAssets, modelMatrixLocGBufferGen, mCam);
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, modelMatrixLocGBufferGen);
+	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
+	drawLight(mAssets, modelMatrixLocGBufferGen, mSunCam.mPos);
 
 	/*// Draw base framebuffer (before post-processing)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -333,12 +337,12 @@ bool BaseGameScreen::quit()
 // Protected methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void BaseGameScreen::quitApplication()
+void BaseGameScreen::quitApplication() noexcept
 {
 	mQuit = true;
 }
 
-void BaseGameScreen::changeScreen(IScreen* newScreen)
+void BaseGameScreen::changeScreen(IScreen* newScreen) noexcept
 {
 	mNewScreenPtr = newScreen;
 }
@@ -346,7 +350,7 @@ void BaseGameScreen::changeScreen(IScreen* newScreen)
 // Private methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void BaseGameScreen::reloadFramebuffers(int width, int height)
+void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {
 	mGBuffer = GBuffer(width, height);
 	mBaseFramebuffer = std::move(BigFramebuffer{width, height});
@@ -354,3 +358,5 @@ void BaseGameScreen::reloadFramebuffers(int width, int height)
 }
 
 } // namespace vox
+
+#include <sfz/MSVC12HackOFF.hpp>

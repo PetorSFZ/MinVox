@@ -12,6 +12,8 @@
 #include "screens/IScreen.hpp"
 #include "GlobalConfig.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 using sfz::vec3f;
@@ -47,9 +49,9 @@ protected:
 	virtual void updateSpecific(const std::vector<SDL_Event>& events,
 	                            const sdl::GameController& ctrl, float delta) = 0;
 
-	void quitApplication();
+	void quitApplication() noexcept;
 
-	void changeScreen(IScreen* newScreen);
+	void changeScreen(IScreen* newScreen) noexcept;
 
 	// Protected members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -88,7 +90,7 @@ private:
 	// Private methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void reloadFramebuffers(int width, int height);
+	void reloadFramebuffers(int width, int height) noexcept;
 
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -99,4 +101,5 @@ private:
 
 } // namespace vox
 
+#include <sfz/MSVC12HackOFF.hpp>
 #endif
