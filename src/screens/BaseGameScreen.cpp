@@ -278,7 +278,8 @@ void BaseGameScreen::render(float)
 	mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
 	                  * sfz::scalingMatrix4(0.5f)
 	                  * mSunCam.mProjMatrix
-	                  * mSunCam.mViewMatrix; // * inverse(viewMatrix), done in shader.
+	                  * mSunCam.mViewMatrix
+	                  * inverse(mCam.mViewMatrix);
 	gl::setUniform(mLightingShader, "uLightMatrix", lightMatrix);
 
 	// Set light position uniform

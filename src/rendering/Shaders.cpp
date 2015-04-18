@@ -221,12 +221,8 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 vsNormal = normalize(texture(uNormalTexture, texCoord).xyz);
 			float occlusion = texture(uOcclusionTexture, texCoord).r;
 
-
-			// This step needs to be done in shader since I don't have function to inverse 4x4 matrix in SFZ Common yet.
-			mat4 lightMatrixComplete = uLightMatrix * inverse(uViewMatrix);
-
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
-			vec4 shadowMapCoord = lightMatrixComplete * vec4(vsPos, 1.0);
+			vec4 shadowMapCoord = uLightMatrix * vec4(vsPos, 1.0);
 
 			// Texture and materials
 			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
