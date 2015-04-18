@@ -8,7 +8,7 @@ GlobalConfig::GlobalConfig() noexcept
 {
 	mVSync = false;
 	mPrintFPS = false;
-	mWindowResolutionX = 800;
+	mWindowResolutionX = 1000;
 	mWindowResolutionY = 800;
 	mRetinaAware = false;
 

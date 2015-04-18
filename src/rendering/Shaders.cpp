@@ -213,6 +213,24 @@ GLuint compileLightingShaderProgram() noexcept
 		uniform vec3 uLightPos;
 		uniform vec3 uLightColor;
 
+		float lightShaftFactor(vec3 vsPos, int numSamples)
+		{
+			vec3 camDir = normalize(vsPos);
+			float sampleLength = length(vsPos) / float(numSamples+2);
+			vec3 toNextSamplePos = camDir * sampleLength;
+	
+			vec3 currentSamplePos = toNextSamplePos;
+			float factor = 0.0;
+			for (int i = 0; i < numSamples; i++) {
+				vec4 smCoord = uLightMatrix * vec4(currentSamplePos, 1.0);
+				factor += (smCoord.z <= 0 ? 0 : textureProj(uShadowMap, smCoord));
+				currentSamplePos += toNextSamplePos;
+			}
+			factor /= float(numSamples);
+			
+			return factor;
+		}
+
 		void main()
 		{
 			// Values from textures
@@ -223,21 +241,6 @@ GLuint compileLightingShaderProgram() noexcept
 
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
 			vec4 shadowMapCoord = uLightMatrix * vec4(vsPos, 1.0);
-
-			// Godrays
-			vec3 camDir = normalize(vsPos);
-			float distToFrag = length(vsPos);
-			int numGodraySamples = 64;
-			float godraySampleLength = distToFrag / float(numGodraySamples);
-			float godray = 0.0f;
-			vec3 currentGodraySamplePos = vec3(0);
-			for (int i = 0; i < numGodraySamples; i++) {
-				vec4 smCoord = uLightMatrix * vec4(currentGodraySamplePos, 1.0);
-				godray += textureProj(uShadowMap, smCoord);
-				currentGodraySamplePos += (godraySampleLength * camDir);
-			}
-			godray /= float(numGodraySamples);
-
 
 			// Texture and materials
 			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
@@ -253,8 +256,8 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 toCam = normalize(-vsPos);
 			vec3 halfVec = normalize(toLight + toCam);
 			float specularNormalization = ((materialShininess + 2.0) / 8.0);
-			float lightVisibility = (shadowMapCoord.z <= 0 ? 0 : 1) // Attempt at not using things behind light:
-			                      * textureProj(uShadowMap, shadowMapCoord);
+			float lightVisibility = shadowMapCoord.z <= 0 ? 0 : textureProj(uShadowMap, shadowMapCoord);
+			float lightShafts = lightShaftFactor(vsPos, 32);
 
 			// Scaling factors for different components
 			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
@@ -265,7 +268,7 @@ GLuint compileLightingShaderProgram() noexcept
 			             + diffuseFactor * materialDiffuse * uLightColor * lightVisibility
 			             + specularFactor * materialSpecular * uLightColor * lightVisibility
 			             + materialEmissive
-			             + 0.4 * godray * uLightColor;
+			             + 0.4 * lightShafts * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
 		}
