@@ -203,13 +203,6 @@ GLuint compileBlurShaderProgram() noexcept
 	return shaderProgram;
 }
 
-// Lerp function from wikipedia: http://en.wikipedia.org/wiki/Lerp_%28computing%29
-// Precise method which guarantees v = v1 when t = 1.
-float lerp(float v0, float v1, float t) noexcept
-{
-	return (1-t)*v0 + t*v1;
-}
-
 vector<vec3f> generateKernel(size_t kernelSize) noexcept
 {
 	std::random_device rd;
@@ -225,7 +218,7 @@ vector<vec3f> generateKernel(size_t kernelSize) noexcept
 		//kernel[i] *= distr2(gen); // Naive solution
 		// More points closer to base, see: http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 		float scale = (float)i / (float)kernelSize;
-		scale = lerp(0.1f, 1.0f, scale*scale);
+		scale = sfz::lerp(0.1f, 1.0f, scale*scale);
 		kernel[i] *= scale;
 	}
 
