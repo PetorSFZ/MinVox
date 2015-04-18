@@ -227,7 +227,7 @@ GLuint compileLightingShaderProgram() noexcept
 			// Godrays
 			vec3 camDir = normalize(vsPos);
 			float distToFrag = length(vsPos);
-			int numGodraySamples = 32;
+			int numGodraySamples = 64;
 			float godraySampleLength = distToFrag / float(numGodraySamples);
 			float godray = 0.0f;
 			vec3 currentGodraySamplePos = vec3(0);
@@ -253,7 +253,8 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 toCam = normalize(-vsPos);
 			vec3 halfVec = normalize(toLight + toCam);
 			float specularNormalization = ((materialShininess + 2.0) / 8.0);
-			float lightVisibility = textureProj(uShadowMap, shadowMapCoord);
+			float lightVisibility = (shadowMapCoord.z <= 0 ? 0 : 1) // Attempt at not using things behind light:
+			                      * textureProj(uShadowMap, shadowMapCoord);
 
 			// Scaling factors for different components
 			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
