@@ -224,6 +224,21 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
 			vec4 shadowMapCoord = uLightMatrix * vec4(vsPos, 1.0);
 
+			// Godrays
+			vec3 camDir = normalize(vsPos);
+			float distToFrag = length(vsPos);
+			int numGodraySamples = 32;
+			float godraySampleLength = distToFrag / float(numGodraySamples);
+			float godray = 0.0f;
+			vec3 currentGodraySamplePos = vec3(0);
+			for (int i = 0; i < numGodraySamples; i++) {
+				vec4 smCoord = uLightMatrix * vec4(currentGodraySamplePos, 1.0);
+				godray += textureProj(uShadowMap, smCoord);
+				currentGodraySamplePos += (godraySampleLength * camDir);
+			}
+			godray /= float(numGodraySamples);
+
+
 			// Texture and materials
 			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
 			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseColor;
@@ -248,7 +263,8 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 shading = ambientLight * materialAmbient * occlusion
 			             + diffuseFactor * materialDiffuse * uLightColor * lightVisibility
 			             + specularFactor * materialSpecular * uLightColor * lightVisibility
-			             + materialEmissive;
+			             + materialEmissive
+			             + 0.4 * godray * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
 		}
