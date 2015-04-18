@@ -26,5 +26,6 @@
 #include "sfz/gl/Context.hpp"
 #include "sfz/gl/Texture.hpp"
 #include "sfz/gl/Utils.hpp"
+#include "sfz/gl/font/FontRenderer.hpp"
 
 #endif

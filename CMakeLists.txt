@@ -139,7 +139,11 @@ set(SOURCE_SFZ_GL_FILES
 	${SRC_DIR}/sfz/gl/Texture.hpp
 	${SRC_DIR}/sfz/gl/Texture.cpp
 	${SRC_DIR}/sfz/gl/Utils.hpp
-	${SRC_DIR}/sfz/gl/Utils.cpp)
+	${SRC_DIR}/sfz/gl/Utils.cpp
+	${SRC_DIR}/sfz/gl/font/FontRenderer.hpp
+	${SRC_DIR}/sfz/gl/font/FontRenderer.cpp
+	${SRC_DIR}/sfz/gl/font/stb_rect_pack.h
+	${SRC_DIR}/sfz/gl/font/stb_truetype.h)
 source_group(sfz_gl FILES ${SOURCE_SFZ_GL_FILES})
 
 set(SOURCE_ALL_FILES
