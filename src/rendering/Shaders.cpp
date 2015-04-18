@@ -223,7 +223,10 @@ GLuint compileLightingShaderProgram() noexcept
 			float factor = 0.0;
 			for (int i = 0; i < numSamples; i++) {
 				vec4 smCoord = uLightMatrix * vec4(currentSamplePos, 1.0);
-				factor += (smCoord.z <= 0 ? 0 : textureProj(uShadowMap, smCoord));
+				float temp;
+				if (smCoord.z <= 0) temp = 0.0;
+				else temp = textureProj(uShadowMap, smCoord);
+				factor += temp;
 				currentSamplePos += toNextSamplePos;
 			}
 			factor /= float(numSamples);
@@ -256,7 +259,11 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 toCam = normalize(-vsPos);
 			vec3 halfVec = normalize(toLight + toCam);
 			float specularNormalization = ((materialShininess + 2.0) / 8.0);
-			float lightVisibility = shadowMapCoord.z <= 0 ? 0 : textureProj(uShadowMap, shadowMapCoord);
+			
+			float temp;
+			if (shadowMapCoord.z <= 0) temp = 0.0;
+			else temp = textureProj(uShadowMap, shadowMapCoord);
+			float lightVisibility = temp;
 			float lightShafts = lightShaftFactor(vsPos, 32);
 
 			// Scaling factors for different components
