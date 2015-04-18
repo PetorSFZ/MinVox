@@ -63,12 +63,12 @@ GLuint compileShadowMapShaderProgram() noexcept
 		in vec3 positionIn;
 
 		uniform mat4 uModelMatrix;
-		uniform mat4 viewMatrix;
-		uniform mat4 projectionMatrix;
+		uniform mat4 uViewMatrix;
+		uniform mat4 uProjectionMatrix;
 
 		void main()
 		{
-			mat4 modelViewProj = projectionMatrix * viewMatrix * uModelMatrix;
+			mat4 modelViewProj = uProjectionMatrix * uViewMatrix * uModelMatrix;
 			gl_Position = modelViewProj * vec4(positionIn, 1.0);
 		}
 	)");
@@ -255,7 +255,7 @@ GLuint compileLightingShaderProgram() noexcept
 	)");
 }
 
-GLuint compilePostProcessShaderProgram() noexcept
+GLuint compileOutputSelectShaderProgram() noexcept
 {
 	return compilePostProcessShaderProgram(R"(
 		#version 330
@@ -268,21 +268,29 @@ GLuint compilePostProcessShaderProgram() noexcept
 		// Output
 		out vec4 fragmentColor;
 
-		// Uniform
-		uniform sampler2D uColorTexture;
+		// Uniforms
+		// Finished output
+		uniform sampler2D uFinishedTexture;
+		
+		// GBuffer
+		uniform sampler2D uDiffuseTexture;
+		uniform sampler2D uPositionTexture;
+		uniform sampler2D uNormalTexture;
+		
+		// SSAO
 		uniform sampler2D uOcclusionTexture;
 
 		uniform int uRenderMode;
 
 		void main()
 		{
-			vec3 color = texture(uColorTexture, texCoord).rgb;
-			float occlusion = texture(uOcclusionTexture, texCoord).r;
-
-			if (uRenderMode == 0) color = (0.5 + 0.5*occlusion)*color;
-			else if (uRenderMode == 1) color = vec3(occlusion);
-
-			fragmentColor = vec4(color, 1.0);
+			switch(uRenderMode) {
+			case 1: fragmentColor = vec4(texture(uFinishedTexture, texCoord).rgb, 1.0); break;
+			case 2: fragmentColor = vec4(texture(uDiffuseTexture, texCoord).rgb, 1.0); break;
+			case 3: fragmentColor = vec4(texture(uPositionTexture, texCoord).xyz, 1.0); break;
+			case 4: fragmentColor = vec4(texture(uNormalTexture, texCoord).xyz, 1.0); break;
+			case 5: fragmentColor = vec4(vec3(texture(uOcclusionTexture, texCoord).r), 1.0); break;
+			}
 		}
 	)");
 }

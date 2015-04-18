@@ -21,7 +21,7 @@ GLuint compileGBufferGenShaderProgram() noexcept;
 
 GLuint compileLightingShaderProgram() noexcept;
 
-GLuint compilePostProcessShaderProgram() noexcept;
+GLuint compileOutputSelectShaderProgram() noexcept;
 
 } // namespace vox
 

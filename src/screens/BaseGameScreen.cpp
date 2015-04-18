@@ -65,9 +65,11 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
 	mLightingShader{compileLightingShaderProgram()},
+	mOutputSelectShader{compileOutputSelectShaderProgram()},
 	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
+	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld, mAssets},
 
@@ -137,13 +139,19 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				break;
 
 			case '1':
-				mRenderMode = 0;
-				break;
-			case '2':
 				mRenderMode = 1;
 				break;
-			case '3':
+			case '2':
 				mRenderMode = 2;
+				break;
+			case '3':
+				mRenderMode = 3;
+				break;
+			case '4':
+				mRenderMode = 4;
+				break;
+			case '5':
+				mRenderMode = 5;
 				break;
 			}
 			break;
@@ -190,8 +198,8 @@ void BaseGameScreen::render(float)
 	mSunCam.updateMatrices();
 	mSunCam.updatePlanes();
 	
-	gl::setUniform(mShadowMapShader, "viewMatrix", mSunCam.mViewMatrix);
-	gl::setUniform(mShadowMapShader, "projectionMatrix", mSunCam.mProjMatrix);
+	gl::setUniform(mShadowMapShader, "uViewMatrix", mSunCam.mViewMatrix);
+	gl::setUniform(mShadowMapShader, "uProjectionMatrix", mSunCam.mProjMatrix);
 
 	// Clear shadow map
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -290,6 +298,42 @@ void BaseGameScreen::render(float)
 	
 	glUseProgram(0);
 
+	// Output select
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	glUseProgram(mOutputSelectShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, mOutputSelectFramebuffer.mFBO);
+	glViewport(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Texture uniforms
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mLightingFramebuffer.mTexture);
+	gl::setUniform(mOutputSelectShader, "uFinishedTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+	gl::setUniform(mOutputSelectShader, "uDiffuseTexture", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
+	gl::setUniform(mOutputSelectShader, "uPositionTexture", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
+	gl::setUniform(mOutputSelectShader, "uNormalTexture", 3);
+
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, occlusionTex);
+	gl::setUniform(mOutputSelectShader, "uOcclusionTexture", 4);
+
+	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
+
+	mFullscreenQuad.render();
+	
+	glUseProgram(0);
+
 	// Blitting post-processed framebuffer to screen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -299,8 +343,8 @@ void BaseGameScreen::render(float)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, mLightingFramebuffer.mFBO);
-	glBlitFramebuffer(0, 0, mLightingFramebuffer.mWidth, mLightingFramebuffer.mHeight,
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mOutputSelectFramebuffer.mFBO);
+	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight,
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
@@ -335,6 +379,7 @@ void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {
 	mGBuffer = GBuffer{width, height};
 	mLightingFramebuffer = PostProcessFramebuffer{width, height};
+	mOutputSelectFramebuffer = PostProcessFramebuffer{width, height};
 }
 
 } // namespace vox

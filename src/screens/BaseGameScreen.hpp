@@ -64,16 +64,16 @@ protected:
 	sdl::Window& mWindow;
 	Assets mAssets;
 
-	GLuint  mShadowMapShader, mGBufferGenShader, mLightingShader;
+	GLuint mShadowMapShader, mGBufferGenShader, mLightingShader, mOutputSelectShader;
 	ShadowMap mShadowMap;
 	GBuffer mGBuffer;
-	PostProcessFramebuffer mLightingFramebuffer;
+	PostProcessFramebuffer mLightingFramebuffer, mOutputSelectFramebuffer;
 	SSAO mSSAO;
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 	
 	bool mOldWorldRenderer = false;
-	int mRenderMode = 0;
+	int mRenderMode = 1;
 
 	Camera mSunCam;
 	vec3f mLightPosSpherical, mLightTarget, mLightColor;
