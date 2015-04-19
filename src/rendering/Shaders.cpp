@@ -307,6 +307,8 @@ GLuint compileOutputSelectShaderProgram() noexcept
 		// SSAO
 		uniform sampler2D uOcclusionTexture;
 
+		uniform sampler2D uFontTexture;
+
 		uniform int uRenderMode;
 
 		void main()
@@ -317,6 +319,7 @@ GLuint compileOutputSelectShaderProgram() noexcept
 			case 3: fragmentColor = vec4(texture(uPositionTexture, texCoord).xyz, 1.0); break;
 			case 4: fragmentColor = vec4(texture(uNormalTexture, texCoord).xyz, 1.0); break;
 			case 5: fragmentColor = vec4(vec3(texture(uOcclusionTexture, texCoord).r), 1.0); break;
+			case 6: fragmentColor = vec4(texture(uFontTexture, texCoord).rgb, 1.0); break;
 			}
 		}
 	)");

@@ -7,6 +7,7 @@
 
 #include "sfz/GL.hpp"
 
+#include "IO.hpp"
 #include "Model.hpp"
 #include "Rendering.hpp"
 #include "screens/IScreen.hpp"
@@ -69,6 +70,8 @@ protected:
 	GBuffer mGBuffer;
 	PostProcessFramebuffer mLightingFramebuffer, mOutputSelectFramebuffer;
 	SSAO mSSAO;
+	sfz::FontRenderer mFontRenderer;
+	PostProcessFramebuffer mFontFramebuffer; // TODO: Remove when done, for easier debugging.
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 	

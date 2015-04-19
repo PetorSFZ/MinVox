@@ -71,6 +71,8 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
+	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 32.0f},
+	mFontFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mWorldRenderer{mWorld, mAssets},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
@@ -153,6 +155,9 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case '5':
 				mRenderMode = 5;
 				break;
+			case '6':
+				mRenderMode = 6;
+				break;
 			}
 			break;
 		}
@@ -209,6 +214,7 @@ void BaseGameScreen::render(float)
 	// Fix surface acne
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(5.0f, 25.0f);
+	//glCullFace(GL_FRONT);
 
 	// Draw shadow casters
 	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
@@ -218,6 +224,7 @@ void BaseGameScreen::render(float)
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glCullFace(GL_BACK);
 
 	// Draw GBuffer
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -298,6 +305,11 @@ void BaseGameScreen::render(float)
 	
 	glUseProgram(0);
 
+	// Rendering some text
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	mFontRenderer.print(mFontFramebuffer.mFBO, mFontFramebuffer.mTexture, mFontFramebuffer.mWidth, mFontFramebuffer.mHeight, "Hello World!", 0.5f, 0.5f, 4.0f);
+
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -327,6 +339,10 @@ void BaseGameScreen::render(float)
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, occlusionTex);
 	gl::setUniform(mOutputSelectShader, "uOcclusionTexture", 4);
+
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, mFontFramebuffer.mTexture);
+	gl::setUniform(mOutputSelectShader, "uFontTexture", 5);
 
 	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
 
@@ -380,6 +396,8 @@ void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 	mGBuffer = GBuffer{width, height};
 	mLightingFramebuffer = PostProcessFramebuffer{width, height};
 	mOutputSelectFramebuffer = PostProcessFramebuffer{width, height};
+
+	mFontFramebuffer = PostProcessFramebuffer{width, height};
 }
 
 } // namespace vox
