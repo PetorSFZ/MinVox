@@ -216,7 +216,7 @@ GLuint compileLightingShaderProgram() noexcept
 		float lightShaftFactor(vec3 vsPos, int numSamples)
 		{
 			vec3 camDir = normalize(vsPos);
-			float sampleLength = length(vsPos) / float(numSamples+2);
+			float sampleLength = length(vsPos) / float(numSamples+1);
 			vec3 toNextSamplePos = camDir * sampleLength;
 	
 			vec3 currentSamplePos = toNextSamplePos;
