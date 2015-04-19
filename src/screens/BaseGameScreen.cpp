@@ -78,7 +78,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 {
 	mLightPosSpherical = vec3f{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
-	mLightColor = vec3f{1.0f, 1.0f, 1.0f};
+	mLightColor = vec3f{1.0f, 0.85f, 0.75f};
 }
 
 /*BaseGameScreen::BaseGameScreen(const BaseGameScreen& baseGameScreen)
