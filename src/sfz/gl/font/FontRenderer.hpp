@@ -4,6 +4,9 @@
 
 #include <sfz/GL.hpp>
 #include <string>
+#include <cstdio>
+
+#include "rendering/FullscreenQuadObject.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -38,6 +41,8 @@ private:
 	std::string mFontPath;
 	const float mFontSize;
 	GLuint mFontRendererShader;
+	vox::FullscreenQuadObject mFullscreenQuad;
+	GLuint mFontTexture;
 };
 
 } // namespace sfz

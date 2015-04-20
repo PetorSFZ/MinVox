@@ -9,7 +9,13 @@
 
 namespace sfz {
 
+// Anonymous namespace
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 namespace {
+
+// Anonymous: Shaders
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 const char* VERTEX_SHADER = R"(
 	#version 330
@@ -37,9 +43,13 @@ const char* FRAGMENT_SHADER = R"(
 	// Output
 	out vec4 fragmentColor;
 
+	// Uniforms
+	uniform sampler2D uFontTexture;
+
 	void main()
 	{
-		fragmentColor = vec4(1.0, 0.0, 0.0, 1.0);
+		float color = texture(uFontTexture, texCoord).r;
+		fragmentColor = vec4(vec3(color), 1.0);
 	}
 )";
 
@@ -78,12 +88,22 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 	mFontSize{fontSize},
 	mFontRendererShader{compileFontRendererShaderProgram()}
 {
+	unsigned char* ttf_buffer = new unsigned char[1<<20];
+	unsigned char* temp_bitmap = new unsigned char[512*512];
+	stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
 
+	std::fread(ttf_buffer, 1, 1<<20, std::fopen(fontPath.c_str(), "rb"));
+	stbtt_BakeFontBitmap(ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+	glGenTextures(1, &mFontTexture);
+	glBindTexture(GL_TEXTURE_2D, mFontTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512,512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
+	// can free temp_bitmap at this point
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 FontRenderer::~FontRenderer() noexcept
 {
-
+	glDeleteTextures(1, &mFontTexture);
 }
 
 // FontRenderer: Public methods
@@ -102,6 +122,11 @@ void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, cons
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // TODO: Debug
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // TODO: Debug
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mFontTexture);
+	gl::setUniform(mFontRendererShader, "uFontTexture", 0);
+
+	mFullscreenQuad.render();
 
 	// Cleanup
 	glUseProgram(0);
