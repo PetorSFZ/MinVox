@@ -4,6 +4,7 @@
 
 #include <string>
 #include <memory>
+#include <random>
 
 #include "sfz/GL.hpp"
 

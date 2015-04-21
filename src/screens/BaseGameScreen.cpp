@@ -158,6 +158,14 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case '6':
 				mRenderMode = 6;
 				break;
+
+			case 'p':
+				std::random_device rd;
+				std::mt19937_64 gen{rd()};
+				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
+				mLightColor = vec3f{distr(gen), distr(gen), distr(gen)};
+				std::cout << "New random light color: " << mLightColor << std::endl;
+				break;
 			}
 			break;
 		}
