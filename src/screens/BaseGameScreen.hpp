@@ -85,7 +85,7 @@ protected:
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;
-	float lightMaxSpeed = sfz::g_PI_FLOAT;
+	float lightMaxSpeed = sfz::PI();
 
 private:
 	// Private methods

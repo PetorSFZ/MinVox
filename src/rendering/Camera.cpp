@@ -39,7 +39,7 @@ void Camera::updatePlanes() noexcept
 	const vec3f normDir = mDir.normalize();
 	const vec3f normUpDir = (mUp - mUp.dot(normDir)*normDir).normalize();
 	const vec3f normRightDir = sfz::cross(normDir, normUpDir).normalize();
-	const float yHalfRadAngle = (mVerticalFov/2.0f) * sfz::g_DEG_TO_RAD_FLOAT;
+	const float yHalfRadAngle = (mVerticalFov/2.0f) * sfz::DEG_TO_RAD();
 	const float xHalfRadAngle = mAspectRatio * yHalfRadAngle;
 	
 	sfz_assert_debug(sfz::approxEqual(normDir.dot(normUpDir), 0.0f, 0.0001f));

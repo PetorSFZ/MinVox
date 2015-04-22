@@ -51,29 +51,29 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 				break;
 			case SDLK_UP:
 				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::g_PI_FLOAT*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_DOWN:
 				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::g_PI_FLOAT*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_LEFT:
 				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, -1.0f*sfz::g_PI_FLOAT*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, -1.0f*sfz::PI()*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_RIGHT:
 				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 1.0f*sfz::g_PI_FLOAT*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::g_PI_FLOAT*delta);
+				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 1.0f*sfz::PI()*delta);
+				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
@@ -83,7 +83,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	}
 
 	float currentSpeed = 3.0f;
-	float turningSpeed = sfz::g_PI_FLOAT;
+	float turningSpeed = sfz::PI();
 
 	// Triggers
 	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {

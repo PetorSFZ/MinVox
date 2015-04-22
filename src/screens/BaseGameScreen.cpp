@@ -78,7 +78,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
 {
-	mLightPosSpherical = vec3f{60.0f, sfz::g_PI_FLOAT*0.15f, sfz::g_PI_FLOAT*0.35f}; // [0] = r, [1] = theta, [2] = phi
+	mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
 	mLightColor = vec3f{1.0f, 0.85f, 0.75f};
 }
@@ -177,7 +177,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 	if (currentLightAxis != -1) {
 		mLightPosSpherical[currentLightAxis] += delta * lightCurrentSpeed;
 		mLightPosSpherical[currentLightAxis] = std::fmod(mLightPosSpherical[currentLightAxis],
-		                                                (sfz::g_PI_FLOAT*2.0f));
+		                                                (sfz::PI()*2.0f));
 	}
 
 	mCam.updateMatrices();
