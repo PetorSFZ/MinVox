@@ -3,7 +3,7 @@
 #define SFZ_GL_UTILS_HPP
 
 #include <sfz/Math.hpp>
-#include "sfz/GL.hpp"
+#include "sfz/gl/OpenGL.hpp"
 #include <iostream>
 #include <string>
 #include <exception> // std::terminate()

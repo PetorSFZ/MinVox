@@ -2,7 +2,8 @@
 #ifndef SFZ_GL_FONT_FONT_RENDERER_HPP
 #define SFZ_GL_FONT_FONT_RENDERER_HPP
 
-#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp>
+#include <sfz/gl/Utils.hpp>
 #include <string>
 #include <cstdio>
 

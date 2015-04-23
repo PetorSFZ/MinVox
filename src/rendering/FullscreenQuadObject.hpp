@@ -2,7 +2,8 @@
 #ifndef VOX_FULLSCREEN_QUAD_OBJECT_HPP
 #define VOX_FULLSCREEN_QUAD_OBJECT_HPP
 
-#include "sfz/GL.hpp"
+#include <sfz/gl/OpenGL.hpp>
+#include <sfz/gl/Utils.hpp>
 
 namespace vox {
 
