@@ -5,6 +5,11 @@
 #define STBTT_STATIC
 #include "stb_truetype.h"
 
+#include <new> // std::nothrow
+#include <cstdio>
+#include <iostream> // std::cerr
+#include <exception> // std::terminate
+
 #include <sfz/MSVC12HackON.hpp>
 
 namespace sfz {
@@ -77,6 +82,28 @@ GLuint compileFontRendererShaderProgram() noexcept
 	return shaderProgram;
 }
 
+uint8_t* loadTTFBuffer(const std::string& path) noexcept
+{
+	const size_t MAX_TTF_BUFFER_SIZE = 1<<22; // 4 MiB
+	uint8_t* buffer = new (std::nothrow) uint8_t[MAX_TTF_BUFFER_SIZE];
+
+	std::FILE* ttfFile = fopen(path.c_str(), "rb");
+	if (ttfFile == NULL) {
+		std::cerr << "Couldn't open TTF file at: " << path << std::endl;
+		std::terminate();
+	}
+
+	size_t readCount = std::fread(buffer, sizeof(uint8_t), MAX_TTF_BUFFER_SIZE, ttfFile);
+	if (readCount == 0) {
+		std::cerr << "Loaded no bytes from TTF file at: " << path << std::endl;
+		std::terminate();
+	}
+
+	std::fclose(ttfFile);
+	return buffer;
+}
+
+
 } // anonymous namespace
 
 // FontRenderer: Constructors & destructors
@@ -88,12 +115,14 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 	mFontSize{fontSize},
 	mFontRendererShader{compileFontRendererShaderProgram()}
 {
-	unsigned char* ttf_buffer = new unsigned char[1<<20];
 	unsigned char* temp_bitmap = new unsigned char[512*512];
 	stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
 
-	std::fread(ttf_buffer, 1, 1<<20, std::fopen(fontPath.c_str(), "rb"));
-	stbtt_BakeFontBitmap(ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+	uint8_t* ttfBuffer = loadTTFBuffer(fontPath);
+	stbtt_BakeFontBitmap(ttfBuffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+	delete[] ttfBuffer;
+
+
 	glGenTextures(1, &mFontTexture);
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512,512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);

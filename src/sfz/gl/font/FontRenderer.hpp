@@ -5,13 +5,17 @@
 #include <sfz/gl/OpenGL.hpp>
 #include <sfz/gl/Utils.hpp>
 #include <string>
-#include <cstdio>
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t
 
 #include "rendering/FullscreenQuadObject.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
 namespace sfz {
+
+using std::size_t;
+using std::uint8_t;
 
 // FontRenderer
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
