@@ -42,7 +42,11 @@ public:
 private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	
+
+	static const size_t FIRST_CHAR = 32; // inclusive
+	static const size_t LAST_CHAR = 246; // inclusive
+	static const size_t CHAR_COUNT = LAST_CHAR - FIRST_CHAR + 2; // 1 extra for unknown char
+
 	std::string mFontPath;
 	const float mFontSize;
 	GLuint mFontRendererShader;

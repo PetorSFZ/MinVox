@@ -116,10 +116,10 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 	mFontRendererShader{compileFontRendererShaderProgram()}
 {
 	unsigned char* temp_bitmap = new unsigned char[512*512];
-	stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
+	stbtt_bakedchar cdata[CHAR_COUNT];
 
 	uint8_t* ttfBuffer = loadTTFBuffer(fontPath);
-	stbtt_BakeFontBitmap(ttfBuffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+	stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, temp_bitmap,512,512, FIRST_CHAR, CHAR_COUNT, cdata); // no guarantee this fits!
 	delete[] ttfBuffer;
 
 

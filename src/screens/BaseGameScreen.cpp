@@ -71,7 +71,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 32.0f},
+	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 64.0f},
 	mFontFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mWorldRenderer{mWorld, mAssets},
 
