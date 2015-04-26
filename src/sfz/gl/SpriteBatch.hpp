@@ -7,12 +7,22 @@
 #include <sfz/gl/Utils.hpp>
 
 #include <cstddef> // size_t
+#include <memory>
 
 #include <sfz/MSVC12HackON.hpp>
 
 namespace sfz {
 
 using std::size_t;
+using sfz::vec2f;
+
+// TextureRegion (for use with SpriteBatch)
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+struct TextureRegion final {
+	vec2f mUVMin, mUVMax;
+	inline TextureRegion(vec2f min, vec2f max) noexcept : mUVMin{min}, mUVMax{max} { };
+};
 
 // SpriteBatch
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -37,7 +47,8 @@ public:
 
 	void begin() noexcept;
 
-	void draw() noexcept;
+	void draw(vec2f position, vec2f dimensions, float angleRads,
+	          const TextureRegion& texRegion) noexcept;
 
 	void end() noexcept;
 
@@ -45,7 +56,14 @@ private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	size_t mCapacity;
+	size_t mCurrentDrawCount;
+
 	GLuint mVAO;
+	GLuint mVertexBuffer, mIndexBuffer, mPosBuffer, mDimBuffer, mUVBuffer;
+	std::unique_ptr<vec2f[]> mPosArray;
+	std::unique_ptr<vec2f[]> mDimArray;
+	std::unique_ptr<vec2f[]> mUVArray;
 };
 
 } // namespace sfz
