@@ -348,6 +348,7 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusi
 SSAO::~SSAO() noexcept
 {
 	glDeleteProgram(mSSAOProgram);
+	glDeleteProgram(mBlurProgram);
 	glDeleteTextures(1, &mNoiseTexture);
 }
 
