@@ -29,7 +29,6 @@ struct TextureRegion final {
 
 class SpriteBatch final {
 public:
-
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -50,7 +49,7 @@ public:
 	void draw(vec2f position, vec2f dimensions, float angleRads,
 	          const TextureRegion& texRegion) noexcept;
 
-	void end() noexcept;
+	void end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture) noexcept;
 
 private:
 	// Private members
@@ -59,6 +58,7 @@ private:
 	size_t mCapacity;
 	size_t mCurrentDrawCount;
 
+	GLuint mShader;
 	GLuint mVAO;
 	GLuint mVertexBuffer, mIndexBuffer, mPosBuffer, mDimBuffer, mUVBuffer;
 	std::unique_ptr<vec2f[]> mPosArray;

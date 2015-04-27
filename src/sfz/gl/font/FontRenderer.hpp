@@ -4,11 +4,12 @@
 
 #include <sfz/gl/OpenGL.hpp>
 #include <sfz/gl/Utils.hpp>
+#include <sfz/gl/SpriteBatch.hpp>
 #include <string>
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 
-#include "rendering/FullscreenQuadObject.hpp"
+//#include "rendering/FullscreenQuadObject.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -50,8 +51,10 @@ private:
 	std::string mFontPath;
 	const float mFontSize;
 	GLuint mFontRendererShader;
-	vox::FullscreenQuadObject mFullscreenQuad;
+
+	//vox::FullscreenQuadObject mFullscreenQuad;
 	GLuint mFontTexture;
+	sfz::SpriteBatch mSpriteBatch;
 };
 
 } // namespace sfz

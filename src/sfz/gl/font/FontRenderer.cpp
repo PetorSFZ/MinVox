@@ -113,7 +113,8 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 :
 	mFontPath{fontPath},
 	mFontSize{fontSize},
-	mFontRendererShader{compileFontRendererShaderProgram()}
+	mFontRendererShader{compileFontRendererShaderProgram()},
+	mSpriteBatch{1000}
 {
 	unsigned char* temp_bitmap = new unsigned char[512*512];
 	stbtt_bakedchar cdata[CHAR_COUNT];
@@ -155,7 +156,12 @@ void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, cons
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
 	gl::setUniform(mFontRendererShader, "uFontTexture", 0);
 
-	mFullscreenQuad.render();
+	//mFullscreenQuad.render();
+	/*mSpriteBatch.begin();
+
+	mSpriteBatch.draw(vec2f::ZERO(), vec2f{0.5f, 0.5f}, 0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
+
+	mSpriteBatch.end(fbo, width, height, mFontTexture);*/
 
 	// Cleanup
 	glUseProgram(0);
