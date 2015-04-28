@@ -135,19 +135,19 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	glBindVertexArray(mVAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-	glVertexAttribPointer(0, 2 /* size */, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
-	glVertexAttribPointer(1, 2 /* size */, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
-	glVertexAttribPointer(2, 2 /* size */, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(3, 2 /*size*/, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
 
 	if (gl::checkAllGLErrors()) {
@@ -195,6 +195,19 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 
 void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture) noexcept
 {
+	// Transfer buffer data
+	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mPosArray[0].glPtr());
+
+	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mDimArray[0].glPtr());
+
+	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity*4, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount*4, mUVArray[0].glPtr());
+
 	// Save previous depth test state and then disable it
 	GLboolean depthTestWasEnabled;
 	glGetBooleanv(GL_DEPTH_TEST, &depthTestWasEnabled);
@@ -203,28 +216,50 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glUseProgram(mShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glViewport(0, 0, fbWidth, fbHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // TODO: Debug
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // TODO: Debug
 
 	// Uniforms
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	gl::setUniform(mShader, "uTexture", 0);
 
-	// Reuse same vertices for each draw instance
-	glVertexAttribDivisor(0, 0);
-	// One position, dimension, and uv coords for each instance
-	glVertexAttribDivisor(1, 1);
-	glVertexAttribDivisor(2, 1);
-	glVertexAttribDivisor(3, 1);
+	// Maybe?
+	glBindVertexArray(mVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(3);
+
+
+	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
+	glVertexAttribDivisor(1, 1); // One position per quad
+	glVertexAttribDivisor(2, 1); // One dimensions per quad
+	glVertexAttribDivisor(3, 0); // One UV coordinate per vertex
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, mCurrentDrawCount);
 
-	// Restore previous depth test state
-	if (depthTestWasEnabled) glEnable(GL_DEPTH_TEST);
-
 	// Cleanup
+	if (depthTestWasEnabled) glEnable(GL_DEPTH_TEST);
 	glUseProgram(0); // TODO: Store previous program
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // TODO: Store previous framebuffer
+	glVertexAttribDivisor(0, 0);
+	glVertexAttribDivisor(1, 0);
+	glVertexAttribDivisor(2, 0);
+	glVertexAttribDivisor(3, 0);
 }
 
 
