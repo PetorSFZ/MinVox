@@ -246,9 +246,9 @@ GLuint compileLightingShaderProgram() noexcept
 			vec4 shadowMapCoord = uLightMatrix * vec4(vsPos, 1.0);
 
 			// Texture and materials
-			vec3 ambientLight = vec3(0.15, 0.15, 0.15);
+			vec3 ambientLight = vec3(0.35, 0.35, 0.35);
 			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseColor;
-			vec3 materialDiffuse = vec3(0.5, 0.5, 0.5) * diffuseColor;
+			vec3 materialDiffuse = vec3(0.3, 0.3, 0.3) * diffuseColor;
 			vec3 materialSpecular = vec3(0.35, 0.35, 0.35);
 			vec3 materialEmissive = vec3(0, 0, 0);
 			float materialShininess = 8;
@@ -264,7 +264,7 @@ GLuint compileLightingShaderProgram() noexcept
 			if (shadowMapCoord.z <= 0) temp = 0.0;
 			else temp = textureProj(uShadowMap, shadowMapCoord);
 			float lightVisibility = temp;
-			float lightShafts = lightShaftFactor(vsPos, 32);
+			float lightShafts = lightShaftFactor(vsPos, 42);
 
 			// Scaling factors for different components
 			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);

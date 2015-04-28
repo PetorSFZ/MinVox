@@ -13,8 +13,8 @@ GlobalConfig::GlobalConfig() noexcept
 	mRetinaAware = false;
 
 	mSSAONumSamples = 16;
-	mSSAORadius = 3.0;
-	mSSAOExp = 2.0;
+	mSSAORadius = 3.0f;
+	mSSAOExp = 1.5f;
 
 	mHorizontalRange = 2;
 	mVerticalRange = 1;
