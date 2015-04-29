@@ -63,7 +63,7 @@ private:
 	GLuint mVertexBuffer, mIndexBuffer, mPosBuffer, mDimBuffer, mUVBuffer;
 	std::unique_ptr<vec2f[]> mPosArray;
 	std::unique_ptr<vec2f[]> mDimArray;
-	std::unique_ptr<vec2f[]> mUVArray;
+	std::unique_ptr<vec4f[]> mUVArray;
 };
 
 } // namespace sfz

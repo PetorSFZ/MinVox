@@ -157,11 +157,15 @@ void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, cons
 	gl::setUniform(mFontRendererShader, "uFontTexture", 0);
 
 	//mFullscreenQuad.render();
-	/*mSpriteBatch.begin();
+	mSpriteBatch.begin();
 
-	mSpriteBatch.draw(vec2f::ZERO(), vec2f{0.5f, 0.5f}, 0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
+	mSpriteBatch.draw(vec2f::ZERO(), vec2f{2.0f, 2.0f},  0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
 
-	mSpriteBatch.end(fbo, width, height, mFontTexture);*/
+	mSpriteBatch.draw(vec2f{-0.25f, -0.25f}, vec2f{0.5f, 0.5f}, 0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
+
+	mSpriteBatch.draw(vec2f{0.25f, 0.25f}, vec2f{0.5f, 0.5f}, 0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{0.5f, 0.5f}});
+
+	mSpriteBatch.end(fbo, width, height, mFontTexture);
 
 	// Cleanup
 	glUseProgram(0);

@@ -21,15 +21,20 @@ const char* VERTEX_SHADER = R"(
 	in vec2 vertexIn;
 	in vec2 positionIn;
 	in vec2 dimensionsIn;
-	in vec2 uvCoordIn;
+	in vec4 uvCoordIn;
 
 	// Ouput
 	out vec2 uvCoord;
 
 	void main()
 	{
-		gl_Position = vec4(vertexIn, 0.0, 1.0);
-		uvCoord = uvCoordIn;
+		gl_Position = vec4(positionIn + vertexIn*dimensionsIn, 0.0, 1.0);
+		switch (gl_VertexID) {
+		case 0: uvCoord = uvCoordIn.xy; break;
+		case 1: uvCoord = uvCoordIn.zy; break;
+		case 2: uvCoord = uvCoordIn.xw; break;
+		case 3: uvCoord = uvCoordIn.zw; break;
+		}
 	}
 )";
 
@@ -91,7 +96,7 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	mShader{compileSpriteBatchShaderProgram()},
 	mPosArray{new (std::nothrow) vec2f[mCapacity]},
 	mDimArray{new (std::nothrow) vec2f[mCapacity]},
-	mUVArray{new (std::nothrow) vec2f[mCapacity*4]}
+	mUVArray{new (std::nothrow) vec4f[mCapacity]}
 {
 	static_assert(sizeof(vec2f) == sizeof(float)*2, "vec2f is padded");
 
@@ -119,7 +124,7 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	// UV buffer (null now, to be updated when rendering batch)
 	glGenBuffers(1, &mUVBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity*4, NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW);
 
 	// Index buffer
 	const unsigned int indices[] = {
@@ -147,7 +152,7 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
 
 	if (gl::checkAllGLErrors()) {
@@ -180,13 +185,8 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 	// Setting position och dimensions arrays
 	mPosArray[mCurrentDrawCount] = position;
 	mDimArray[mCurrentDrawCount] = dimensions;
-
-	// Setting uv array
-	const size_t uvBaseIndex = mCurrentDrawCount*4;
-	mUVArray[uvBaseIndex] = texRegion.mUVMin;
-	mUVArray[uvBaseIndex+1] = vec2f{texRegion.mUVMax[0], texRegion.mUVMin[1]};
-	mUVArray[uvBaseIndex+2] = vec2f{texRegion.mUVMin[0], texRegion.mUVMax[1]};
-	mUVArray[uvBaseIndex+3] = texRegion.mUVMax;
+	mUVArray[mCurrentDrawCount] = vec4f{texRegion.mUVMin[0], texRegion.mUVMin[1],
+	                                    texRegion.mUVMax[0], texRegion.mUVMax[1]};
 
 	// Incrementing current draw count
 	mCurrentDrawCount++;
@@ -205,8 +205,8 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mDimArray[0].glPtr());
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity*4, NULL, GL_STREAM_DRAW); // Orphaning.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount*4, mUVArray[0].glPtr());
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec4f)*mCurrentDrawCount, mUVArray[0].glPtr());
 
 	// Save previous depth test state and then disable it
 	GLboolean depthTestWasEnabled;
@@ -240,14 +240,14 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
 
 
 	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
 	glVertexAttribDivisor(1, 1); // One position per quad
 	glVertexAttribDivisor(2, 1); // One dimensions per quad
-	glVertexAttribDivisor(3, 0); // One UV coordinate per vertex
+	glVertexAttribDivisor(3, 1); // One UV coordinate per vertex
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, mCurrentDrawCount);
