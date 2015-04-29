@@ -159,7 +159,7 @@ void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, cons
 	//mFullscreenQuad.render();
 	mSpriteBatch.begin();
 
-	mSpriteBatch.draw(vec2f::ZERO(), vec2f{2.0f, 2.0f},  0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
+	mSpriteBatch.draw(vec2f::ZERO(), vec2f{2.0f, 2.0f}, 90.0f * sfz::DEG_TO_RAD(), sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
 
 	mSpriteBatch.draw(vec2f{-0.25f, -0.25f}, vec2f{0.5f, 0.5f}, 0.0f, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
 

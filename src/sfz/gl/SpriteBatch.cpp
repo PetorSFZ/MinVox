@@ -21,6 +21,7 @@ const char* VERTEX_SHADER = R"(
 	in vec2 vertexIn;
 	in vec2 positionIn;
 	in vec2 dimensionsIn;
+	in float angleRadIn;
 	in vec4 uvCoordIn;
 
 	// Ouput
@@ -28,7 +29,11 @@ const char* VERTEX_SHADER = R"(
 
 	void main()
 	{
-		gl_Position = vec4(positionIn + vertexIn*dimensionsIn, 0.0, 1.0);
+		float cos = cos(angleRadIn);
+		float sin = sin(angleRadIn);
+		mat2 rot = mat2(cos, sin, -sin, cos); // Column major
+
+		gl_Position = vec4(positionIn + rot*(vertexIn*dimensionsIn), 0.0, 1.0);
 		switch (gl_VertexID) {
 		case 0: uvCoord = uvCoordIn.xy; break;
 		case 1: uvCoord = uvCoordIn.zy; break;
@@ -72,7 +77,8 @@ GLuint compileSpriteBatchShaderProgram() noexcept
 	glBindAttribLocation(shaderProgram, 0, "vertexIn");
 	glBindAttribLocation(shaderProgram, 1, "positionIn");
 	glBindAttribLocation(shaderProgram, 2, "dimensionsIn");
-	glBindAttribLocation(shaderProgram, 3, "uvCoordIn");
+	glBindAttribLocation(shaderProgram, 3, "angleRadIn");
+	glBindAttribLocation(shaderProgram, 4, "uvCoordIn");
 	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
 
 	gl::linkProgram(shaderProgram);
@@ -96,6 +102,7 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	mShader{compileSpriteBatchShaderProgram()},
 	mPosArray{new (std::nothrow) vec2f[mCapacity]},
 	mDimArray{new (std::nothrow) vec2f[mCapacity]},
+	mAngleArray{new (std::nothrow) float[mCapacity]},
 	mUVArray{new (std::nothrow) vec4f[mCapacity]}
 {
 	static_assert(sizeof(vec2f) == sizeof(float)*2, "vec2f is padded");
@@ -120,6 +127,11 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	glGenBuffers(1, &mDimBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW);
+
+	// Angle buffer (null now, to be updated when rendering batch)
+	glGenBuffers(1, &mAngleBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*mCapacity, NULL, GL_STREAM_DRAW);
 
 	// UV buffer (null now, to be updated when rendering batch)
 	glGenBuffers(1, &mUVBuffer);
@@ -151,9 +163,13 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(4);
 
 	if (gl::checkAllGLErrors()) {
 		std::cerr << "^^^ Above errors caused by SpriteBatch constructor" << std::endl;
@@ -167,6 +183,7 @@ SpriteBatch::~SpriteBatch() noexcept
 	glDeleteBuffers(1, &mIndexBuffer);
 	glDeleteBuffers(1, &mPosBuffer);
 	glDeleteBuffers(1, &mDimBuffer);
+	glDeleteBuffers(1, &mAngleBuffer);
 	glDeleteBuffers(1, &mUVBuffer);
 	glDeleteVertexArrays(1, &mVAO);
 }
@@ -185,6 +202,7 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 	// Setting position och dimensions arrays
 	mPosArray[mCurrentDrawCount] = position;
 	mDimArray[mCurrentDrawCount] = dimensions;
+	mAngleArray[mCurrentDrawCount] = angleRads;
 	mUVArray[mCurrentDrawCount] = vec4f{texRegion.mUVMin[0], texRegion.mUVMin[1],
 	                                    texRegion.mUVMax[0], texRegion.mUVMax[1]};
 
@@ -203,6 +221,10 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mDimArray[0].glPtr());
+
+	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*mCurrentDrawCount, &mAngleArray[0]);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
@@ -239,15 +261,20 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(4);
 
 
 	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
 	glVertexAttribDivisor(1, 1); // One position per quad
 	glVertexAttribDivisor(2, 1); // One dimensions per quad
-	glVertexAttribDivisor(3, 1); // One UV coordinate per vertex
+	glVertexAttribDivisor(3, 1); // One angle per quad
+	glVertexAttribDivisor(4, 1); // One UV coordinate per vertex
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, mCurrentDrawCount);
@@ -260,6 +287,7 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glVertexAttribDivisor(1, 0);
 	glVertexAttribDivisor(2, 0);
 	glVertexAttribDivisor(3, 0);
+	glVertexAttribDivisor(4, 0);
 }
 
 

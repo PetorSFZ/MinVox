@@ -60,9 +60,10 @@ private:
 
 	GLuint mShader;
 	GLuint mVAO;
-	GLuint mVertexBuffer, mIndexBuffer, mPosBuffer, mDimBuffer, mUVBuffer;
+	GLuint mVertexBuffer, mIndexBuffer, mPosBuffer, mDimBuffer, mAngleBuffer, mUVBuffer;
 	std::unique_ptr<vec2f[]> mPosArray;
 	std::unique_ptr<vec2f[]> mDimArray;
+	std::unique_ptr<float[]> mAngleArray;
 	std::unique_ptr<vec4f[]> mUVArray;
 };
 
