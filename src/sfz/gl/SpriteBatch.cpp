@@ -31,8 +31,7 @@ const char* VERTEX_SHADER = R"(
 	{
 		float cos = cos(angleRadIn);
 		float sin = sin(angleRadIn);
-		mat2 rot = mat2(cos, sin, -sin, cos); // Column major
-
+		mat2 rot = mat2(cos, sin, -sin, cos); // Column major 2d rotation matrix
 		gl_Position = vec4(positionIn + rot*(vertexIn*dimensionsIn), 0.0, 1.0);
 		switch (gl_VertexID) {
 		case 0: uvCoord = uvCoordIn.xy; break;
@@ -213,69 +212,60 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 
 void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture) noexcept
 {
-	// Transfer buffer data
+	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
+
+	// Setting up buffers and transferring data.
+	glBindVertexArray(mVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
+
 	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mPosArray[0].glPtr());
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribDivisor(1, 1); // One position per quad
 
 	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mDimArray[0].glPtr());
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(2);
+	glVertexAttribDivisor(2, 1); // One dimensions per quad
 
 	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*mCurrentDrawCount, &mAngleArray[0]);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(3);
+	glVertexAttribDivisor(3, 1); // One angle per quad
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec4f)*mCurrentDrawCount, mUVArray[0].glPtr());
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(4);
+	glVertexAttribDivisor(4, 1); // One UV coordinate per vertex
 
 	// Save previous depth test state and then disable it
 	GLboolean depthTestWasEnabled;
 	glGetBooleanv(GL_DEPTH_TEST, &depthTestWasEnabled);
 	glDisable(GL_DEPTH_TEST);
 
+	// Enabling shader
 	glUseProgram(mShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glViewport(0, 0, fbWidth, fbHeight);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // TODO: Debug
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // TODO: Debug
 
 	// Uniforms
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	gl::setUniform(mShader, "uTexture", 0);
 
-	// Maybe?
-	glBindVertexArray(mVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(3);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(4);
-
-
-	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
-	glVertexAttribDivisor(1, 1); // One position per quad
-	glVertexAttribDivisor(2, 1); // One dimensions per quad
-	glVertexAttribDivisor(3, 1); // One angle per quad
-	glVertexAttribDivisor(4, 1); // One UV coordinate per vertex
-
+	// Drawing instances
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, mCurrentDrawCount);
 
