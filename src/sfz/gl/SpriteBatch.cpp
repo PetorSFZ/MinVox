@@ -27,12 +27,17 @@ const char* VERTEX_SHADER = R"(
 	// Ouput
 	out vec2 uvCoord;
 
+	// Uniforms
+	uniform vec2 uCamPos;
+	uniform vec2 uCamDim;
+
 	void main()
 	{
+		// Note: Matrices in GLSL are initiated
 		float cos = cos(angleRadIn);
 		float sin = sin(angleRadIn);
-		mat2 rot = mat2(cos, sin, -sin, cos); // Column major 2d rotation matrix
-		gl_Position = vec4(positionIn + rot*(vertexIn*dimensionsIn), 0.0, 1.0);
+		mat2 rotationMat = mat2(cos, sin, -sin, cos);
+		gl_Position = vec4(positionIn + rotationMat*(vertexIn*(2*dimensionsIn/uCamDim)), 0.0, 1.0);
 		switch (gl_VertexID) {
 		case 0: uvCoord = uvCoordIn.xy; break;
 		case 1: uvCoord = uvCoordIn.zy; break;
@@ -190,8 +195,10 @@ SpriteBatch::~SpriteBatch() noexcept
 // SpriteBatch: Public interface
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void SpriteBatch::begin() noexcept
+void SpriteBatch::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 {
+	mCamPos = cameraPosition;
+	mCamDim = cameraDimensions;
 	mCurrentDrawCount = 0;
 }
 
@@ -234,7 +241,7 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mDimArray[0].glPtr());
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
-	glVertexAttribDivisor(2, 1); // One dimensions per quad
+	glVertexAttribDivisor(2, 1); // One dimension per quad
 
 	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
@@ -264,6 +271,9 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	gl::setUniform(mShader, "uTexture", 0);
+
+	gl::setUniform(mShader, "uCamPos", mCamPos);
+	gl::setUniform(mShader, "uCamDim", mCamDim);
 
 	// Drawing instances
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);

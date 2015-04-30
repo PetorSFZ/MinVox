@@ -44,7 +44,7 @@ public:
 	// Public interface
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void begin() noexcept;
+	void begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept;
 
 	void draw(vec2f position, vec2f dimensions, float angleRads,
 	          const TextureRegion& texRegion) noexcept;
@@ -57,6 +57,7 @@ private:
 
 	size_t mCapacity;
 	size_t mCurrentDrawCount;
+	vec2f mCamPos, mCamDim;
 
 	GLuint mShader;
 	GLuint mVAO;
