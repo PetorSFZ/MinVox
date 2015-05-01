@@ -3,11 +3,13 @@
 #define SFZ_GL_SPRITE_BATCH_HPP
 
 #include <sfz/Assert.hpp>
+#include <sfz/Math.hpp>
 #include <sfz/gl/OpenGL.hpp>
 #include <sfz/gl/Utils.hpp>
 
 #include <cstddef> // size_t
 #include <memory>
+#include <cmath>
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -15,6 +17,7 @@ namespace sfz {
 
 using std::size_t;
 using sfz::vec2f;
+using sfz::mat3f;
 
 // TextureRegion (for use with SpriteBatch)
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -57,14 +60,12 @@ private:
 
 	size_t mCapacity;
 	size_t mCurrentDrawCount;
-	vec2f mCamPos, mCamDim;
+	mat3f mCamProj;
 
 	GLuint mShader;
 	GLuint mVAO;
-	GLuint mVertexBuffer, mIndexBuffer, mPosBuffer, mDimBuffer, mAngleBuffer, mUVBuffer;
-	std::unique_ptr<vec2f[]> mPosArray;
-	std::unique_ptr<vec2f[]> mDimArray;
-	std::unique_ptr<float[]> mAngleArray;
+	GLuint mVertexBuffer, mIndexBuffer, mTransformBuffer, mUVBuffer;
+	std::unique_ptr<mat3f[]> mTransformArray;
 	std::unique_ptr<vec4f[]> mUVArray;
 };
 

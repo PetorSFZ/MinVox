@@ -141,7 +141,7 @@ FontRenderer::~FontRenderer() noexcept
 
 void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, const std::string& text, float x, float y, float size) noexcept
 {
-	// Save previous depth test state and then disable it
+	/*// Save previous depth test state and then disable it
 	GLboolean depthTestWasEnabled;
 	glGetBooleanv(GL_DEPTH_TEST, &depthTestWasEnabled);
 	glDisable(GL_DEPTH_TEST);
@@ -154,10 +154,10 @@ void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, cons
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
-	gl::setUniform(mFontRendererShader, "uFontTexture", 0);
+	gl::setUniform(mFontRendererShader, "uFontTexture", 0);*/
 
 	//mFullscreenQuad.render();
-	mSpriteBatch.begin(vec2f{0.0f, 0.0f}, vec2f{4.0f, 2.0f});
+	mSpriteBatch.begin(vec2f{1.0f, 0.0f}, vec2f{4.0f, 2.0f});
 
 	mSpriteBatch.draw(vec2f::ZERO(), vec2f{2.0f, 2.0f}, 90.0f * sfz::DEG_TO_RAD(), sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
 
@@ -168,9 +168,9 @@ void FontRenderer::print(GLuint fbo, GLuint tex, float width, float height, cons
 	mSpriteBatch.end(fbo, width, height, mFontTexture);
 
 	// Cleanup
-	glUseProgram(0);
+	/*glUseProgram(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	if (depthTestWasEnabled) glEnable(GL_DEPTH_TEST);
+	if (depthTestWasEnabled) glEnable(GL_DEPTH_TEST);*/
 }
 
 } // namespace sfz

@@ -19,25 +19,15 @@ const char* VERTEX_SHADER = R"(
 
 	// Input
 	in vec2 vertexIn;
-	in vec2 positionIn;
-	in vec2 dimensionsIn;
-	in float angleRadIn;
+	in mat3 transformIn;
 	in vec4 uvCoordIn;
 
 	// Ouput
 	out vec2 uvCoord;
 
-	// Uniforms
-	uniform vec2 uCamPos;
-	uniform vec2 uCamDim;
-
 	void main()
 	{
-		// Note: Matrices in GLSL are initiated
-		float cos = cos(angleRadIn);
-		float sin = sin(angleRadIn);
-		mat2 rotationMat = mat2(cos, sin, -sin, cos);
-		gl_Position = vec4(positionIn + rotationMat*(vertexIn*(2*dimensionsIn/uCamDim)), 0.0, 1.0);
+		gl_Position = vec4((transformIn*vec3(vertexIn, 1.0)).xy, 0.0, 1.0);
 		switch (gl_VertexID) {
 		case 0: uvCoord = uvCoordIn.xy; break;
 		case 1: uvCoord = uvCoordIn.zy; break;
@@ -79,9 +69,7 @@ GLuint compileSpriteBatchShaderProgram() noexcept
 	glDeleteShader(fragmentShader);
 
 	glBindAttribLocation(shaderProgram, 0, "vertexIn");
-	glBindAttribLocation(shaderProgram, 1, "positionIn");
-	glBindAttribLocation(shaderProgram, 2, "dimensionsIn");
-	glBindAttribLocation(shaderProgram, 3, "angleRadIn");
+	glBindAttribLocation(shaderProgram, 1, "transformIn");
 	glBindAttribLocation(shaderProgram, 4, "uvCoordIn");
 	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
 
@@ -104,12 +92,11 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	mCapacity{capacity},
 	mCurrentDrawCount{0},
 	mShader{compileSpriteBatchShaderProgram()},
-	mPosArray{new (std::nothrow) vec2f[mCapacity]},
-	mDimArray{new (std::nothrow) vec2f[mCapacity]},
-	mAngleArray{new (std::nothrow) float[mCapacity]},
+	mTransformArray{new (std::nothrow) mat3f[mCapacity]},
 	mUVArray{new (std::nothrow) vec4f[mCapacity]}
 {
 	static_assert(sizeof(vec2f) == sizeof(float)*2, "vec2f is padded");
+	static_assert(sizeof(mat3f) == sizeof(float)*9, "mat3f is padded");
 
 	// Vertex buffer
 	const float vertices[] = {
@@ -122,20 +109,10 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Position buffer (null now, to be updated when rendering batch)
-	glGenBuffers(1, &mPosBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW);
-
-	// Dimensions buffer (null now, to be updated when rendering batch)
-	glGenBuffers(1, &mDimBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW);
-
-	// Angle buffer (null now, to be updated when rendering batch)
-	glGenBuffers(1, &mAngleBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*mCapacity, NULL, GL_STREAM_DRAW);
+	// Transform buffer (null now, to be updated when rendering batch)
+	glGenBuffers(1, &mTransformBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, mTransformBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(mat3f)*mCapacity, NULL, GL_STREAM_DRAW);
 
 	// UV buffer (null now, to be updated when rendering batch)
 	glGenBuffers(1, &mUVBuffer);
@@ -156,23 +133,19 @@ SpriteBatch::SpriteBatch(size_t capacity) noexcept
 	glBindVertexArray(mVAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, mTransformBuffer);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*0));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*1));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*2));
 	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(4);
 
 	if (gl::checkAllGLErrors()) {
@@ -185,9 +158,7 @@ SpriteBatch::~SpriteBatch() noexcept
 	glDeleteProgram(mShader);
 	glDeleteBuffers(1, &mVertexBuffer);
 	glDeleteBuffers(1, &mIndexBuffer);
-	glDeleteBuffers(1, &mPosBuffer);
-	glDeleteBuffers(1, &mDimBuffer);
-	glDeleteBuffers(1, &mAngleBuffer);
+	glDeleteBuffers(1, &mTransformBuffer);
 	glDeleteBuffers(1, &mUVBuffer);
 	glDeleteVertexArrays(1, &mVAO);
 }
@@ -197,18 +168,22 @@ SpriteBatch::~SpriteBatch() noexcept
 
 void SpriteBatch::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 {
-	mCamPos = cameraPosition;
-	mCamDim = cameraDimensions;
+	mCamProj = sfz::glOrthogonalProjectionMatrix2D(cameraPosition, cameraDimensions);
 	mCurrentDrawCount = 0;
 }
 
 void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 					   const TextureRegion& texRegion) noexcept
 {
-	// Setting position och dimensions arrays
-	mPosArray[mCurrentDrawCount] = position;
-	mDimArray[mCurrentDrawCount] = dimensions;
-	mAngleArray[mCurrentDrawCount] = angleRads;
+	float cos = std::cos(angleRads);
+	float sin = std::sin(angleRads);
+	mat3f rotMat{{cos, -sin, 0.0f}, {sin, cos, 0.0f}, {0.0f, 0.0f, 1.0f}};
+	mat3f scaling{{dimensions[0], 0.0f, 0.0f}, {0.0f, dimensions[1], 0.0f}, {0.0f, 0.0f, 1.0f}};
+	mat3f transform = rotMat * scaling;
+	transform.setColumn(2, vec3f{position[0], position[1], 1.0f});
+
+	// Setting transform & uv arrays
+	mTransformArray[mCurrentDrawCount] = mCamProj * transform;
 	mUVArray[mCurrentDrawCount] = vec4f{texRegion.mUVMin[0], texRegion.mUVMin[1],
 	                                    texRegion.mUVMax[0], texRegion.mUVMax[1]};
 
@@ -229,26 +204,18 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glEnableVertexAttribArray(0);
 	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
 
-	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mPosArray[0].glPtr());
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, mTransformBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(mat3f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(mat3f)*mCurrentDrawCount, mTransformArray[0].glPtr());
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*0));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*1));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*2));
 	glEnableVertexAttribArray(1);
-	glVertexAttribDivisor(1, 1); // One position per quad
-
-	glBindBuffer(GL_ARRAY_BUFFER, mDimBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2f)*mCurrentDrawCount, mDimArray[0].glPtr());
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
-	glVertexAttribDivisor(2, 1); // One dimension per quad
-
-	glBindBuffer(GL_ARRAY_BUFFER, mAngleBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*mCurrentDrawCount, &mAngleArray[0]);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(3);
-	glVertexAttribDivisor(3, 1); // One angle per quad
+	glVertexAttribDivisor(1, 1); // One transform per quad
+	glVertexAttribDivisor(2, 1);
+	glVertexAttribDivisor(3, 1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
@@ -271,9 +238,6 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	gl::setUniform(mShader, "uTexture", 0);
-
-	gl::setUniform(mShader, "uCamPos", mCamPos);
-	gl::setUniform(mShader, "uCamDim", mCamDim);
 
 	// Drawing instances
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
