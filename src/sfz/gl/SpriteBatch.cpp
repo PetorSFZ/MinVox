@@ -197,6 +197,7 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
 
 	// Setting up buffers and transferring data.
+	// Uses orpahning, see: https://www.opengl.org/wiki/Buffer_Object_Streaming
 	glBindVertexArray(mVAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
