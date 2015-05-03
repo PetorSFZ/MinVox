@@ -19,6 +19,7 @@ using std::size_t;
 
 struct TextureRegion final {
 	vec2f mUVMin, mUVMax;
+	inline TextureRegion() noexcept = default;
 	inline TextureRegion(vec2f min, vec2f max) noexcept : mUVMin{min}, mUVMax{max} { };
 };
 

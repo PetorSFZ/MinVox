@@ -316,12 +316,20 @@ void BaseGameScreen::render(float)
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	mFontRenderer.begin(vec2f::ZERO(), vec2f{100.0f, 100.0f}, vec4f{1.0f, 1.0f, 1.0f, 1.0f});
+	glBindFramebuffer(GL_FRAMEBUFFER, mFontFramebuffer.mFBO);
+	glViewport(0, 0, mFontFramebuffer.mWidth, mFontFramebuffer.mHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	mFontRenderer.write(vec2f{10.0f, 50.0f}, 16.0f, "Hello World");
+	mFontRenderer.begin(vec2f{50.0f, 50.0f}, vec2f{100.0f, 100.0f});
+
+	mFontRenderer.write(vec2f{10.0f, 50.0f}, 8.0f, "Hello World");
+
+	//mFontRenderer.writeBitmapFont(vec2f{50.0f, 50.0f}, vec2f{60.0f, 60.0f});
 
 	mFontRenderer.end(mFontFramebuffer.mFBO, vec2f{static_cast<float>(mFontFramebuffer.mWidth),
-	                                               static_cast<float>(mFontFramebuffer.mHeight)});
+	                                               static_cast<float>(mFontFramebuffer.mHeight)},
+					  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

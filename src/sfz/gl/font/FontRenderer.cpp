@@ -5,6 +5,7 @@
 #define STBTT_STATIC
 #include "stb_truetype.h"
 
+#include <sfz/gl/Utils.hpp>
 #include <new> // std::nothrow
 #include <cstdio>
 #include <iostream> // std::cerr
@@ -73,13 +74,15 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 :
 	mFontPath{fontPath},
 	mFontSize{fontSize},
-	mSpriteBatch{1000, FONT_RENDERER_FRAGMENT_SHADER_SRC}
+	mSpriteBatch{1000, FONT_RENDERER_FRAGMENT_SHADER_SRC},
+	mCharTexRegions{new (std::nothrow) TextureRegion[CHAR_COUNT]},
+	mCharWidths{new (std::nothrow) float[CHAR_COUNT]}
 {
 	unsigned char* temp_bitmap = new unsigned char[512*512];
-	stbtt_bakedchar cdata[CHAR_COUNT];
+	stbtt_bakedchar cdata[CHAR_COUNT-1];
 
 	uint8_t* ttfBuffer = loadTTFBuffer(fontPath);
-	stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, temp_bitmap,512,512, FIRST_CHAR, CHAR_COUNT, cdata); // no guarantee this fits!
+	stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, temp_bitmap,512,512, FIRST_CHAR, CHAR_COUNT-1, cdata); // no guarantee this fits!
 	delete[] ttfBuffer;
 
 	glGenTextures(1, &mFontTexture);
@@ -87,6 +90,17 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512,512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
 	// can free temp_bitmap at this point
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// Character arrays
+	sfz_assert_debug(LAST_CHAR == (CHAR_COUNT-1));
+	for (size_t i = 0; i < CHAR_COUNT-1; i++) {
+		mCharTexRegions[i] = TextureRegion{
+		                       vec2f{(float)cdata[i].x0/512.0f, (float)cdata[i].y0/512.0f},
+		                       vec2f{(float)cdata[i].x1/512.0f, (float)cdata[i].y1/512.0f}};
+		mCharWidths[i] = cdata[i].xadvance;
+	}
+	mCharTexRegions[LAST_CHAR] = mCharTexRegions[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
+	mCharWidths[LAST_CHAR] = mCharWidths[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
 }
 
 FontRenderer::~FontRenderer() noexcept
@@ -97,9 +111,8 @@ FontRenderer::~FontRenderer() noexcept
 // FontRenderer: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions, vec4f textColor) noexcept
+void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 {
-	gl::setUniform(mSpriteBatch.shaderProgram(), "uTextColor", textColor);
 	mSpriteBatch.begin(cameraPosition, cameraDimensions);
 }
 
@@ -107,16 +120,26 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 {
 	vec2f currentPos = position;
 
+	for (unsigned char c : text) {
+		size_t index = size_t(c) - FIRST_CHAR;
+		if (index > LAST_CHAR) index = LAST_CHAR+1; // Location of unknown char
+		TextureRegion& charRegion = mCharTexRegions[index];
+		mSpriteBatch.draw(currentPos, vec2f{size, size}, charRegion);
+		currentPos[0] += size;
+	}
+
 	//mSpriteBatch.draw(???, vec2f{???, size}, ???);
 }
 
 void FontRenderer::writeBitmapFont(vec2f position, vec2f dimensions) noexcept
 {
-	// TODO: Do something
+	mSpriteBatch.draw(position, dimensions, TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
 }
 
-void FontRenderer::end(GLuint fbo, vec2f viewportDimensions) noexcept
+void FontRenderer::end(GLuint fbo, vec2f viewportDimensions, vec4f textColor) noexcept
 {
+	glUseProgram(mSpriteBatch.shaderProgram());
+	gl::setUniform(mSpriteBatch.shaderProgram(), "uTextColor", textColor);
 	mSpriteBatch.end(fbo, viewportDimensions, mFontTexture);
 }
 
