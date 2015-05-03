@@ -2,14 +2,11 @@
 #ifndef SFZ_GL_SPRITE_BATCH_HPP
 #define SFZ_GL_SPRITE_BATCH_HPP
 
-#include <sfz/Assert.hpp>
 #include <sfz/Math.hpp>
 #include <sfz/gl/OpenGL.hpp>
-#include <sfz/gl/Utils.hpp>
 
 #include <cstddef> // size_t
 #include <memory>
-#include <cmath>
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -49,8 +46,8 @@ public:
 	 * uniform sampler2D uTexture;
 	 */
 	SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcept;
-	//SpriteBatch(SpriteBatch&& other) noexcept;
-	//SpriteBatch& operator= (SpriteBatch&& other) noexcept;
+	SpriteBatch(SpriteBatch&& other) noexcept;
+	SpriteBatch& operator= (SpriteBatch&& other) noexcept;
 	~SpriteBatch() noexcept;
 
 	// Public interface

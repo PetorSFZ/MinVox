@@ -1,6 +1,11 @@
 #include "sfz/gl/SpriteBatch.hpp"
 
+#include <sfz/Assert.hpp>
+#include <sfz/gl/Utils.hpp>
+
 #include <new> // std::nothrow
+#include <algorithm> // std::swap
+#include <cmath>
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -155,6 +160,32 @@ SpriteBatch::SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcep
 	if (gl::checkAllGLErrors()) {
 		std::cerr << "^^^ Above errors caused by SpriteBatch constructor" << std::endl;
 	}
+}
+
+SpriteBatch::SpriteBatch(SpriteBatch&& other) noexcept
+:
+	SpriteBatch(0)
+{
+	*this = std::move(other);
+}
+
+SpriteBatch& SpriteBatch::operator= (SpriteBatch&& other) noexcept
+{
+	std::swap(mCapacity, other.mCapacity);
+	std::swap(mCurrentDrawCount, other.mCurrentDrawCount);
+	std::swap(mCamProj, other.mCamProj);
+
+	std::swap(mShader, other.mShader);
+	std::swap(mVAO, other.mVAO);
+	std::swap(mVertexBuffer, other.mVertexBuffer);
+	std::swap(mIndexBuffer, other.mIndexBuffer);
+	std::swap(mTransformBuffer, other.mTransformBuffer);
+	std::swap(mUVBuffer, other.mUVBuffer);
+
+	std::swap(mTransformArray, other.mTransformArray);
+	std::swap(mUVArray, other.mUVArray);
+
+	return *this;
 }
 
 SpriteBatch::~SpriteBatch() noexcept
