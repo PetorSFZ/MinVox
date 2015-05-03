@@ -63,6 +63,7 @@ private:
 
 	std::unique_ptr<TextureRegion[]> mCharTexRegions;
 	std::unique_ptr<float[]> mCharWidths;
+	std::unique_ptr<float[]> mCharOffsets;
 };
 
 } // namespace sfz

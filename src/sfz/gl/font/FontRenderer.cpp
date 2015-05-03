@@ -8,6 +8,7 @@
 #include <sfz/gl/Utils.hpp>
 #include <new> // std::nothrow
 #include <cstdio>
+#include <cstring> // std::memcpy
 #include <iostream> // std::cerr
 #include <exception> // std::terminate
 
@@ -65,6 +66,33 @@ uint8_t* loadTTFBuffer(const std::string& path) noexcept
 	return buffer;
 }
 
+void flipBitmapFontTexture(uint8_t* const bitmapFont, size_t w, size_t h) noexcept
+{
+	const size_t pixelCount = w * h;
+	uint8_t* const tempBuffer = new (std::nothrow) uint8_t[pixelCount];
+
+	uint8_t* readPtr = bitmapFont; // Reads from bitmap font, starting value is first pixel.
+	uint8_t* writePtr = tempBuffer + pixelCount; // Starting value is first pixel outside range
+
+	// Copy pixels from bitmap font to buffer flipping the rows along the way.
+	while (writePtr > tempBuffer) {
+		writePtr = writePtr - w; // Move writePtr back one image row
+		std::memcpy(writePtr, readPtr, w); // Copy one image row to temp buffer
+		readPtr = readPtr + w;
+	}
+
+	// Copy pixels back from temp buffer into the bitmapFont
+	std::memcpy(bitmapFont, tempBuffer, pixelCount);
+	delete[] tempBuffer;
+}
+
+TextureRegion calculateTextureRegion(const stbtt_bakedchar& c, float w, float h) noexcept
+{
+	vec2f minTemp{static_cast<float>(c.x0)/w, (h - static_cast<float>(c.y1))/h};
+	vec2f maxTemp{static_cast<float>(c.x1)/w, (h - static_cast<float>(c.y0))/h};
+	return TextureRegion{minTemp, maxTemp};
+}
+
 } // anonymous namespace
 
 // FontRenderer: Constructors & destructors
@@ -76,14 +104,17 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 	mFontSize{fontSize},
 	mSpriteBatch{1000, FONT_RENDERER_FRAGMENT_SHADER_SRC},
 	mCharTexRegions{new (std::nothrow) TextureRegion[CHAR_COUNT]},
-	mCharWidths{new (std::nothrow) float[CHAR_COUNT]}
+	mCharWidths{new (std::nothrow) float[CHAR_COUNT]},
+	mCharOffsets{new (std::nothrow) float[CHAR_COUNT]}
 {
-	unsigned char* temp_bitmap = new unsigned char[512*512];
+	uint8_t* temp_bitmap = new uint8_t[512*512];
 	stbtt_bakedchar cdata[CHAR_COUNT-1];
 
 	uint8_t* ttfBuffer = loadTTFBuffer(fontPath);
 	stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, temp_bitmap,512,512, FIRST_CHAR, CHAR_COUNT-1, cdata); // no guarantee this fits!
 	delete[] ttfBuffer;
+
+	flipBitmapFontTexture(temp_bitmap, 512, 512);
 
 	glGenTextures(1, &mFontTexture);
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
@@ -94,13 +125,13 @@ FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
 	// Character arrays
 	sfz_assert_debug(LAST_CHAR == (CHAR_COUNT-1));
 	for (size_t i = 0; i < CHAR_COUNT-1; i++) {
-		mCharTexRegions[i] = TextureRegion{
-		                       vec2f{(float)cdata[i].x0/512.0f, (float)cdata[i].y0/512.0f},
-		                       vec2f{(float)cdata[i].x1/512.0f, (float)cdata[i].y1/512.0f}};
+		mCharTexRegions[i] = calculateTextureRegion(cdata[i], 512.0f, 512.0f);
 		mCharWidths[i] = cdata[i].xadvance;
+		mCharOffsets[i] = cdata[i].xoff;
 	}
 	mCharTexRegions[LAST_CHAR] = mCharTexRegions[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
 	mCharWidths[LAST_CHAR] = mCharWidths[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
+	mCharOffsets[LAST_CHAR] = mCharOffsets[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
 }
 
 FontRenderer::~FontRenderer() noexcept
@@ -118,14 +149,17 @@ void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 
 void FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
 {
+	float scale = size / mFontSize;
 	vec2f currentPos = position;
 
 	for (unsigned char c : text) {
 		size_t index = size_t(c) - FIRST_CHAR;
 		if (index > LAST_CHAR) index = LAST_CHAR+1; // Location of unknown char
 		TextureRegion& charRegion = mCharTexRegions[index];
-		mSpriteBatch.draw(currentPos, vec2f{size, size}, charRegion);
-		currentPos[0] += size;
+		float charWidth = scale*mCharWidths[index];
+		float charOffset = scale*mCharOffsets[index];
+		mSpriteBatch.draw(currentPos, vec2f{charWidth, size}, charRegion);
+		currentPos[0] += charWidth + charOffset;
 	}
 
 	//mSpriteBatch.draw(???, vec2f{???, size}, ???);
