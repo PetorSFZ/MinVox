@@ -98,11 +98,11 @@ TextureRegion calculateTextureRegion(const stbtt_bakedchar& c, float w, float h)
 // FontRenderer: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-FontRenderer::FontRenderer(const std::string& fontPath, float fontSize) noexcept
+FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch, float fontSize) noexcept
 :
 	mFontPath{fontPath},
 	mFontSize{fontSize},
-	mSpriteBatch{1000, FONT_RENDERER_FRAGMENT_SHADER_SRC},
+	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC},
 	mCharTexRegions{new (std::nothrow) TextureRegion[CHAR_COUNT]},
 	mCharWidths{new (std::nothrow) float[CHAR_COUNT]},
 	mCharOffsets{new (std::nothrow) float[CHAR_COUNT]}

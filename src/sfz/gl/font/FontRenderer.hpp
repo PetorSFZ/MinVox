@@ -33,7 +33,7 @@ public:
 	FontRenderer& operator= (const FontRenderer&) = delete;
 	FontRenderer& operator= (FontRenderer&&) = delete;
 
-	FontRenderer(const std::string& fontPath, float fontSize) noexcept;
+	FontRenderer(const std::string& fontPath, size_t numCharsPerBatch, float fontSize) noexcept;
 	~FontRenderer() noexcept;
 
 	// Public methods
