@@ -50,7 +50,7 @@ uint8_t* loadTTFBuffer(const std::string& path) noexcept
 	const size_t MAX_TTF_BUFFER_SIZE = 1<<22; // 4 MiB
 	uint8_t* buffer = new (std::nothrow) uint8_t[MAX_TTF_BUFFER_SIZE];
 
-	std::FILE* ttfFile = fopen(path.c_str(), "rb");
+	std::FILE* ttfFile = std::fopen(path.c_str(), "rb");
 	if (ttfFile == NULL) {
 		std::cerr << "Couldn't open TTF file at: " << path << std::endl;
 		std::terminate();
@@ -104,8 +104,8 @@ FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch,
 	mFontSize{fontSize},
 	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC},
 	mCharTexRegions{new (std::nothrow) TextureRegion[CHAR_COUNT]},
-	mCharWidths{new (std::nothrow) float[CHAR_COUNT]},
-	mCharOffsets{new (std::nothrow) float[CHAR_COUNT]}
+	mCharOffsets{new (std::nothrow) vec2f[CHAR_COUNT]},
+	mCharAdvances{new (std::nothrow) float[CHAR_COUNT]}
 {
 	uint8_t* temp_bitmap = new uint8_t[512*512];
 	stbtt_bakedchar cdata[CHAR_COUNT-1];
@@ -126,12 +126,12 @@ FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch,
 	sfz_assert_debug(LAST_CHAR == (CHAR_COUNT-1));
 	for (size_t i = 0; i < CHAR_COUNT-1; i++) {
 		mCharTexRegions[i] = calculateTextureRegion(cdata[i], 512.0f, 512.0f);
-		mCharWidths[i] = cdata[i].xadvance;
-		mCharOffsets[i] = cdata[i].xoff;
+		mCharOffsets[i] = vec2f{cdata[i].xoff, cdata[i].yoff};
+		mCharAdvances[i] = cdata[i].xadvance;
 	}
 	mCharTexRegions[LAST_CHAR] = mCharTexRegions[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
-	mCharWidths[LAST_CHAR] = mCharWidths[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
 	mCharOffsets[LAST_CHAR] = mCharOffsets[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
+	mCharAdvances[LAST_CHAR] = mCharAdvances[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
 }
 
 FontRenderer::~FontRenderer() noexcept
@@ -155,11 +155,13 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 	for (unsigned char c : text) {
 		size_t index = size_t(c) - FIRST_CHAR;
 		if (index > LAST_CHAR) index = LAST_CHAR+1; // Location of unknown char
+
 		TextureRegion& charRegion = mCharTexRegions[index];
-		float charWidth = scale*mCharWidths[index];
-		float charOffset = scale*mCharOffsets[index];
-		mSpriteBatch.draw(currentPos, vec2f{charWidth, size}, charRegion);
-		currentPos[0] += charWidth + charOffset;
+		vec2f charOffset = mCharOffsets[index];
+		float charAdvance = mCharAdvances[index];
+
+		mSpriteBatch.draw(currentPos + vec2f{0.0f, 0.0f}, 512.0f*charRegion.dimensions(), charRegion);
+		currentPos[0] += charAdvance;
 	}
 
 	//mSpriteBatch.draw(???, vec2f{???, size}, ???);

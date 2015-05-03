@@ -321,11 +321,11 @@ void BaseGameScreen::render(float)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	mFontRenderer.begin(vec2f{50.0f, 50.0f}, vec2f{100.0f, 100.0f});
+	mFontRenderer.begin(vec2f{500.0f, 500.0f}, vec2f{1000.0f, 1000.0f});
 
-	mFontRenderer.write(vec2f{10.0f, 70.0f}, 3.0f, "Hello World?åäö");
+	mFontRenderer.write(vec2f{10.0f, 70.0f}, 64.0f, "Hello World?åäö");
 
-	mFontRenderer.writeBitmapFont(vec2f{25.0f, 25.0f}, vec2f{50.0f, 50.0f});
+	//mFontRenderer.writeBitmapFont(vec2f{25.0f, 25.0f}, vec2f{50.0f, 50.0f});
 
 	mFontRenderer.end(mFontFramebuffer.mFBO, vec2f{static_cast<float>(mFontFramebuffer.mWidth),
 	                                               static_cast<float>(mFontFramebuffer.mHeight)},

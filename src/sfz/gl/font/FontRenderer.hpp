@@ -62,8 +62,8 @@ private:
 	sfz::SpriteBatch mSpriteBatch;
 
 	std::unique_ptr<TextureRegion[]> mCharTexRegions;
-	std::unique_ptr<float[]> mCharWidths;
-	std::unique_ptr<float[]> mCharOffsets;
+	std::unique_ptr<vec2f[]> mCharOffsets;
+	std::unique_ptr<float[]> mCharAdvances;
 };
 
 } // namespace sfz
