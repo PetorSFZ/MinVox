@@ -14,7 +14,7 @@ namespace {
 // Anonymous: Shaders
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-const char* VERTEX_SHADER = R"(
+const char* VERTEX_SHADER_SRC = R"(
 	#version 330
 
 	// Input
@@ -37,7 +37,7 @@ const char* VERTEX_SHADER = R"(
 	}
 )";
 
-const char* FRAGMENT_SHADER = R"(
+const char* FRAGMENT_SHADER_SRC = R"(
 	#version 330
 
 	precision highp float; // required by GLSL spec Sect 4.5.3
@@ -57,10 +57,10 @@ const char* FRAGMENT_SHADER = R"(
 	}
 )";
 
-GLuint compileSpriteBatchShaderProgram() noexcept
+GLuint compileSpriteBatchShaderProgram(const char* vertexSrc, const char* fragmentSrc) noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(VERTEX_SHADER);
-	GLuint fragmentShader = gl::compileFragmentShader(FRAGMENT_SHADER);
+	GLuint vertexShader = gl::compileVertexShader(vertexSrc);
+	GLuint fragmentShader = gl::compileFragmentShader(fragmentSrc);
 
 	GLuint shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
@@ -88,10 +88,14 @@ GLuint compileSpriteBatchShaderProgram() noexcept
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 SpriteBatch::SpriteBatch(size_t capacity) noexcept
+: SpriteBatch(capacity, FRAGMENT_SHADER_SRC) { }
+
+
+SpriteBatch::SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcept
 :
 	mCapacity{capacity},
 	mCurrentDrawCount{0},
-	mShader{compileSpriteBatchShaderProgram()},
+	mShader{compileSpriteBatchShaderProgram(VERTEX_SHADER_SRC, fragmentShaderSrc)},
 	mTransformArray{new (std::nothrow) mat3f[mCapacity]},
 	mUVArray{new (std::nothrow) vec4f[mCapacity]}
 {
@@ -172,6 +176,22 @@ void SpriteBatch::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 	mCurrentDrawCount = 0;
 }
 
+void SpriteBatch::draw(vec2f position, vec2f dimensions, const TextureRegion& texRegion) noexcept
+{
+	mat3f transform{{dimensions[0], 0.0f, position[0]},
+					{0.0f, dimensions[1], position[1]},
+	                {0.0f, 0.0f, 1.0f}};
+
+	// Setting transform & uv arrays
+	mTransformArray[mCurrentDrawCount] = mCamProj * transform;
+	mUVArray[mCurrentDrawCount] = vec4f{texRegion.mUVMin[0], texRegion.mUVMin[1],
+	                                    texRegion.mUVMax[0], texRegion.mUVMax[1]};
+
+	// Incrementing current draw count
+	mCurrentDrawCount++;
+	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
+}
+
 void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 					   const TextureRegion& texRegion) noexcept
 {
@@ -192,7 +212,7 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
 }
 
-void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture) noexcept
+void SpriteBatch::end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noexcept
 {
 	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
 
@@ -233,7 +253,7 @@ void SpriteBatch::end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture)
 	// Enabling shader
 	glUseProgram(mShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glViewport(0, 0, fbWidth, fbHeight);
+	glViewport(0, 0, viewportDimensions[0], viewportDimensions[1]);
 
 	// Uniforms
 	glActiveTexture(GL_TEXTURE0);

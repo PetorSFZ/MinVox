@@ -2,6 +2,7 @@
 #ifndef SFZ_GL_FONT_FONT_RENDERER_HPP
 #define SFZ_GL_FONT_FONT_RENDERER_HPP
 
+#include <sfz/Math.hpp>
 #include <sfz/gl/OpenGL.hpp>
 #include <sfz/gl/Utils.hpp>
 #include <sfz/gl/SpriteBatch.hpp>
@@ -9,14 +10,14 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 
-//#include "rendering/FullscreenQuadObject.hpp"
-
 #include <sfz/MSVC12HackON.hpp>
 
 namespace sfz {
 
 using std::size_t;
 using std::uint8_t;
+using sfz::vec2f;
+using sfz::vec4f;
 
 // FontRenderer
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -38,7 +39,13 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void print(GLuint fbo, GLuint tex, float width, float height, const std::string& text, float x, float y, float size) noexcept;
+	void begin(vec2f cameraPosition, vec2f cameraDimensions, vec4f textColor) noexcept;
+
+	void write(vec2f position, float size, const std::string& text) noexcept;
+
+	void writeBitmapFont(vec2f position, vec2f dimensions) noexcept;
+
+	void end(GLuint fbo, vec2f viewportDimensions) noexcept;
 
 private:
 	// Private members
@@ -50,9 +57,7 @@ private:
 
 	std::string mFontPath;
 	const float mFontSize;
-	GLuint mFontRendererShader;
 
-	//vox::FullscreenQuadObject mFullscreenQuad;
 	GLuint mFontTexture;
 	sfz::SpriteBatch mSpriteBatch;
 };

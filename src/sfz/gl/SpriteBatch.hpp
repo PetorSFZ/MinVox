@@ -16,8 +16,6 @@
 namespace sfz {
 
 using std::size_t;
-using sfz::vec2f;
-using sfz::mat3f;
 
 // TextureRegion (for use with SpriteBatch)
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -39,7 +37,18 @@ public:
 	SpriteBatch(const SpriteBatch&) = delete;
 	SpriteBatch& operator= (const SpriteBatch&) = delete;
 
+	/**
+	 * @brief Creates a SpriteBatch with the specified capacity.
+	 */
 	SpriteBatch(size_t capacity) noexcept;
+	/**
+	 * @brief Creates a SpriteBatch with a custom fragment shader.
+	 * The fragment shader needs the following declarations:
+	 * in vec2 uvCoord;
+	 * out vec4 fragmentColor
+	 * uniform sampler2D uTexture;
+	 */
+	SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcept;
 	//SpriteBatch(SpriteBatch&& other) noexcept;
 	//SpriteBatch& operator= (SpriteBatch&& other) noexcept;
 	~SpriteBatch() noexcept;
@@ -49,10 +58,14 @@ public:
 
 	void begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept;
 
+	void draw(vec2f position, vec2f dimensions, const TextureRegion& texRegion) noexcept;
+
 	void draw(vec2f position, vec2f dimensions, float angleRads,
 	          const TextureRegion& texRegion) noexcept;
 
-	void end(GLuint fbo, float fbWidth, float fbHeight, GLuint texture) noexcept;
+	void end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noexcept;
+
+	inline GLuint shaderProgram() const noexcept { return mShader; }
 
 private:
 	// Private members

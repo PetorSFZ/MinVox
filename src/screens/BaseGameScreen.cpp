@@ -316,7 +316,12 @@ void BaseGameScreen::render(float)
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	mFontRenderer.print(mFontFramebuffer.mFBO, mFontFramebuffer.mTexture, mFontFramebuffer.mWidth, mFontFramebuffer.mHeight, "Hello World!", 0.5f, 0.5f, 4.0f);
+	mFontRenderer.begin(vec2f::ZERO(), vec2f{100.0f, 100.0f}, vec4f{1.0f, 1.0f, 1.0f, 1.0f});
+
+	mFontRenderer.write(vec2f{10.0f, 50.0f}, 16.0f, "Hello World");
+
+	mFontRenderer.end(mFontFramebuffer.mFBO, vec2f{static_cast<float>(mFontFramebuffer.mWidth),
+	                                               static_cast<float>(mFontFramebuffer.mHeight)});
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
