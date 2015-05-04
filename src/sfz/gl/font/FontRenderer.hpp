@@ -58,7 +58,7 @@ private:
 	std::string mFontPath;
 	const float mFontSize;
 
-	const size_t mTexWidth, mTexHeight;
+	const int mTexWidth, mTexHeight;
 	GLuint mFontTexture;
 	sfz::SpriteBatch mSpriteBatch;
 

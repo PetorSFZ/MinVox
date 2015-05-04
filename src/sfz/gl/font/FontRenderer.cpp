@@ -111,10 +111,8 @@ FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch,
 {
 	uint8_t* tempBitmap = new uint8_t[mTexWidth*mTexHeight];
 
-
 	stbtt_pack_context packContext;
-	void* allocContext = NULL; // ???
-	if(stbtt_PackBegin(&packContext, tempBitmap, mTexWidth, mTexHeight, 0, 1, allocContext) == 0) {
+	if(stbtt_PackBegin(&packContext, tempBitmap, mTexWidth, mTexHeight, 0, 1, NULL) == 0) {
 		std::cerr << "FontRenderer: Couldn't stbtt_PackBegin()" << std::endl;
 		std::terminate();
 	}
@@ -165,7 +163,8 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 	vec2f pos, dim;
 	TextureRegion texRegion;
 	for (unsigned char c : text) {
-		int codepoint = c;
+		int codepoint = c - FIRST_CHAR;
+		if (codepoint < 0 || LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
 		stbtt_GetPackedQuad(reinterpret_cast<stbtt_packedchar*>(mPackedChars), mTexWidth,
 		                    mTexHeight, codepoint, &advPos[0], &advPos[1], &quad, false);
 
@@ -174,9 +173,9 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 		dim[0] = quad.x1 - quad.x0;
 		dim[1] = quad.y1 - quad.y0;
 		texRegion.mUVMin[0] = quad.s0;
-		texRegion.mUVMin[1] = quad.t0;
+		texRegion.mUVMin[1] = quad.t1;
 		texRegion.mUVMax[0] = quad.s1;
-		texRegion.mUVMax[1] = quad.t1;
+		texRegion.mUVMax[1] = quad.t0;
 
 		mSpriteBatch.draw(pos, dim, texRegion);
 	}
