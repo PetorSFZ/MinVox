@@ -53,17 +53,16 @@ private:
 
 	static const size_t FIRST_CHAR = 32; // inclusive
 	static const size_t LAST_CHAR = 246; // inclusive
-	static const size_t CHAR_COUNT = LAST_CHAR - FIRST_CHAR + 2; // 1 extra for unknown char
+	static const size_t CHAR_COUNT = LAST_CHAR - FIRST_CHAR + 1;
 	static const char UNKNOWN_CHAR = '?';
 	std::string mFontPath;
 	const float mFontSize;
 
+	const size_t mTexWidth, mTexHeight;
 	GLuint mFontTexture;
 	sfz::SpriteBatch mSpriteBatch;
 
-	std::unique_ptr<TextureRegion[]> mCharTexRegions;
-	std::unique_ptr<vec2f[]> mCharOffsets;
-	std::unique_ptr<float[]> mCharAdvances;
+	void* const mPackedChars; // Type is implementation defined
 };
 
 } // namespace sfz

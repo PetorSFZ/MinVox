@@ -1,5 +1,6 @@
 #include "sfz/gl/font/FontRenderer.hpp"
 
+#define STB_RECT_PACK_IMPLEMENTATION
 #include "stb_rect_pack.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
@@ -8,6 +9,7 @@
 #include <sfz/gl/Utils.hpp>
 #include <new> // std::nothrow
 #include <cstdio>
+#include <cstdlib> // malloc
 #include <cstring> // std::memcpy
 #include <iostream> // std::cerr
 #include <exception> // std::terminate
@@ -102,41 +104,50 @@ FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch,
 :
 	mFontPath{fontPath},
 	mFontSize{fontSize},
+	mTexWidth{1024},
+	mTexHeight{1024},
 	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC},
-	mCharTexRegions{new (std::nothrow) TextureRegion[CHAR_COUNT]},
-	mCharOffsets{new (std::nothrow) vec2f[CHAR_COUNT]},
-	mCharAdvances{new (std::nothrow) float[CHAR_COUNT]}
+	mPackedChars{new (std::nothrow) stbtt_packedchar[CHAR_COUNT]}
 {
-	uint8_t* temp_bitmap = new uint8_t[512*512];
-	stbtt_bakedchar cdata[CHAR_COUNT-1];
+	uint8_t* tempBitmap = new uint8_t[mTexWidth*mTexHeight];
+
+
+	stbtt_pack_context packContext;
+	void* allocContext = NULL; // ???
+	if(stbtt_PackBegin(&packContext, tempBitmap, mTexWidth, mTexHeight, 0, 1, allocContext) == 0) {
+		std::cerr << "FontRenderer: Couldn't stbtt_PackBegin()" << std::endl;
+		std::terminate();
+	}
+
+	stbtt_PackSetOversampling(&packContext, 2, 2);
 
 	uint8_t* ttfBuffer = loadTTFBuffer(fontPath);
-	stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, temp_bitmap,512,512, FIRST_CHAR, CHAR_COUNT-1, cdata); // no guarantee this fits!
+
+	stbtt_PackFontRange(&packContext, ttfBuffer, 0, mFontSize, FIRST_CHAR, CHAR_COUNT,
+	                    reinterpret_cast<stbtt_packedchar*>(mPackedChars));
+
+	stbtt_PackEnd(&packContext);
 	delete[] ttfBuffer;
 
-	flipBitmapFontTexture(temp_bitmap, 512, 512);
+	//flipBitmapFontTexture(tempBitmap, width, height);
 
 	glGenTextures(1, &mFontTexture);
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512,512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
-	// can free temp_bitmap at this point
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, mTexWidth, mTexHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
+	             tempBitmap);
+	// Generate mipmaps
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	// Character arrays
-	sfz_assert_debug(LAST_CHAR == (CHAR_COUNT-1));
-	for (size_t i = 0; i < CHAR_COUNT-1; i++) {
-		mCharTexRegions[i] = calculateTextureRegion(cdata[i], 512.0f, 512.0f);
-		mCharOffsets[i] = vec2f{cdata[i].xoff, cdata[i].yoff};
-		mCharAdvances[i] = cdata[i].xadvance;
-	}
-	mCharTexRegions[LAST_CHAR] = mCharTexRegions[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
-	mCharOffsets[LAST_CHAR] = mCharOffsets[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
-	mCharAdvances[LAST_CHAR] = mCharAdvances[size_t(UNKNOWN_CHAR)-FIRST_CHAR];
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Enable anisotropic filtering
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
+	delete[] tempBitmap;
 }
 
 FontRenderer::~FontRenderer() noexcept
 {
 	glDeleteTextures(1, &mFontTexture);
+	delete[] reinterpret_cast<stbtt_packedchar* const>(mPackedChars);
 }
 
 // FontRenderer: Public methods
@@ -149,22 +160,26 @@ void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 
 void FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
 {
-	float scale = size / mFontSize;
-	vec2f currentPos = position;
-
+	stbtt_aligned_quad quad;
+	vec2f advPos = position;
+	vec2f pos, dim;
+	TextureRegion texRegion;
 	for (unsigned char c : text) {
-		size_t index = size_t(c) - FIRST_CHAR;
-		if (index > LAST_CHAR) index = LAST_CHAR+1; // Location of unknown char
+		int codepoint = c;
+		stbtt_GetPackedQuad(reinterpret_cast<stbtt_packedchar*>(mPackedChars), mTexWidth,
+		                    mTexHeight, codepoint, &advPos[0], &advPos[1], &quad, false);
 
-		TextureRegion& charRegion = mCharTexRegions[index];
-		vec2f charOffset = mCharOffsets[index];
-		float charAdvance = mCharAdvances[index];
+		pos[0] = (quad.x0 + quad.x1) / 2.0f;
+		pos[1] = (quad.y0 + quad.y1) / 2.0f;
+		dim[0] = quad.x1 - quad.x0;
+		dim[1] = quad.y1 - quad.y0;
+		texRegion.mUVMin[0] = quad.s0;
+		texRegion.mUVMin[1] = quad.s1;
+		texRegion.mUVMax[0] = quad.t0;
+		texRegion.mUVMax[1] = quad.t1;
 
-		mSpriteBatch.draw(currentPos + vec2f{0.0f, 0.0f}, 512.0f*charRegion.dimensions(), charRegion);
-		currentPos[0] += charAdvance;
+		mSpriteBatch.draw(pos, dim, texRegion);
 	}
-
-	//mSpriteBatch.draw(???, vec2f{???, size}, ???);
 }
 
 void FontRenderer::writeBitmapFont(vec2f position, vec2f dimensions) noexcept
