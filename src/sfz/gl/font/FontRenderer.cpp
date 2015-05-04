@@ -174,8 +174,8 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 		dim[0] = quad.x1 - quad.x0;
 		dim[1] = quad.y1 - quad.y0;
 		texRegion.mUVMin[0] = quad.s0;
-		texRegion.mUVMin[1] = quad.s1;
-		texRegion.mUVMax[0] = quad.t0;
+		texRegion.mUVMin[1] = quad.t0;
+		texRegion.mUVMax[0] = quad.s1;
 		texRegion.mUVMax[1] = quad.t1;
 
 		mSpriteBatch.draw(pos, dim, texRegion);
