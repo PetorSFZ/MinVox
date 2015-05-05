@@ -16,6 +16,7 @@ namespace sfz {
 
 using std::size_t;
 using std::uint8_t;
+using std::uint32_t;
 using sfz::vec2f;
 using sfz::vec4f;
 
@@ -33,7 +34,8 @@ public:
 	FontRenderer& operator= (const FontRenderer&) = delete;
 	FontRenderer& operator= (FontRenderer&&) = delete;
 
-	FontRenderer(const std::string& fontPath, size_t numCharsPerBatch, float fontSize) noexcept;
+	FontRenderer(const std::string& fontPath, uint32_t texWidth, uint32_t texHeight,
+	             float fontSize, size_t numCharsPerBatch) noexcept;
 	~FontRenderer() noexcept;
 
 	// Public methods
@@ -51,14 +53,13 @@ private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	static const size_t FIRST_CHAR = 32; // inclusive
-	static const size_t LAST_CHAR = 246; // inclusive
-	static const size_t CHAR_COUNT = LAST_CHAR - FIRST_CHAR + 1;
-	static const char UNKNOWN_CHAR = '?';
-	std::string mFontPath;
-	const float mFontSize;
+	static const uint32_t FIRST_CHAR = 32; // inclusive
+	static const uint32_t LAST_CHAR = 246; // inclusive
+	static const uint32_t CHAR_COUNT = LAST_CHAR - FIRST_CHAR + 1;
+	static const uint32_t UNKNOWN_CHAR = '?';
 
-	const int mTexWidth, mTexHeight;
+	const float mFontSize;
+	const uint32_t mTexWidth, mTexHeight;
 	GLuint mFontTexture;
 	sfz::SpriteBatch mSpriteBatch;
 

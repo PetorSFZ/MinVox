@@ -29,13 +29,6 @@ namespace {
 // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-using std::uint32_t;
-
-//const uint32_t UTF8_ACCEPT = 0;
-//const uint32_t UTF8_REJECT = 1;
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 1
-
 static const uint8_t utf8d[] =
 {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
@@ -54,10 +47,10 @@ static const uint8_t utf8d[] =
 	1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
 };
 
-uint32_t decode(uint32_t* state, uint32_t* codep, uint32_t byte)
+bool decode(uint32_t* state, uint32_t* codep, uint32_t byte)
 {
 	uint32_t type = utf8d[byte];
-	*codep = (*state != UTF8_ACCEPT) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
+	*codep = (*state != 0) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
 	*state = utf8d[256 + *state*16 + type];
 	return *state;
 }
@@ -107,44 +100,17 @@ uint8_t* loadTTFBuffer(const std::string& path) noexcept
 	return buffer;
 }
 
-void flipBitmapFontTexture(uint8_t* const bitmapFont, size_t w, size_t h) noexcept
-{
-	const size_t pixelCount = w * h;
-	uint8_t* const tempBuffer = new (std::nothrow) uint8_t[pixelCount];
-
-	uint8_t* readPtr = bitmapFont; // Reads from bitmap font, starting value is first pixel.
-	uint8_t* writePtr = tempBuffer + pixelCount; // Starting value is first pixel outside range
-
-	// Copy pixels from bitmap font to buffer flipping the rows along the way.
-	while (writePtr > tempBuffer) {
-		writePtr = writePtr - w; // Move writePtr back one image row
-		std::memcpy(writePtr, readPtr, w); // Copy one image row to temp buffer
-		readPtr = readPtr + w;
-	}
-
-	// Copy pixels back from temp buffer into the bitmapFont
-	std::memcpy(bitmapFont, tempBuffer, pixelCount);
-	delete[] tempBuffer;
-}
-
-TextureRegion calculateTextureRegion(const stbtt_bakedchar& c, float w, float h) noexcept
-{
-	vec2f minTemp{static_cast<float>(c.x0)/w, (h - static_cast<float>(c.y1))/h};
-	vec2f maxTemp{static_cast<float>(c.x1)/w, (h - static_cast<float>(c.y0))/h};
-	return TextureRegion{minTemp, maxTemp};
-}
-
 } // anonymous namespace
 
 // FontRenderer: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch, float fontSize) noexcept
+FontRenderer::FontRenderer(const std::string& fontPath, uint32_t texWidth, uint32_t texHeight,
+	                       float fontSize, size_t numCharsPerBatch) noexcept
 :
-	mFontPath{fontPath},
 	mFontSize{fontSize},
-	mTexWidth{1024},
-	mTexHeight{1024},
+	mTexWidth{texWidth},
+	mTexHeight{texHeight},
 	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC},
 	mPackedChars{new (std::nothrow) stbtt_packedchar[CHAR_COUNT]}
 {
@@ -165,8 +131,6 @@ FontRenderer::FontRenderer(const std::string& fontPath, size_t numCharsPerBatch,
 
 	stbtt_PackEnd(&packContext);
 	delete[] ttfBuffer;
-
-	//flipBitmapFontTexture(tempBitmap, width, height);
 
 	glGenTextures(1, &mFontTexture);
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
@@ -204,7 +168,7 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 
 	uint32_t codepoint;
 	uint32_t state = 0;
-	for (unsigned char c : text) {
+	for (uint8_t c : text) {
 		if (decode(&state, &codepoint, c)) continue;
 		codepoint -= FIRST_CHAR;
 		if ((int)LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
