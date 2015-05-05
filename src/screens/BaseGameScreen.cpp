@@ -323,7 +323,7 @@ void BaseGameScreen::render(float)
 
 	mFontRenderer.begin(vec2f{500.0f, 500.0f}, vec2f{1000.0f, 1000.0f});
 
-	mFontRenderer.write(vec2f{10.0f, 70.0f}, 64.0f, "Hello World?åäö");
+	mFontRenderer.write(vec2f{5.0f, 5.0f}, 64.0f, "Hello World?åäö");
 
 	mFontRenderer.writeBitmapFont(vec2f{500.0f, 500.0f}, vec2f{400.0f, 400.0f});
 

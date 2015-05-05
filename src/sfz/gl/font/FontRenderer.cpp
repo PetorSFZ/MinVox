@@ -164,14 +164,14 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 	TextureRegion texRegion;
 	for (unsigned char c : text) {
 		int codepoint = c - FIRST_CHAR;
-		if (codepoint < 0 || LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
+		if (codepoint < 0 || (int)LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
 		stbtt_GetPackedQuad(reinterpret_cast<stbtt_packedchar*>(mPackedChars), mTexWidth,
 		                    mTexHeight, codepoint, &advPos[0], &advPos[1], &quad, false);
 
-		pos[0] = (quad.x0 + quad.x1) / 2.0f;
-		pos[1] = (quad.y0 + quad.y1) / 2.0f;
 		dim[0] = quad.x1 - quad.x0;
 		dim[1] = quad.y1 - quad.y0;
+		pos[0] = (quad.x0 + quad.x1) / 2.0f;
+		pos[1] = ((quad.y0 + quad.y1) / 2.0f) + dim[1];
 		texRegion.mUVMin[0] = quad.s0;
 		texRegion.mUVMin[1] = quad.t1;
 		texRegion.mUVMax[0] = quad.s1;
