@@ -103,31 +103,25 @@ uint8_t* loadTTFBuffer(const std::string& path) noexcept
 	return buffer;
 }
 
-void copy_GetPackedQuad(void* chardata, int pw, int ph, int char_index, float *xpos, float *ypos, stbtt_aligned_quad *q, int align_to_integer)
+struct CharInfo {
+	vec2f pos;
+	vec2f dim;
+	TextureRegion texRegion;
+};
+
+void calculateCharInfo(CharInfo& info, void* chardata, vec2f pixelToUV, uint32_t codeIndex,
+                       vec2f& pos, float scale) noexcept
 {
-   float ipw = 1.0f / pw, iph = 1.0f / ph;
-   stbtt_packedchar *b = reinterpret_cast<stbtt_packedchar*>(chardata) + char_index;
+	stbtt_packedchar& c = reinterpret_cast<stbtt_packedchar*>(chardata)[codeIndex];
 
-   if (align_to_integer) {
-      float x = (float) STBTT_ifloor((*xpos + b->xoff) + 0.5f);
-      float y = (float) STBTT_ifloor((*ypos + b->yoff) + 0.5f);
-      q->x0 = x;
-      q->y0 = y;
-      q->x1 = x + b->xoff2 - b->xoff;
-      q->y1 = y + b->yoff2 - b->yoff;
-   } else {
-      q->x0 = *xpos + b->xoff;
-      q->y0 = *ypos + b->yoff;
-      q->x1 = *xpos + b->xoff2;
-      q->y1 = *ypos + b->yoff2;
-   }
+	info.dim = vec2f{c.xoff2 - c.xoff, c.yoff2 - c.yoff} * scale;
+	info.texRegion.mUVMin = vec2f{(float)c.x0, (float)c.y1} * pixelToUV[0];
+	info.texRegion.mUVMax = vec2f{(float)c.x1, (float)c.y0} * pixelToUV[1];
 
-   q->s0 = b->x0 * ipw;
-   q->t0 = b->y0 * iph;
-   q->s1 = b->x1 * ipw;
-   q->t1 = b->y1 * iph;
+	info.pos[0] = pos[0] + info.dim[0]/2.0f;
+	info.pos[1] = pos[1] - ((c.yoff + c.yoff2) / 2.0f) * scale;
 
-   *xpos += b->xadvance;
+	pos[0] += c.xadvance * scale;
 }
 
 } // anonymous namespace
@@ -191,38 +185,21 @@ void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 
 void FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
 {
-	float scale = size / mFontSize;
+	const float scale = size / mFontSize;
+	const vec2f pixelToUV{1.0f/static_cast<float>(mTexWidth), 1.0f/static_cast<float>(mTexHeight)};
 
-	stbtt_aligned_quad quad;
-	vec2f prevPos = position;
+	CharInfo info;
 	vec2f currPos = position;
-	vec2f pos, dim;
-	TextureRegion texRegion;
-
 	uint32_t codepoint;
 	uint32_t state = 0;
 	for (uint8_t c : text) {
 		if (decode(&state, &codepoint, c)) continue;
 		codepoint -= FIRST_CHAR;
 		if (LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
-		copy_GetPackedQuad(mPackedChars, mTexWidth, mTexHeight, codepoint, &currPos[0], &currPos[1], &quad, false);
 
-		vec2f dist = currPos - prevPos;
-		currPos = prevPos + dist*scale;
-		prevPos = currPos;
+		calculateCharInfo(info, mPackedChars, pixelToUV, codepoint, currPos, scale);
 
-		dim[0] = quad.x1 - quad.x0;
-		dim[1] = quad.y1 - quad.y0;
-		pos[0] = (quad.x0 + quad.x1) / 2.0f;
-		pos[1] = ((quad.y0 + quad.y1) / 2.0f) +		dim[1];
-
-		dim *= scale;
-		texRegion.mUVMin[0] = quad.s0;
-		texRegion.mUVMin[1] = quad.t1;
-		texRegion.mUVMax[0] = quad.s1;
-		texRegion.mUVMax[1] = quad.t0;
-
-		mSpriteBatch.draw(pos, dim, texRegion);
+		mSpriteBatch.draw(info.pos, info.dim, info.texRegion);
 	}
 }
 
