@@ -2,6 +2,7 @@
 #ifndef SFZ_GL_HPP
 #define SFZ_GL_HPP
 
+#include "sfz/gl/Alignment.hpp"
 #include "sfz/gl/OpenGL.hpp"
 #include "sfz/gl/Context.hpp"
 #include "sfz/gl/SpriteBatch.hpp"
