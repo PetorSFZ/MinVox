@@ -3,6 +3,7 @@
 #define SFZ_GL_ALIGNMENT_HPP
 
 #include <cstdint> // int8_t
+#include <iostream> // std::ostream
 
 namespace sfz {
 
@@ -36,6 +37,16 @@ inline const char* to_string(VerticalAlign align) noexcept
 	case VerticalAlign::MIDDLE: return "MIDDLE";
 	case VerticalAlign::TOP: return "TOP";
 	}
+}
+
+inline std::ostream& operator<< (std::ostream& ostream, HorizontalAlign align) noexcept
+{
+	return ostream << to_string(align);
+}
+
+inline std::ostream& operator<< (std::ostream& ostream, VerticalAlign align) noexcept
+{
+	return ostream << to_string(align);
 }
 
 /**
