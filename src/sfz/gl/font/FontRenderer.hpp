@@ -44,7 +44,8 @@ public:
 
 	void begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept;
 
-	void write(vec2f position, float size, const std::string& text) noexcept;
+	/** @return The position to write the next char at. */
+	float write(vec2f position, float size, const std::string& text) noexcept;
 
 	void writeBitmapFont(vec2f position, vec2f dimensions) noexcept;
 

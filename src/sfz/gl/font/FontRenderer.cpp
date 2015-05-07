@@ -185,7 +185,7 @@ void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 	mSpriteBatch.begin(cameraPosition, cameraDimensions);
 }
 
-void FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
+float FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
 {
 	const float scale = size / mFontSize;
 
@@ -209,6 +209,8 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 		calculateCharInfo(info, mPackedChars, mPixelToUV, codepoint, currPos, scale);
 		mSpriteBatch.draw(info.pos, info.dim, info.texRegion);
 	}
+
+	return currPos[0];
 }
 
 void FontRenderer::writeBitmapFont(vec2f position, vec2f dimensions) noexcept
