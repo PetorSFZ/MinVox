@@ -169,20 +169,9 @@ int main()
 	bool running = true;
 	float delta = calculateDelta();
 
-	float fpsMean = 0.0f;
-	long fpsSamples = 0;
-
 	while (running) {
 		delta = calculateDelta();
 		pollEventsUpdateControllers(events);
-
-		float fps = 1.0f/delta;
-		if (1.0f < fps && fps < 250.0f) {
-			float fpsTotal = (fpsMean * (float)fpsSamples) + fps;
-			fpsSamples++;
-			fpsMean = fpsTotal / (float)fpsSamples;
-			if (cfg.mPrintFPS) std::cout << "FPS: " << fps << ", Mean: " << fpsMean << "\n";
-		}
 
 		currentScreen->update(events, controllers[currentController], delta);
 		auto newScreen = currentScreen->changeScreen();

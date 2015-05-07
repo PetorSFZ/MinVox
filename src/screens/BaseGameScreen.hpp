@@ -72,7 +72,6 @@ protected:
 	PostProcessFramebuffer mLightingFramebuffer, mOutputSelectFramebuffer;
 	SSAO mSSAO;
 	sfz::FontRenderer mFontRenderer;
-	PostProcessFramebuffer mFontFramebuffer; // TODO: Remove when done, for easier debugging.
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 	
@@ -86,6 +85,9 @@ protected:
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;
 	float lightMaxSpeed = sfz::PI();
+
+	float mFPSMean = 0.0f;
+	long mFPSSamples = 0;
 
 private:
 	// Private methods

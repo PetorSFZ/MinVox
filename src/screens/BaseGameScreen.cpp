@@ -71,8 +71,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 64.0f, 1000},
-	mFontFramebuffer{window.drawableWidth(), window.drawableHeight()},
+	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 74.0f, 1000},
 	mWorldRenderer{mWorld, mAssets},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
@@ -155,10 +154,6 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case '5':
 				mRenderMode = 5;
 				break;
-			case '6':
-				mRenderMode = 6;
-				break;
-
 			case 'p':
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
@@ -185,7 +180,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 	mWorld.update(mCam.mPos);
 }
 
-void BaseGameScreen::render(float)
+void BaseGameScreen::render(float delta)
 {
 	// Enable blending
 	glEnable(GL_BLEND);
@@ -316,21 +311,42 @@ void BaseGameScreen::render(float)
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	glBindFramebuffer(GL_FRAMEBUFFER, mFontFramebuffer.mFBO);
-	glViewport(0, 0, mFontFramebuffer.mWidth, mFontFramebuffer.mHeight);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	using sfz::HorizontalAlign;
+	using sfz::VerticalAlign;
 
-	mFontRenderer.begin(vec2f{500.0f, 500.0f}, vec2f{1000.0f, 1000.0f});
+	float aspect = (float)mLightingFramebuffer.mWidth / (float)mLightingFramebuffer.mHeight;
+	vec2f fontWindowDimensions{100.0f * aspect, 100.0f};
+	vec2f lightingViewport{(float)mLightingFramebuffer.mWidth, (float)mLightingFramebuffer.mHeight};
 
-	mFontRenderer.write(vec2f{5.0f, 5.0f + 64.0f}, 32.0f, "Smaller string");
-	mFontRenderer.write(vec2f{5.0f, 5.0f}, 64.0f, "Hello World?åäö™™");
+	float fps = 1.0f/delta;
+	if (1.0f < fps && fps < 250.0f) {
+		float fpsTotal = (mFPSMean * (float)mFPSSamples) + fps;
+		mFPSSamples++;
+		mFPSMean = fpsTotal / (float)mFPSSamples;
+		if (mCfg.mPrintFPS) {
+			mFontRenderer.horizontalAlign(HorizontalAlign::LEFT);
+			mFontRenderer.verticalAlign(VerticalAlign::TOP);
 
-	mFontRenderer.writeBitmapFont(vec2f{500.0f, 500.0f}, vec2f{400.0f, 400.0f});
+			// Drop shadow
+			float xPos = 1.15f;
+			mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, "FPS: ");
+			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, std::to_string(fps));
+			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, ", Mean: ");
+			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, std::to_string(mFPSMean));
+			mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
+			                  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
 
-	mFontRenderer.end(mFontFramebuffer.mFBO, vec2f{static_cast<float>(mFontFramebuffer.mWidth),
-	                                               static_cast<float>(mFontFramebuffer.mHeight)},
-					  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
+			xPos = 1.0f;
+			mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, "FPS: ");
+			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, std::to_string(fps));
+			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, ", Mean: ");
+			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, std::to_string(mFPSMean));
+			mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
+			                  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
+		}
+	}
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -361,10 +377,6 @@ void BaseGameScreen::render(float)
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, occlusionTex);
 	gl::setUniform(mOutputSelectShader, "uOcclusionTexture", 4);
-
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, mFontFramebuffer.mTexture);
-	gl::setUniform(mOutputSelectShader, "uFontTexture", 5);
 
 	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
 
@@ -418,8 +430,6 @@ void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 	mGBuffer = GBuffer{width, height};
 	mLightingFramebuffer = PostProcessFramebuffer{width, height};
 	mOutputSelectFramebuffer = PostProcessFramebuffer{width, height};
-
-	mFontFramebuffer = PostProcessFramebuffer{width, height};
 }
 
 } // namespace vox
