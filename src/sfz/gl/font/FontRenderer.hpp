@@ -5,6 +5,7 @@
 #include <sfz/Math.hpp>
 #include <sfz/gl/OpenGL.hpp>
 #include <sfz/gl/SpriteBatch.hpp>
+#include <sfz/gl/Alignment.hpp>
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 #include <memory>
@@ -49,6 +50,17 @@ public:
 
 	void end(GLuint fbo, vec2f viewportDimensions, vec4f textColor) noexcept;
 
+	float measureStringWidth(float size, const std::string& text) const noexcept;
+
+	// Getters / setters
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	inline HorizontalAlign horizontalAlign() const noexcept { return mHorizAlign; }
+	inline VerticalAlign verticalAlign() const noexcept { return mVertAlign; }
+
+	inline void horizontalAlign(HorizontalAlign align) noexcept { mHorizAlign = align; }
+	inline void verticalAlign(VerticalAlign align) noexcept { mVertAlign = align; }
+
 private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -59,11 +71,12 @@ private:
 	static const uint32_t UNKNOWN_CHAR = '?';
 
 	const float mFontSize;
-	const uint32_t mTexWidth, mTexHeight;
+	const vec2f mPixelToUV;
 	GLuint mFontTexture;
-	sfz::SpriteBatch mSpriteBatch;
-
 	void* const mPackedChars; // Type is implementation defined
+	SpriteBatch mSpriteBatch;
+	HorizontalAlign mHorizAlign = HorizontalAlign::LEFT;
+	VerticalAlign mVertAlign = VerticalAlign::MIDDLE;
 };
 
 } // namespace sfz

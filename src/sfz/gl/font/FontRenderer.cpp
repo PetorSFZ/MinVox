@@ -133,15 +133,14 @@ FontRenderer::FontRenderer(const std::string& fontPath, uint32_t texWidth, uint3
 	                       float fontSize, size_t numCharsPerBatch) noexcept
 :
 	mFontSize{fontSize},
-	mTexWidth{texWidth},
-	mTexHeight{texHeight},
+	mPixelToUV{1.0f/static_cast<float>(texWidth), 1.0f/static_cast<float>(texHeight)},
 	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC},
 	mPackedChars{new (std::nothrow) stbtt_packedchar[CHAR_COUNT]}
 {
-	uint8_t* tempBitmap = new uint8_t[mTexWidth*mTexHeight];
+	uint8_t* tempBitmap = new uint8_t[texWidth*texHeight];
 
 	stbtt_pack_context packContext;
-	if(stbtt_PackBegin(&packContext, tempBitmap, mTexWidth, mTexHeight, 0, 1, NULL) == 0) {
+	if(stbtt_PackBegin(&packContext, tempBitmap, texWidth, texHeight, 0, 1, NULL) == 0) {
 		std::cerr << "FontRenderer: Couldn't stbtt_PackBegin()" << std::endl;
 		std::terminate();
 	}
@@ -158,7 +157,7 @@ FontRenderer::FontRenderer(const std::string& fontPath, uint32_t texWidth, uint3
 
 	glGenTextures(1, &mFontTexture);
 	glBindTexture(GL_TEXTURE_2D, mFontTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, mTexWidth, mTexHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
 	             tempBitmap);
 	// Generate mipmaps
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -186,10 +185,17 @@ void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
 void FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
 {
 	const float scale = size / mFontSize;
-	const vec2f pixelToUV{1.0f/static_cast<float>(mTexWidth), 1.0f/static_cast<float>(mTexHeight)};
+
+	vec2f currPos = position;
+	const float vertOffsetScale = distance(VerticalAlign::BOTTOM, mVertAlign) / 2.0f;
+	currPos[1] -= size * vertOffsetScale;
+	if (mHorizAlign != HorizontalAlign::LEFT) {
+		const float strWidth = measureStringWidth(size, text);
+		const float horizOffsetScale = distance(HorizontalAlign::LEFT, mHorizAlign) / 2.0f;
+		currPos[0] -= strWidth * horizOffsetScale;
+	}
 
 	CharInfo info;
-	vec2f currPos = position;
 	uint32_t codepoint;
 	uint32_t state = 0;
 	for (uint8_t c : text) {
@@ -197,8 +203,7 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 		codepoint -= FIRST_CHAR;
 		if (LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
 
-		calculateCharInfo(info, mPackedChars, pixelToUV, codepoint, currPos, scale);
-
+		calculateCharInfo(info, mPackedChars, mPixelToUV, codepoint, currPos, scale);
 		mSpriteBatch.draw(info.pos, info.dim, info.texRegion);
 	}
 }
@@ -213,6 +218,22 @@ void FontRenderer::end(GLuint fbo, vec2f viewportDimensions, vec4f textColor) no
 	glUseProgram(mSpriteBatch.shaderProgram());
 	gl::setUniform(mSpriteBatch.shaderProgram(), "uTextColor", textColor);
 	mSpriteBatch.end(fbo, viewportDimensions, mFontTexture);
+}
+
+float FontRenderer::measureStringWidth(float size, const std::string& text) const noexcept
+{
+	const float scale = size / mFontSize;
+	CharInfo info;
+	vec2f currPos = vec2f::ZERO();
+	uint32_t codepoint;
+	uint32_t state = 0;
+	for (uint8_t c : text) {
+		if (decode(&state, &codepoint, c)) continue;
+		codepoint -= FIRST_CHAR;
+		if (LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
+		calculateCharInfo(info, mPackedChars, mPixelToUV, codepoint, currPos, scale);
+	}
+	return currPos[0];
 }
 
 } // namespace sfz
