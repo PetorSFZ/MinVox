@@ -79,6 +79,9 @@ const char* FONT_RENDERER_FRAGMENT_SHADER_SRC = R"(
 	}
 )";
 
+// Anonymous: Functions
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 uint8_t* loadTTFBuffer(const std::string& path) noexcept
 {
 	const size_t MAX_TTF_BUFFER_SIZE = 1<<22; // 4 MiB
@@ -98,6 +101,33 @@ uint8_t* loadTTFBuffer(const std::string& path) noexcept
 
 	std::fclose(ttfFile);
 	return buffer;
+}
+
+void copy_GetPackedQuad(void* chardata, int pw, int ph, int char_index, float *xpos, float *ypos, stbtt_aligned_quad *q, int align_to_integer)
+{
+   float ipw = 1.0f / pw, iph = 1.0f / ph;
+   stbtt_packedchar *b = reinterpret_cast<stbtt_packedchar*>(chardata) + char_index;
+
+   if (align_to_integer) {
+      float x = (float) STBTT_ifloor((*xpos + b->xoff) + 0.5f);
+      float y = (float) STBTT_ifloor((*ypos + b->yoff) + 0.5f);
+      q->x0 = x;
+      q->y0 = y;
+      q->x1 = x + b->xoff2 - b->xoff;
+      q->y1 = y + b->yoff2 - b->yoff;
+   } else {
+      q->x0 = *xpos + b->xoff;
+      q->y0 = *ypos + b->yoff;
+      q->x1 = *xpos + b->xoff2;
+      q->y1 = *ypos + b->yoff2;
+   }
+
+   q->s0 = b->x0 * ipw;
+   q->t0 = b->y0 * iph;
+   q->s1 = b->x1 * ipw;
+   q->t1 = b->y1 * iph;
+
+   *xpos += b->xadvance;
 }
 
 } // anonymous namespace
@@ -175,8 +205,7 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 		if (decode(&state, &codepoint, c)) continue;
 		codepoint -= FIRST_CHAR;
 		if (LAST_CHAR < codepoint) codepoint = UNKNOWN_CHAR - FIRST_CHAR;
-		stbtt_GetPackedQuad(reinterpret_cast<stbtt_packedchar*>(mPackedChars), mTexWidth,
-		                    mTexHeight, codepoint, &currPos[0], &currPos[1], &quad, false);
+		copy_GetPackedQuad(mPackedChars, mTexWidth, mTexHeight, codepoint, &currPos[0], &currPos[1], &quad, false);
 
 		vec2f dist = currPos - prevPos;
 		currPos = prevPos + dist*scale;
@@ -185,7 +214,7 @@ void FontRenderer::write(vec2f position, float size, const std::string& text) no
 		dim[0] = quad.x1 - quad.x0;
 		dim[1] = quad.y1 - quad.y0;
 		pos[0] = (quad.x0 + quad.x1) / 2.0f;
-		pos[1] = ((quad.y0 + quad.y1) / 2.0f) + dim[1];
+		pos[1] = ((quad.y0 + quad.y1) / 2.0f) +		dim[1];
 
 		dim *= scale;
 		texRegion.mUVMin[0] = quad.s0;
