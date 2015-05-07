@@ -149,8 +149,11 @@ FontRenderer::FontRenderer(const std::string& fontPath, uint32_t texWidth, uint3
 
 	uint8_t* ttfBuffer = loadTTFBuffer(fontPath);
 
-	stbtt_PackFontRange(&packContext, ttfBuffer, 0, mFontSize, FIRST_CHAR, CHAR_COUNT,
-	                    reinterpret_cast<stbtt_packedchar*>(mPackedChars));
+	if (stbtt_PackFontRange(&packContext, ttfBuffer, 0, mFontSize, FIRST_CHAR, CHAR_COUNT,
+	                    reinterpret_cast<stbtt_packedchar*>(mPackedChars)) == 0) {
+		std::cerr << "FontRenderer: Couldn't pack font, texture likely too small." << std::endl;
+		std::terminate();
+	}
 
 	stbtt_PackEnd(&packContext);
 	delete[] ttfBuffer;
