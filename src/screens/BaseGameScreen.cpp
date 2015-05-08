@@ -138,6 +138,16 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				mSSAO.numSamples(mSSAO.numSamples() + 8);
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
 				break;
+			case 'n':
+				mLightShaftExposure -= 0.05f;
+				if (mLightShaftExposure < 0.0f) mLightShaftExposure = 0.0f;
+				std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
+				break;
+			case 'm':
+				mLightShaftExposure += 0.05f;
+				if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
+				std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
+				break;
 
 			case '1':
 				mRenderMode = 1;
@@ -303,6 +313,8 @@ void BaseGameScreen::render(float delta)
 	// Set light position uniform
 	gl::setUniform(mLightingShader, "uLightPos", mSunCam.mPos);
 	gl::setUniform(mLightingShader, "uLightColor", mLightColor);
+
+	gl::setUniform(mLightingShader, "uLightShaftExposure", mLightShaftExposure);
 
 	mFullscreenQuad.render();
 	

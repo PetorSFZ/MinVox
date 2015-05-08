@@ -86,6 +86,8 @@ protected:
 	float lightNormalSpeed = 0.5f;
 	float lightMaxSpeed = sfz::PI();
 
+	float mLightShaftExposure = 0.4f;
+
 	float mFPSMean = 0.0f;
 	long mFPSSamples = 0;
 

@@ -213,6 +213,8 @@ GLuint compileLightingShaderProgram() noexcept
 		uniform vec3 uLightPos;
 		uniform vec3 uLightColor;
 
+		uniform float uLightShaftExposure = 0.4;
+
 		float lightShaftFactor(vec3 vsPos, int numSamples)
 		{
 			vec3 camDir = normalize(vsPos);
@@ -275,7 +277,7 @@ GLuint compileLightingShaderProgram() noexcept
 			             + diffuseFactor * materialDiffuse * uLightColor * lightVisibility
 			             + specularFactor * materialSpecular * uLightColor * lightVisibility
 			             + materialEmissive
-			             + 0.4 * lightShafts * uLightColor;
+			             + uLightShaftExposure * lightShafts * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
 		}
