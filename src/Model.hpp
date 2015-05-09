@@ -3,6 +3,7 @@
 #define VOX_MODEL_HPP
 
 #include "model/Chunk.hpp"
+#include "model/ChunkModel.hpp"
 #include "model/TerrainGeneration.hpp"
 #include "model/Voxel.hpp"
 #include "model/World.hpp"
