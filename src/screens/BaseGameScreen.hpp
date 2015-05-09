@@ -90,6 +90,7 @@ protected:
 
 	float mFPSMean = 0.0f;
 	long mFPSSamples = 0;
+	InGameProfiler mProfiler;
 
 private:
 	// Private methods

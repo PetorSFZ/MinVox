@@ -75,7 +75,9 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWorldRenderer{mWorld, mAssets},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
-	        65.0f, 1.0f, 3.0f, 120.0f}
+	        65.0f, 1.0f, 3.0f, 120.0f},
+
+	mProfiler{{"ShadowMap", "GBuffer Gen", "SSAO + Lighting", "Text Rendering"}}
 {
 	mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
@@ -206,6 +208,8 @@ void BaseGameScreen::render(float delta)
 	// Draw shadow map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	mProfiler.startProfiling();
+
 	glUseProgram(mShadowMapShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
 	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
@@ -239,8 +243,12 @@ void BaseGameScreen::render(float delta)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	//glCullFace(GL_BACK);
 
+	mProfiler.endProfiling(0);
+
 	// Draw GBuffer
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	mProfiler.startProfiling();
 
 	glUseProgram(mGBufferGenShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mGBuffer.mFBO);
@@ -265,8 +273,12 @@ void BaseGameScreen::render(float delta)
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
 	drawLight(mAssets, modelMatrixLocGBufferGen, mSunCam.mPos);
 
+	mProfiler.endProfiling(1);
+
 	// Lighting
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	mProfiler.startProfiling();
 
 	GLuint occlusionTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
 	                                      mCam.mProjMatrix);
@@ -320,8 +332,12 @@ void BaseGameScreen::render(float delta)
 	
 	glUseProgram(0);
 
+	mProfiler.endProfiling(2);
+
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	mProfiler.startProfiling();
 
 	using sfz::HorizontalAlign;
 	using sfz::VerticalAlign;
@@ -335,30 +351,44 @@ void BaseGameScreen::render(float delta)
 		float fpsTotal = (mFPSMean * (float)mFPSSamples) + fps;
 		mFPSSamples++;
 		mFPSMean = fpsTotal / (float)mFPSSamples;
-		if (mCfg.mPrintFPS) {
-			mFontRenderer.horizontalAlign(HorizontalAlign::LEFT);
-			mFontRenderer.verticalAlign(VerticalAlign::TOP);
-
-			// Drop shadow
-			float xPos = 1.15f;
-			mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, "FPS: ");
-			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, std::to_string(fps));
-			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, ", Mean: ");
-			xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, 2.8f, std::to_string(mFPSMean));
-			mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
-			                  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
-
-			xPos = 1.0f;
-			mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, "FPS: ");
-			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, std::to_string(fps));
-			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, ", Mean: ");
-			xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, 2.8f, std::to_string(mFPSMean));
-			mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
-			                  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
-		}
 	}
+
+	float fontSize = 2.8f;
+
+	if (mCfg.mPrintFPS) {
+		mFontRenderer.horizontalAlign(HorizontalAlign::LEFT);
+		mFontRenderer.verticalAlign(VerticalAlign::TOP);
+
+		// Drop shadow
+		float xPos = 1.15f;
+		mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, "FPS: ");
+		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(fps));
+		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, ", Mean: ");
+		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(mFPSMean));
+		for (size_t i = 0; i < mProfiler.size(); ++i) {
+			mFontRenderer.write(vec2f{1.0f, 99.85f - fontSize*(i+1)}, fontSize,
+			                    mProfiler.completeString(i));
+		}
+		mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
+						  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
+
+		xPos = 1.0f;
+		mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, "FPS: ");
+		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(fps));
+		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, ", Mean: ");
+		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(mFPSMean));
+		for (size_t i = 0; i < mProfiler.size(); ++i) {
+			mFontRenderer.write(vec2f{1.0f, 100.0f - fontSize*(i+1)}, fontSize,
+			                    mProfiler.completeString(i));
+		}
+		mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
+						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
+	}
+
+
+	mProfiler.endProfiling(3);
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
