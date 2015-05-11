@@ -146,6 +146,8 @@ set(SOURCE_SFZ_GL_FILES
 	${SRC_DIR}/sfz/gl/SpriteBatch.cpp
 	${SRC_DIR}/sfz/gl/Texture.hpp
 	${SRC_DIR}/sfz/gl/Texture.cpp
+	${SRC_DIR}/sfz/gl/TexturePacker.hpp
+	${SRC_DIR}/sfz/gl/TexturePacker.cpp
 	${SRC_DIR}/sfz/gl/TextureRegion.hpp
 	${SRC_DIR}/sfz/gl/Utils.hpp
 	${SRC_DIR}/sfz/gl/Utils.cpp
