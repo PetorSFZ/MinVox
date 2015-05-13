@@ -5,7 +5,7 @@
 #include <cstdint> // int8_t
 #include <iostream> // std::ostream
 
-namespace sfz {
+namespace gl {
 
 using std::int8_t;
 

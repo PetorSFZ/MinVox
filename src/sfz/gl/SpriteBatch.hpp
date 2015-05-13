@@ -11,8 +11,12 @@
 
 #include <sfz/MSVC12HackON.hpp>
 
-namespace sfz {
+namespace gl {
 
+using sfz::vec2f;
+using sfz::vec4f;
+using sfz::mat3f;
+using sfz::TextureRegion;
 using std::size_t;
 
 // SpriteBatch

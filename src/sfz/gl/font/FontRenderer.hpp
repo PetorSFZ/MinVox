@@ -13,7 +13,7 @@
 
 #include <sfz/MSVC12HackON.hpp>
 
-namespace sfz {
+namespace gl {
 
 using std::size_t;
 using std::uint8_t;

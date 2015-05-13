@@ -339,8 +339,8 @@ void BaseGameScreen::render(float delta)
 
 	mProfiler.startProfiling();
 
-	using sfz::HorizontalAlign;
-	using sfz::VerticalAlign;
+	using gl::HorizontalAlign;
+	using gl::VerticalAlign;
 
 	float aspect = (float)mLightingFramebuffer.mWidth / (float)mLightingFramebuffer.mHeight;
 	vec2f fontWindowDimensions{100.0f * aspect, 100.0f};

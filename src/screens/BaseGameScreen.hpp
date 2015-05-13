@@ -71,7 +71,7 @@ protected:
 	GBuffer mGBuffer;
 	PostProcessFramebuffer mLightingFramebuffer, mOutputSelectFramebuffer;
 	SSAO mSSAO;
-	sfz::FontRenderer mFontRenderer;
+	gl::FontRenderer mFontRenderer;
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 	

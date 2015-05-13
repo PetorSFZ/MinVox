@@ -8,7 +8,7 @@
 
 #include <sfz/MSVC12HackON.hpp>
 
-namespace sfz {
+namespace gl {
 
 // Anonymous namespace
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
