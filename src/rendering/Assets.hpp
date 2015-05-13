@@ -20,6 +20,10 @@ struct Assets final {
 	            VANILLA,
 	            YELLOW;
 
+	gl::TexturePacker CUBE_FACE_ATLAS;
+
+	gl::SpriteBatch mSpriteBatch;
+
 	Assets();
 	Assets(const Assets&) = delete;
 	Assets& operator= (const Assets&) = delete;

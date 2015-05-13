@@ -2,9 +2,10 @@
 
 #include <SDL.h>
 #include "sfz/gl/Utils.hpp"
-
 //#define STB_RECT_PACK_IMPLEMENTATION
 #include "sfz/gl/font/stb_rect_pack.h"
+
+#include <new> // std::nothrow
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -80,25 +81,54 @@ SDL_Surface* loadTexture(const std::string& path) noexcept
 	return surface;
 }
 
+bool packRects(vector<stbrp_rect>& rects, int width, int height) noexcept
+{
+	stbrp_context packContext;
+	stbrp_node* nodes = new (std::nothrow) stbrp_node[width+2];
+	stbrp_init_target(&packContext, width, height, nodes, width);
+	stbrp_pack_rects(&packContext, rects.data(), rects.size());
+	delete[] nodes;
+	
+	// Check if all rects were packed
+	for (auto& rect : rects) {
+		if (!rect.was_packed) return false;
+	}
+	return true;
+}
+
 } // anonymous namespace
 
 // TexturePacker: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-TexturePacker::TexturePacker(const vector<string>& paths) noexcept
+TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filenames,
+                             size_t suggestedWidth, size_t suggestedHeight) noexcept
 :
-	mPaths{paths},
-	mTexRegions{paths.size()}
+	mSize{filenames.size()},
+	mFilenames{filenames},
+	mTexRegions{mSize}
 {
-	vector<SDL_Surface*> surfaces{paths.size()};
-	vector<struct stbrp_rect> rects{paths.size()};
-	for (auto& path : paths) {
-		surfaces.emplace_back(loadTexture(path));
+	vector<SDL_Surface*> surfaces;
+	vector<stbrp_rect> rects;
+	for (auto& filename : filenames) {
+		surfaces.emplace_back(loadTexture(dirPath + filename));
 		struct stbrp_rect r;
 		r.id = surfaces.size()-1;
 		r.w = surfaces.back()->w;
 		r.h = surfaces.back()->h;
 		rects.push_back(r);
+	}
+
+	size_t width = suggestedWidth;
+	size_t height = suggestedHeight;
+
+	packRects(rects, (int)width, (int)height);
+
+	
+
+	// Cleaning up surfaces
+	for (SDL_Surface* surface : surfaces) {
+		SDL_FreeSurface(surface);
 	}
 
 	glGenTextures(1, &mTexture);

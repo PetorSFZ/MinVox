@@ -34,7 +34,8 @@ public:
 	TexturePacker& operator= (const TexturePacker&) = delete;
 	TexturePacker& operator= (TexturePacker&&) = delete;
 
-	TexturePacker(const vector<string>& paths) noexcept;
+	TexturePacker(const string& dirPath, const vector<string>& filenames,
+	              size_t suggestedWidth = 1024, size_t suggestedHeight = 1024) noexcept;
 	~TexturePacker() noexcept;
 
 	// Public methods
@@ -46,7 +47,8 @@ private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	vector<string> mPaths;
+	size_t mSize;
+	vector<string> mFilenames;
 	GLuint mTexture;
 	size_t mTexWidth, mTexHeight;
 	vector<TextureRegion> mTexRegions;

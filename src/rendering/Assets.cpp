@@ -24,7 +24,12 @@ Assets::Assets()
 	GREEN{cubeFacePath() + "green_b.png"},
 	ORANGE{cubeFacePath() + "orange_b.png"},
 	VANILLA{cubeFacePath() + "vanilla_b.png"},
-	YELLOW{cubeFacePath() + "yellow_b.png"}
+	YELLOW{cubeFacePath() + "yellow_b.png"},
+
+	CUBE_FACE_ATLAS{cubeFacePath(), {"blue_b.png", "green_b.png", "orange_b.png", "vanilla_b.png",
+	                                 "yellow_b.png"}},
+
+	mSpriteBatch{1000}
 {
 	// Textures loaded and initialized.
 }
