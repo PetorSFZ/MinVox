@@ -112,6 +112,7 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 	mFilenames{filenames},
 	mTexRegions{mSize}
 {
+	// Loads surfaces and creates rects for packing
 	vector<SDL_Surface*> surfaces;
 	vector<stbrp_rect> rects;
 	for (auto& filename : filenames) {
@@ -126,14 +127,25 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 	size_t width = suggestedWidth;
 	size_t height = suggestedHeight;
 
-	packRects(rects, (int)width, (int)height);
+	// Increases size until packing succeeds
+	bool widthIncTurn = true;
+	while (!packRects(rects, (int)width, (int)height))
+	{
+		if (widthIncTurn) width *= 2;
+		else height *= 2;
+	}
 
-	// Little endian masks
+	mTexWidth = width;
+	mTexHeight = height;
+
+	// Creates surface and makes sure it's empty.
 	uint32_t rmask = 0x000000ff;
     uint32_t gmask = 0x0000ff00;
     uint32_t bmask = 0x00ff0000;
     uint32_t amask = 0xff000000;
     SDL_Surface* surface = SDL_CreateRGBSurface(0, width, height, 32, rmask, gmask, bmask, amask);
+	SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+	SDL_FillRect(surface, NULL, 0);
 
 	// Blitting individual surfaces to common surface and calculating TextureRegions
 	vec2f texDimInv{1.0f/(float)width, 1.0f/(float)height};

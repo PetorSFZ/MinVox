@@ -58,7 +58,7 @@ const char* FRAGMENT_SHADER_SRC = R"(
 
 	void main()
 	{
-		fragmentColor = vec4(texture(uTexture, uvCoord).rgb, 1.0);
+		fragmentColor = texture(uTexture, uvCoord);
 	}
 )";
 
