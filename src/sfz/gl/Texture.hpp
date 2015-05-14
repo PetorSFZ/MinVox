@@ -2,19 +2,15 @@
 #ifndef SFZ_GL_TEXTURE_HPP
 #define SFZ_GL_TEXTURE_HPP
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <GL/glew.h>
 #include <string>
-#include <cstring> // std::memcpy
-#include <iostream>
-#include <exception> // std::terminate
-#include <algorithm> // std::swap
+#include "sfz/gl/OpenGL.hpp"
 #include "sfz/gl/Utils.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
 namespace gl {
+
+using std::string;
 
 class Texture final {
 public:
@@ -30,7 +26,7 @@ public:
 	Texture(const Texture&) = delete;
 	Texture& operator= (const Texture&) = delete;
 	
-	Texture(const std::string& path) noexcept;
+	Texture(const string& path) noexcept;
 	Texture& operator= (Texture&& other) noexcept;
 	~Texture() noexcept;
 };

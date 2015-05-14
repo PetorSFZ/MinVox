@@ -1,5 +1,11 @@
 #include "sfz/gl/Texture.hpp"
 
+#include <SDL_image.h>
+#include <cstring> // std::memcpy
+#include <iostream>
+#include <exception> // std::terminate
+#include <algorithm> // std::swap
+
 #include <sfz/MSVC12HackON.hpp>
 
 namespace gl {
@@ -45,7 +51,7 @@ void flipSurface(SDL_Surface* surface) noexcept
 	SDL_UnlockSurface(surface);
 }
 
-GLuint loadTexture(const std::string& path) noexcept
+GLuint loadTexture(const string& path) noexcept
 {
 	// Load specified surface.
 	SDL_Surface* surface = NULL;
@@ -98,7 +104,7 @@ GLuint loadTexture(const std::string& path) noexcept
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Texture::Texture(const std::string& path) noexcept
+Texture::Texture(const string& path) noexcept
 :
 	mHandle(loadTexture(path))
 {

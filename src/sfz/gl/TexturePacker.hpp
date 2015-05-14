@@ -34,8 +34,8 @@ public:
 	TexturePacker& operator= (const TexturePacker&) = delete;
 	TexturePacker& operator= (TexturePacker&&) = delete;
 
-	TexturePacker(const string& dirPath, const vector<string>& filenames,
-	              size_t suggestedWidth = 1024, size_t suggestedHeight = 1024) noexcept;
+	TexturePacker(const string& dirPath, const vector<string>& filenames, int padding = 1,
+	              size_t suggestedWidth = 512, size_t suggestedHeight = 512) noexcept;
 	~TexturePacker() noexcept;
 
 	// Public methods
