@@ -108,7 +108,9 @@ bool packRects(vector<stbrp_rect>& rects, int width, int height) noexcept
 TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filenames, int padding,
                              size_t suggestedWidth, size_t suggestedHeight) noexcept
 :
-	mFilenames{filenames}//, mTexRegions{filenames.size()}
+	mWidth{suggestedWidth},
+	mHeight{suggestedHeight},
+	mFilenames{filenames}
 {
 	size_t size = filenames.size();
 
@@ -124,32 +126,26 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 		rects.push_back(r);
 	}
 
-	size_t width = suggestedWidth;
-	size_t height = suggestedHeight;
-
 	// Increases size until packing succeeds
 	bool widthIncTurn = true;
-	while (!packRects(rects, (int)width, (int)height))
+	while (!packRects(rects, (int)mWidth, (int)mHeight))
 	{
-		if (widthIncTurn) width *= 2;
-		else height *= 2;
+		if (widthIncTurn) mWidth *= 2;
+		else mHeight *= 2;
 		widthIncTurn = !widthIncTurn;
 	}
-
-	mTexWidth = width;
-	mTexHeight = height;
 
 	// Creates surface and makes sure it's empty.
 	uint32_t rmask = 0x000000ff;
     uint32_t gmask = 0x0000ff00;
     uint32_t bmask = 0x00ff0000;
     uint32_t amask = 0xff000000;
-    SDL_Surface* surface = SDL_CreateRGBSurface(0, width, height, 32, rmask, gmask, bmask, amask);
+    SDL_Surface* surface = SDL_CreateRGBSurface(0, mWidth, mHeight, 32, rmask, gmask, bmask, amask);
 	SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 	SDL_FillRect(surface, NULL, 0);
 
 	// Blitting individual surfaces to common surface and calculating TextureRegions
-	vec2f texDimInv{1.0f/(float)width, 1.0f/(float)height};
+	vec2f texDimInv{1.0f/(float)mWidth, 1.0f/(float)mHeight};
 	for (size_t i = 0; i < size; ++i) {
 		SDL_Rect dstRect;
 		dstRect.w = surfaces[i]->w - 2*padding;
@@ -166,9 +162,6 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 		                  (float)(dstRect.y + dstRect.h - 2*padding)}
 		            .elemMult(texDimInv);
 		mTextureRegionMap[filenames[i]] = TextureRegion{min, max};
-		//mTexRegions[i] = TextureRegion{min, max};
-		/*std::cout << filenames[i] << ": " << dstRect.x << "x, " << dstRect.y << "y, " << dstRect.w << "w, " << dstRect.h << "h\n";
-		std::cout << filenames[i] << ": min=" << mTexRegions[i].mUVMin << ", max=" << mTexRegions[i].mUVMax << std::endl;*/
 	}
 
 	// Cleaning up surfaces

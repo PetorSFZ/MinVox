@@ -44,8 +44,8 @@ public:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	inline GLuint texture() const noexcept { return mTexture; }
-	inline size_t textureWidth() const noexcept { return mTexWidth; }
-	inline size_t textureHeight() const noexcept { return mTexHeight; }
+	inline size_t textureWidth() const noexcept { return mWidth; }
+	inline size_t textureHeight() const noexcept { return mHeight; }
 	inline const vector<string>& filenames() const noexcept { return mFilenames; }
 	const TextureRegion* textureRegion(const string& filename) const noexcept;
 
@@ -54,7 +54,7 @@ private:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	GLuint mTexture;
-	size_t mTexWidth, mTexHeight;
+	size_t mWidth, mHeight;
 	vector<string> mFilenames;
 	unordered_map<string, TextureRegion> mTextureRegionMap;
 };
