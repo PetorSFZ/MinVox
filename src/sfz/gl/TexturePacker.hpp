@@ -9,6 +9,7 @@
 #include <cstddef> // size_t
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -17,6 +18,7 @@ namespace gl {
 using std::size_t;
 using std::vector;
 using std::string;
+using std::unordered_map;
 
 using sfz::TextureRegion;
 
@@ -42,16 +44,19 @@ public:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	inline GLuint texture() const noexcept { return mTexture; }
+	inline size_t textureWidth() const noexcept { return mTexWidth; }
+	inline size_t textureHeight() const noexcept { return mTexHeight; }
+	inline const vector<string>& filenames() const noexcept { return mFilenames; }
+	const TextureRegion* textureRegion(const string& filename) const noexcept;
 
 private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	size_t mSize;
-	vector<string> mFilenames;
 	GLuint mTexture;
 	size_t mTexWidth, mTexHeight;
-	vector<TextureRegion> mTexRegions;
+	vector<string> mFilenames;
+	unordered_map<string, TextureRegion> mTextureRegionMap;
 };
 
 } // namespace sfz

@@ -108,10 +108,10 @@ bool packRects(vector<stbrp_rect>& rects, int width, int height) noexcept
 TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filenames, int padding,
                              size_t suggestedWidth, size_t suggestedHeight) noexcept
 :
-	mSize{filenames.size()},
-	mFilenames{filenames},
-	mTexRegions{mSize}
+	mFilenames{filenames}//, mTexRegions{filenames.size()}
 {
+	size_t size = filenames.size();
+
 	// Loads surfaces and creates rects for packing
 	vector<SDL_Surface*> surfaces;
 	vector<stbrp_rect> rects;
@@ -133,6 +133,7 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 	{
 		if (widthIncTurn) width *= 2;
 		else height *= 2;
+		widthIncTurn = !widthIncTurn;
 	}
 
 	mTexWidth = width;
@@ -149,7 +150,7 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 
 	// Blitting individual surfaces to common surface and calculating TextureRegions
 	vec2f texDimInv{1.0f/(float)width, 1.0f/(float)height};
-	for (size_t i = 0; i < mSize; ++i) {
+	for (size_t i = 0; i < size; ++i) {
 		SDL_Rect dstRect;
 		dstRect.w = surfaces[i]->w - 2*padding;
 		dstRect.h = surfaces[i]->h - 2*padding;
@@ -164,7 +165,8 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 		vec2f max = vec2f{(float)(dstRect.x + dstRect.w - 2*padding),
 		                  (float)(dstRect.y + dstRect.h - 2*padding)}
 		            .elemMult(texDimInv);
-		mTexRegions[i] = TextureRegion{min, max};
+		mTextureRegionMap[filenames[i]] = TextureRegion{min, max};
+		//mTexRegions[i] = TextureRegion{min, max};
 		/*std::cout << filenames[i] << ": " << dstRect.x << "x, " << dstRect.y << "y, " << dstRect.w << "w, " << dstRect.h << "h\n";
 		std::cout << filenames[i] << ": min=" << mTexRegions[i].mUVMin << ", max=" << mTexRegions[i].mUVMax << std::endl;*/
 	}
@@ -192,6 +194,16 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 TexturePacker::~TexturePacker() noexcept
 {
 	glDeleteTextures(1, &mTexture);
+}
+
+// TexturePacker: Public methods
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+const TextureRegion* TexturePacker::textureRegion(const string& filename) const noexcept
+{
+	auto it = mTextureRegionMap.find(filename);
+	if (it == mTextureRegionMap.end()) return nullptr;
+	return &it->second;
 }
 
 } // namespace sfz

@@ -387,10 +387,6 @@ void BaseGameScreen::render(float delta)
 						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
 	}
 
-	mAssets.mSpriteBatch.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-	mAssets.mSpriteBatch.draw(vec2f{50.0f, 50.0f}, vec2f{60.0f, 60.0f}, gl::TextureRegion{vec2f::ZERO(), vec2f{1.0f, 1.0f}});
-	mAssets.mSpriteBatch.end(mLightingFramebuffer.mFBO, lightingViewport, mAssets.CUBE_FACE_ATLAS.texture());
-
 	mProfiler.endProfiling(3);
 
 	// Output select
