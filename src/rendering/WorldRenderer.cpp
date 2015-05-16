@@ -27,7 +27,24 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
+	static ChunkMesh mesh;
 	mat4f transform = sfz::identityMatrix4<float>();
+
+	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
+		if (!mWorld.chunkAvailable(i)) continue;
+		mesh.set(*mWorld.chunkPtr(i));
+
+		vec3i offset = mWorld.chunkOffset(i);
+		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
+
+		sfz::translation(transform, offsetVec);
+		gl::setUniform(modelMatrixLoc, transform);
+		glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
+		mesh.render();
+	}
+
+
+	/*mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
@@ -72,7 +89,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 			}
 		}
 		sfz_assert_debug(index == ChunkIterateEnd);
-	}
+	}*/
 }
 
 void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
