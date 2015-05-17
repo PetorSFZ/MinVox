@@ -157,12 +157,20 @@ const unsigned int CUBE_INDICES[] = {
 const size_t NUM_ELEMENTS = sizeof(CUBE_VERTICES)/sizeof(vec3f);
 const size_t NUM_INDICES = sizeof(CUBE_INDICES)/sizeof(unsigned int);
 
-template<typename T, size_t NUM_VOXELS, size_t NUM_DATA_ELEMENTS>
-void fillArray(const unique_ptr<T[]>& array, const T* data)
+void fillNormalArray(const unique_ptr<vec3f[]>& array, size_t numVoxelsPerChunk) noexcept
 {
-	for (size_t iVox = 0; iVox < NUM_VOXELS; ++iVox) {
-		for (size_t iArr = 0; iArr < NUM_DATA_ELEMENTS; ++iArr) {
-			array[iVox + iArr] = data[iArr];
+	for (size_t iVox = 0; iVox < numVoxelsPerChunk; ++iVox) {
+		for (size_t iArr = 0; iArr < NUM_ELEMENTS; ++iArr) {
+			array[iVox*NUM_ELEMENTS + iArr] = CUBE_NORMALS[iArr];
+		}
+	}
+}
+
+void fillIndexArray(const unique_ptr<unsigned int[]>& array, size_t numVoxelsPerChunk) noexcept
+{
+	for (size_t iVox = 0; iVox < numVoxelsPerChunk; ++iVox) {
+		for (size_t iArr = 0; iArr < NUM_INDICES; ++iArr) {
+			array[iVox*NUM_INDICES + iArr] = (iArr*NUM_ELEMENTS) + CUBE_INDICES[iArr];
 		}
 	}
 }
@@ -204,29 +212,30 @@ ChunkMesh::ChunkMesh() noexcept
 	static_assert(NUM_ELEMENTS == 24, "NUM_ELEMENTS is wrong size");
 	static_assert(NUM_INDICES == 36, "NUM_INDICES is wrong size");
 
-	const size_t NUM_VOXELS = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
-	fillArray<vec3f, NUM_VOXELS, NUM_ELEMENTS>(mNormalArray, CUBE_NORMALS);
-	fillArray<unsigned int, NUM_VOXELS, NUM_INDICES>(mIndexArray, CUBE_INDICES);
+	//const size_t NUM_VOXELS = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
+	//fillArray<vec3f, NUM_VOXELS, NUM_ELEMENTS>(mNormalArray, CUBE_NORMALS);
+	fillNormalArray(mNormalArray, mNumVoxelsPerChunk);
+	fillIndexArray(mIndexArray, mNumVoxelsPerChunk);
 
 	// Vertex buffer
 	glGenBuffers(1, &mVertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_VERTICES), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_VERTICES)*mNumVoxelsPerChunk, NULL, GL_DYNAMIC_DRAW);
 
 	// Normal buffer
 	glGenBuffers(1, &mNormalBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mNormalBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_NORMALS), &mNormalArray[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_NORMALS)*mNumVoxelsPerChunk, mNormalArray[0].glPtr(), GL_STATIC_DRAW);
 
 	// UV buffer
 	glGenBuffers(1, &mUVBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_UV_COORDS), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_UV_COORDS)*mNumVoxelsPerChunk, NULL, GL_DYNAMIC_DRAW);
 
 	// Index buffer
 	glGenBuffers(1, &mIndexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mIndexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(mIndexBuffer), &mIndexArray[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_INDICES)*mNumVoxelsPerChunk, &mIndexArray[0], GL_STATIC_DRAW);
 
 	// Vertex Array Object
 	glGenVertexArrays(1, &mVAO);
@@ -271,10 +280,11 @@ void ChunkMesh::set(const Chunk& chunk) noexcept
 		index++;
 		if (v.type() == VoxelType::AIR) continue;
 
-		addVoxelVertex(mVertexArray, mCurrentNumVoxels, index.voxelOffset());
-		addVoxelUV(mUVArray, mCurrentNumVoxels, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
+		// TODO: Startpos is probably wrong, check carefully.
+		addVoxelVertex(mVertexArray, mCurrentNumVoxels*NUM_ELEMENTS, index.voxelOffset());
+		addVoxelUV(mUVArray, mCurrentNumVoxels*NUM_ELEMENTS, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
 
-		mCurrentNumVoxels++;
+		mCurrentNumVoxels += 1;
 	}
 
 	// Transfer data to GPU.
@@ -306,7 +316,7 @@ void ChunkMesh::render() noexcept
 {
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
-	glDrawElements(GL_TRIANGLES, NUM_INDICES*mNumVoxelsPerChunk, GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLES, NUM_INDICES*mCurrentNumVoxels, GL_UNSIGNED_INT, NULL);
 }
 
 } // namespace vox

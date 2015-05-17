@@ -39,7 +39,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 
 		sfz::translation(transform, offsetVec);
 		gl::setUniform(modelMatrixLoc, transform);
-		glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
+		glBindTexture(GL_TEXTURE_2D, mAssets.ORANGE.mHandle);
 		mesh.render();
 	}
 
