@@ -170,7 +170,7 @@ void fillIndexArray(const unique_ptr<unsigned int[]>& array, size_t numVoxelsPer
 {
 	for (size_t iVox = 0; iVox < numVoxelsPerChunk; ++iVox) {
 		for (size_t iArr = 0; iArr < NUM_INDICES; ++iArr) {
-			array[iVox*NUM_INDICES + iArr] = (iArr*NUM_ELEMENTS) + CUBE_INDICES[iArr];
+			array[iVox*NUM_INDICES + iArr] = (iVox*NUM_ELEMENTS) + CUBE_INDICES[iArr];
 		}
 	}
 }
@@ -212,8 +212,6 @@ ChunkMesh::ChunkMesh() noexcept
 	static_assert(NUM_ELEMENTS == 24, "NUM_ELEMENTS is wrong size");
 	static_assert(NUM_INDICES == 36, "NUM_INDICES is wrong size");
 
-	//const size_t NUM_VOXELS = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
-	//fillArray<vec3f, NUM_VOXELS, NUM_ELEMENTS>(mNormalArray, CUBE_NORMALS);
 	fillNormalArray(mNormalArray, mNumVoxelsPerChunk);
 	fillIndexArray(mIndexArray, mNumVoxelsPerChunk);
 
