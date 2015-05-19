@@ -32,14 +32,14 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 
 	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
 		if (!mWorld.chunkAvailable(i)) continue;
-		mesh.set(*mWorld.chunkPtr(i));
+		mesh.set(*mWorld.chunkPtr(i), mAssets);
 
 		vec3i offset = mWorld.chunkOffset(i);
 		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
 
 		sfz::translation(transform, offsetVec);
 		gl::setUniform(modelMatrixLoc, transform);
-		glBindTexture(GL_TEXTURE_2D, mAssets.ORANGE.mHandle);
+		glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
 		mesh.render();
 	}
 

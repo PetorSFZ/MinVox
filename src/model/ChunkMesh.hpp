@@ -5,6 +5,7 @@
 #include <sfz/math/Vector.hpp>
 #include "sfz/GL.hpp"
 #include "model/Chunk.hpp"
+#include "rendering/Assets.hpp"
 #include <memory>
 
 #include <sfz/MSVC12HackON.hpp>
@@ -34,7 +35,7 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void set(const Chunk& chunk) noexcept;
+	void set(const Chunk& chunk, const Assets& assets) noexcept;
 	void render() noexcept;
 
 private:

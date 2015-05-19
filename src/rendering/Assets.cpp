@@ -1,5 +1,7 @@
 #include "rendering/Assets.hpp"
 
+#include <sfz/MSVC12HackON.hpp>
+
 namespace vox {
 
 // Anonymous functions
@@ -29,6 +31,12 @@ Assets::Assets()
 	CUBE_FACE_ATLAS{cubeFacePath(), {"blue_b.png", "green_b.png", "orange_b.png", "vanilla_b.png",
 	                                 "yellow_b.png"}},
 
+	BLUE_TR{*CUBE_FACE_ATLAS.textureRegion("blue_b.png")},
+	GREEN_TR{*CUBE_FACE_ATLAS.textureRegion("green_b.png")},
+	ORANGE_TR{*CUBE_FACE_ATLAS.textureRegion("orange_b.png")},
+	VANILLA_TR{*CUBE_FACE_ATLAS.textureRegion("vanilla_b.png")},
+	YELLOW_TR{*CUBE_FACE_ATLAS.textureRegion("yellow_b.png")},
+
 	mSpriteBatch{1000}
 {
 	// Textures loaded and initialized.
@@ -37,7 +45,7 @@ Assets::Assets()
 // Public functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint Assets::getCubeFaceTexture(Voxel voxel) const
+GLuint Assets::getCubeFaceTexture(Voxel voxel) const noexcept
 {
 	switch (voxel.type()) {
 	case VoxelType::AIR:
@@ -54,4 +62,23 @@ GLuint Assets::getCubeFaceTexture(Voxel voxel) const
 	}
 }
 
+const TextureRegion& Assets::getCubeFaceTextureRegion(Voxel voxel) const noexcept
+{
+	switch (voxel.type()) {
+	case VoxelType::AIR:
+		std::cerr << "AIR shouldn't be rendered." << std::endl;
+		std::terminate();
+	case VoxelType::BLUE: return BLUE_TR;
+	case VoxelType::GREEN: return GREEN_TR;
+	case VoxelType::ORANGE: return ORANGE_TR;
+	case VoxelType::VANILLA: return VANILLA_TR;
+	case VoxelType::YELLOW: return YELLOW_TR;
+	default:
+		std::cerr << "TextureRegion doesn't exist." << std::endl;
+		std::terminate();
+	}
+}
+
 } // namespace vox
+
+#include <sfz/MSVC12HackOFF.hpp>

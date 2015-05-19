@@ -268,7 +268,7 @@ ChunkMesh::~ChunkMesh() noexcept
 // ChunkMesh: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void ChunkMesh::set(const Chunk& chunk) noexcept
+void ChunkMesh::set(const Chunk& chunk, const Assets& assets) noexcept
 {
 	mCurrentNumVoxels = 0;
 	ChunkIndex index = ChunkIterateBegin;
@@ -280,8 +280,7 @@ void ChunkMesh::set(const Chunk& chunk) noexcept
 
 		// TODO: Startpos is probably wrong, check carefully.
 		addVoxelVertex(mVertexArray, mCurrentNumVoxels*NUM_ELEMENTS, index.voxelOffset());
-		addVoxelUV(mUVArray, mCurrentNumVoxels*NUM_ELEMENTS, sfz::TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
-
+		addVoxelUV(mUVArray, mCurrentNumVoxels*NUM_ELEMENTS, assets.getCubeFaceTextureRegion(v));
 		mCurrentNumVoxels += 1;
 	}
 
