@@ -27,7 +27,33 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
-	static ChunkMesh mesh;
+	static ChunkMesh* meshes = [&]() {
+		ChunkMesh* meshArray = new ChunkMesh[mWorld.mNumChunks];
+		for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
+			meshArray[i].set(*mWorld.chunkPtr(i), mAssets);
+		}
+		return meshArray;
+	}();
+
+	mat4f transform = sfz::identityMatrix4<float>();
+	AABB aabb;
+	glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
+
+	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
+		if (!mWorld.chunkAvailable(i)) continue;
+
+		vec3i offset = mWorld.chunkOffset(i);
+		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
+
+		calculateChunkAABB(aabb, offsetVec);
+		if (!cam.isVisible(aabb)) continue;
+
+		sfz::translation(transform, offsetVec);
+		gl::setUniform(modelMatrixLoc, transform);
+		meshes[i].render();
+	}
+
+	/*static ChunkMesh mesh;
 	mat4f transform = sfz::identityMatrix4<float>();
 
 	glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
@@ -42,7 +68,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 		sfz::translation(transform, offsetVec);
 		gl::setUniform(modelMatrixLoc, transform);
 		mesh.render();
-	}
+	}*/
 
 
 	/*mat4f transform = sfz::identityMatrix4<float>();
