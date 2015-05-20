@@ -166,7 +166,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case '5':
 				mRenderMode = 5;
 				break;
-			case 'p':
+			case 'l':
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
 				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
