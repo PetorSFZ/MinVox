@@ -160,8 +160,9 @@ const size_t NUM_INDICES = sizeof(CUBE_INDICES)/sizeof(unsigned int);
 void fillNormalArray(const unique_ptr<vec3f[]>& array, size_t numVoxelsPerChunk) noexcept
 {
 	for (size_t iVox = 0; iVox < numVoxelsPerChunk; ++iVox) {
+		size_t arrayPos = iVox * NUM_ELEMENTS;
 		for (size_t iArr = 0; iArr < NUM_ELEMENTS; ++iArr) {
-			array[iVox*NUM_ELEMENTS + iArr] = CUBE_NORMALS[iArr];
+			array[arrayPos + iArr] = CUBE_NORMALS[iArr];
 		}
 	}
 }
@@ -169,26 +170,30 @@ void fillNormalArray(const unique_ptr<vec3f[]>& array, size_t numVoxelsPerChunk)
 void fillIndexArray(const unique_ptr<unsigned int[]>& array, size_t numVoxelsPerChunk) noexcept
 {
 	for (size_t iVox = 0; iVox < numVoxelsPerChunk; ++iVox) {
+		size_t arrayPos = iVox * NUM_INDICES;
+		unsigned int indexOffset = iVox * NUM_ELEMENTS;
 		for (size_t iArr = 0; iArr < NUM_INDICES; ++iArr) {
-			array[iVox*NUM_INDICES + iArr] = (iVox*NUM_ELEMENTS) + CUBE_INDICES[iArr];
+			array[arrayPos + iArr] = indexOffset + CUBE_INDICES[iArr];
 		}
 	}
 }
 
-void addVoxelVertex(const unique_ptr<vec3f[]>& array, size_t startPos,
+void addVoxelVertex(const unique_ptr<vec3f[]>& array, size_t voxelNum,
 					const vec3f& position) noexcept
 {
+	size_t arrayPos = voxelNum * NUM_ELEMENTS;
 	for (size_t i = 0; i < NUM_ELEMENTS; ++i) {
-		array[startPos + i] = position + CUBE_VERTICES[i];
+		array[arrayPos + i] = position + CUBE_VERTICES[i];
 	}
 }
 
-void addVoxelUV(const unique_ptr<vec2f[]>& array, size_t startPos,
+void addVoxelUV(const unique_ptr<vec2f[]>& array, size_t voxelNum,
                 const sfz::TextureRegion& texRegion) noexcept
 {
+	size_t arrayPos = voxelNum * NUM_ELEMENTS;
 	vec2f dim = texRegion.dimensions();
 	for (size_t i = 0; i < NUM_ELEMENTS; ++i) {
-		array[startPos + i] = texRegion.mUVMin + CUBE_UV_COORDS[i].elemMult(dim);
+		array[arrayPos + i] = texRegion.mUVMin + CUBE_UV_COORDS[i].elemMult(dim);
 	}
 }
 
@@ -275,13 +280,16 @@ void ChunkMesh::set(const Chunk& chunk, const Assets& assets) noexcept
 
 	while (index != ChunkIterateEnd) {
 		Voxel v = chunk.getVoxel(index);
-		index++;
-		if (v.type() == VoxelType::AIR) continue;
 
-		// TODO: Startpos is probably wrong, check carefully.
-		addVoxelVertex(mVertexArray, mCurrentNumVoxels*NUM_ELEMENTS, index.voxelOffset());
-		addVoxelUV(mUVArray, mCurrentNumVoxels*NUM_ELEMENTS, assets.getCubeFaceTextureRegion(v));
+		if (v.type() == VoxelType::AIR) {
+			index++;
+			continue;
+		}
+
+		addVoxelVertex(mVertexArray, mCurrentNumVoxels, index.voxelOffset());
+		addVoxelUV(mUVArray, mCurrentNumVoxels, assets.getCubeFaceTextureRegion(v));
 		mCurrentNumVoxels += 1;
+		index++;
 	}
 
 	// Transfer data to GPU.
