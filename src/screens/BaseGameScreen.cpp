@@ -71,7 +71,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 74.0f, 1000},
+	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 74.0f, 3000},
 	mWorldRenderer{mWorld, mAssets},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
@@ -356,7 +356,8 @@ void BaseGameScreen::render(float delta)
 	vec2f lightingViewport{(float)mLightingFramebuffer.mWidth, (float)mLightingFramebuffer.mHeight};
 
 	float fps = 1.0f/delta;
-	if (1.0f < fps && fps < 250.0f) {
+	if (fps > 10000.0f) fps = 10000.0f; // Small hack
+	if (1.0f < fps && fps < 500.0f) {
 		float fpsTotal = (mFPSMean * (float)mFPSSamples) + fps;
 		mFPSSamples++;
 		mFPSMean = fpsTotal / (float)mFPSSamples;
