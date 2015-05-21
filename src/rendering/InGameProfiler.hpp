@@ -25,10 +25,12 @@ public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	InGameProfiler() = delete;
+	InGameProfiler() = default; // Needed because of MSVC12
 	InGameProfiler(const InGameProfiler&) = delete;
 	InGameProfiler& operator= (const InGameProfiler&) = delete;
 
+	InGameProfiler(InGameProfiler&& other) noexcept;
+	InGameProfiler& operator= (InGameProfiler&& other) noexcept;
 	InGameProfiler(std::initializer_list<string> list) noexcept;
 
 	// Public methods

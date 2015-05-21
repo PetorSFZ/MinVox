@@ -133,10 +133,12 @@ FontRenderer::FontRenderer(const std::string& fontPath, uint32_t texWidth, uint3
 	                       float fontSize, size_t numCharsPerBatch) noexcept
 :
 	mFontSize{fontSize},
-	mPixelToUV{1.0f/static_cast<float>(texWidth), 1.0f/static_cast<float>(texHeight)},
-	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC},
-	mPackedChars{new (std::nothrow) stbtt_packedchar[CHAR_COUNT]}
+	mPackedChars{new (std::nothrow) stbtt_packedchar[CHAR_COUNT]},
+	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC}
 {
+	// This should be const, but MSVC12 doesn't support ini lists in constructor's ini list
+	mPixelToUV = vec2f{1.0f/static_cast<float>(texWidth), 1.0f/static_cast<float>(texHeight)};
+
 	uint8_t* tempBitmap = new uint8_t[texWidth*texHeight];
 
 	stbtt_pack_context packContext;

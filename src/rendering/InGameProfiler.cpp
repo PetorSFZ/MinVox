@@ -1,6 +1,7 @@
 #include <rendering/InGameProfiler.hpp>
 
 #include <sfz/Assert.hpp>
+#include <algorithm> // std::swap
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -8,6 +9,38 @@ namespace vox {
 
 // InGameProfiler: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+InGameProfiler::InGameProfiler(InGameProfiler&& other) noexcept
+{
+	using std::swap;
+
+	swap(mStartTime, other.mStartTime);
+	swap(mEndTime, other.mEndTime);
+
+	swap(mSize, other.mSize);
+	swap(mMeasurementNames, other.mMeasurementNames);
+	swap(mLatestMeasurements, other.mLatestMeasurements);
+	swap(mNumMeasurements, other.mNumMeasurements);
+	swap(mAverageMeasurements, other.mAverageMeasurements);
+	swap(mCompleteStrings, other.mCompleteStrings);
+}
+
+InGameProfiler& InGameProfiler::operator= (InGameProfiler&& other) noexcept
+{
+	using std::swap;
+
+	swap(mStartTime, other.mStartTime);
+	swap(mEndTime, other.mEndTime);
+
+	swap(mSize, other.mSize);
+	swap(mMeasurementNames, other.mMeasurementNames);
+	swap(mLatestMeasurements, other.mLatestMeasurements);
+	swap(mNumMeasurements, other.mNumMeasurements);
+	swap(mAverageMeasurements, other.mAverageMeasurements);
+	swap(mCompleteStrings, other.mCompleteStrings);
+
+	return *this;
+}
 
 InGameProfiler::InGameProfiler(std::initializer_list<string> list) noexcept
 :

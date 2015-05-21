@@ -72,7 +72,7 @@ private:
 	static const uint32_t UNKNOWN_CHAR = '?';
 
 	const float mFontSize;
-	const vec2f mPixelToUV;
+	vec2f mPixelToUV;
 	GLuint mFontTexture;
 	void* const mPackedChars; // Type is implementation defined
 	SpriteBatch mSpriteBatch;

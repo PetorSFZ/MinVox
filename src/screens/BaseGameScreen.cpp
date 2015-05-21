@@ -75,10 +75,15 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWorldRenderer{mWorld, mAssets},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
-	        65.0f, 1.0f, 3.0f, 120.0f},
-
-	mProfiler{{"ShadowMap", "GBuffer Gen", "SSAO + Lighting", "Text Rendering", "Output Select + Blitting", "Between Frames"}}
+	        65.0f, 1.0f, 3.0f, 120.0f}
 {
+	mProfiler = InGameProfiler{{"ShadowMap",
+	                            "GBuffer Gen",
+								"SSAO + Lighting",
+	                            "Text Rendering",
+	                            "Output Select + Blitting",
+	                            "Between Frames"}};
+
 	mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
 	mLightColor = vec3f{1.0f, 0.85f, 0.75f};
