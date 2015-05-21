@@ -77,11 +77,13 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f},
 
-	mProfiler{{"ShadowMap", "GBuffer Gen", "SSAO + Lighting", "Text Rendering"}}
+	mProfiler{{"ShadowMap", "GBuffer Gen", "SSAO + Lighting", "Text Rendering", "Output Select + Blitting", "Between Frames"}}
 {
 	mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
 	mLightColor = vec3f{1.0f, 0.85f, 0.75f};
+
+	mProfiler.startProfiling();
 }
 
 /*BaseGameScreen::BaseGameScreen(const BaseGameScreen& baseGameScreen)
@@ -194,6 +196,8 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 
 void BaseGameScreen::render(float delta)
 {
+	mProfiler.endProfiling(5);
+
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -392,6 +396,8 @@ void BaseGameScreen::render(float delta)
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	mProfiler.startProfiling();
+
 	glUseProgram(mOutputSelectShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mOutputSelectFramebuffer.mFBO);
 	glViewport(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight);
@@ -438,6 +444,10 @@ void BaseGameScreen::render(float delta)
 	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight,
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	mProfiler.endProfiling(4);
+
+	mProfiler.startProfiling();
 }
 
 std::unique_ptr<IScreen> BaseGameScreen::changeScreen()

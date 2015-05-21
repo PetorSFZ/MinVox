@@ -51,7 +51,7 @@ void InGameProfiler::endProfiling(size_t index) noexcept
 
 	mCompleteStrings[index].clear();
 	mCompleteStrings[index] += mMeasurementNames[index];
-	mCompleteStrings[index] += ", last: ";
+	mCompleteStrings[index] += ": ";
 	mCompleteStrings[index] += std::to_string(mLatestMeasurements[index]);
 	mCompleteStrings[index] += "ms, avg: ";
 	mCompleteStrings[index] += std::to_string(mAverageMeasurements[index]);
