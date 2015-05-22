@@ -77,7 +77,14 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
+			case SDLK_SPACE:
+				vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
+				Voxel v = mWorld.getVoxel(pos);
+				if (v.type() != VoxelType::AIR) mWorld.setVoxel(pos, Voxel{VoxelType::AIR, 0});
+				else mWorld.setVoxel(pos, Voxel{VoxelType::ORANGE, 0});
+				break;
 			}
+				
 			break;
 		}
 	}

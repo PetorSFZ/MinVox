@@ -3,9 +3,7 @@
 #define VOX_MODEL_CHUNK_MESH_HPP
 
 #include <sfz/math/Vector.hpp>
-#include "sfz/GL.hpp"
 #include "model/Chunk.hpp"
-#include "rendering/Assets.hpp"
 #include <memory>
 
 #include <sfz/MSVC12HackON.hpp>
@@ -34,15 +32,15 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void set(const Chunk& chunk, const Assets& assets) noexcept;
+	void set(const Chunk& chunk) noexcept;
 	void render() const noexcept;
 
 private:
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint mVAO;
-	GLuint mVertexBuffer, mNormalBuffer, mUVBuffer, mIndexBuffer;
+	unsigned int mVAO;
+	unsigned int mVertexBuffer, mNormalBuffer, mUVBuffer, mIndexBuffer;
 
 	size_t mCurrentNumVoxels = 0;
 	const size_t mNumVoxelsPerChunk, mDataArraySize, mIndicesArraySize;

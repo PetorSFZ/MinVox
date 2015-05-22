@@ -1,7 +1,6 @@
 #include "model/World.hpp"
 
 #include <new> // std::nothrow
-#include "rendering/Assets.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -137,6 +136,8 @@ void World::setVoxel(const vec3i& position, Voxel voxel) noexcept
 	bool success = writeChunk(*chunkPtr, chunkOffset[0], chunkOffset[1], chunkOffset[2], mName);
 	if (!success) {
 		chunkPtr->setVoxel(voxelOffset, oldVoxel);
+	} else {
+		mChunkMeshes[index].set(*chunkPtr);
 	}
 }
 
@@ -241,7 +242,7 @@ void World::loadChunks() noexcept
 				mChunks[currentWriteIndex] = generateChunk(itr);
 				writeChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName);
 			}
-			mChunkMeshes[currentWriteIndex].set(mChunks[currentWriteIndex], getAssets());
+			mChunkMeshes[currentWriteIndex].set(mChunks[currentWriteIndex]);
 			mOffsets[currentWriteIndex] = itr;
 			mAvailabilities[currentWriteIndex] = true;
 			mToBeReplaced[currentWriteIndex] = false;

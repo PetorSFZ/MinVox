@@ -42,7 +42,7 @@ public:
 	const TextureRegion& getCubeFaceTextureRegion(Voxel voxel) const noexcept;
 
 private:
-	Assets();
+	Assets() noexcept;
 	Assets(const Assets&) = delete;
 	Assets& operator= (const Assets&) = delete;
 	

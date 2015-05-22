@@ -20,7 +20,7 @@ const std::string& cubeFacePath()
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Assets::Assets()
+Assets::Assets() noexcept
 :
 	BLUE{cubeFacePath() + "blue_b.png"},
 	GREEN{cubeFacePath() + "green_b.png"},

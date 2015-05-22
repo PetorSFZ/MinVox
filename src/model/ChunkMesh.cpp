@@ -1,6 +1,8 @@
 #include "model/ChunkMesh.hpp"
 
 #include <new> // std::nothrow
+#include "sfz/GL.hpp"
+#include "rendering/Assets.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
@@ -273,7 +275,7 @@ ChunkMesh::~ChunkMesh() noexcept
 // ChunkMesh: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void ChunkMesh::set(const Chunk& chunk, const Assets& assets) noexcept
+void ChunkMesh::set(const Chunk& chunk) noexcept
 {
 	mCurrentNumVoxels = 0;
 	ChunkIndex index = ChunkIterateBegin;
@@ -287,7 +289,7 @@ void ChunkMesh::set(const Chunk& chunk, const Assets& assets) noexcept
 		}
 
 		addVoxelVertex(mVertexArray, mCurrentNumVoxels, index.voxelOffset());
-		addVoxelUV(mUVArray, mCurrentNumVoxels, assets.getCubeFaceTextureRegion(v));
+		addVoxelUV(mUVArray, mCurrentNumVoxels, getAssets().getCubeFaceTextureRegion(v));
 		mCurrentNumVoxels += 1;
 		index++;
 	}
