@@ -27,14 +27,6 @@ WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
-	static ChunkMesh* meshes = [&]() {
-		ChunkMesh* meshArray = new ChunkMesh[mWorld.mNumChunks];
-		for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
-			meshArray[i].set(*mWorld.chunkPtr(i), mAssets);
-		}
-		return meshArray;
-	}();
-
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 	glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
@@ -50,28 +42,13 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 
 		sfz::translation(transform, offsetVec);
 		gl::setUniform(modelMatrixLoc, transform);
-		meshes[i].render();
+		mWorld.chunkMesh(i).render();
 	}
+}
 
-	/*static ChunkMesh mesh;
+void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
+{
 	mat4f transform = sfz::identityMatrix4<float>();
-
-	glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
-
-	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
-		if (!mWorld.chunkAvailable(i)) continue;
-		mesh.set(*mWorld.chunkPtr(i), mAssets);
-
-		vec3i offset = mWorld.chunkOffset(i);
-		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
-
-		sfz::translation(transform, offsetVec);
-		gl::setUniform(modelMatrixLoc, transform);
-		mesh.render();
-	}*/
-
-
-	/*mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
@@ -116,12 +93,9 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 			}
 		}
 		sfz_assert_debug(index == ChunkIterateEnd);
-	}*/
-}
+	}
 
-void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
-{
-	// Old naive loop
+	/*// Old naive loop
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
@@ -152,7 +126,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 				}
 			}
 		}
-	}
+	}*/
 }
 
 } // namespace vox

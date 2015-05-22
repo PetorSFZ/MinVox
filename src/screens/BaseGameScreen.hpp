@@ -64,7 +64,7 @@ protected:
 	Camera mCam;
 
 	sdl::Window& mWindow;
-	Assets mAssets;
+	Assets& mAssets;
 
 	GLuint mShadowMapShader, mGBufferGenShader, mLightingShader, mOutputSelectShader;
 	ShadowMap mShadowMap;

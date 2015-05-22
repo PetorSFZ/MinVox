@@ -12,6 +12,7 @@
 
 #include "model/Voxel.hpp"
 #include "model/Chunk.hpp"
+#include "model/ChunkMesh.hpp"
 #include "io/ChunkIO.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
@@ -61,6 +62,7 @@ public:
 	int chunkIndex(const vec3i& offset) const noexcept;
 
 	const Chunk* chunkPtr(size_t index) const noexcept;
+	const ChunkMesh& chunkMesh(size_t index) const noexcept;
 	const vec3i chunkOffset(size_t index) const noexcept;
 	bool chunkAvailable(size_t index) const noexcept;
 
@@ -79,6 +81,7 @@ private:
 
 	vec3i mCurrentChunkOffset;
 	unique_ptr<Chunk[]> mChunks;
+	unique_ptr<ChunkMesh[]> mChunkMeshes;
 	unique_ptr<vec3i[]> mOffsets;
 	unique_ptr<bool[]> mAvailabilities;
 	unique_ptr<bool[]> mToBeReplaced;

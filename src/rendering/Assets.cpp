@@ -79,6 +79,13 @@ const TextureRegion& Assets::getCubeFaceTextureRegion(Voxel voxel) const noexcep
 	}
 }
 
+/** @brief Gets the global Assets instance. */
+Assets& getAssets() noexcept
+{
+	static Assets assets;
+	return assets;
+}
+
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>

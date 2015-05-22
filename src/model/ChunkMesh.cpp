@@ -317,7 +317,7 @@ void ChunkMesh::set(const Chunk& chunk, const Assets& assets) noexcept
 	glEnableVertexAttribArray(2);
 }
 
-void ChunkMesh::render() noexcept
+void ChunkMesh::render() const noexcept
 {
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);

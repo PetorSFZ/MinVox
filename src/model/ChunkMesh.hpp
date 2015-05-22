@@ -25,7 +25,6 @@ public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	//ChunkMesh() = delete;
 	ChunkMesh(const ChunkMesh&) = delete;
 	ChunkMesh& operator= (const ChunkMesh&) = delete;
 
@@ -36,7 +35,7 @@ public:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void set(const Chunk& chunk, const Assets& assets) noexcept;
-	void render() noexcept;
+	void render() const noexcept;
 
 private:
 	// Private members

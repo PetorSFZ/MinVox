@@ -60,7 +60,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	     (float)window.width()/(float)window.height(), 0.5f, 1000.0f},
 
 	mWindow{window},
-	mAssets{},
+	mAssets{getAssets()},
 
 	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},

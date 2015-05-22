@@ -46,8 +46,8 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 			case 'p':
 			case 'P':
 				mOldWorldRenderer = !mOldWorldRenderer;
-				if (mOldWorldRenderer) std::cout << "Using old (linear) world renderer.\n";
-				else std::cout << "Using (recursive) world renderer.\n";
+				if (mOldWorldRenderer) std::cout << "Using old (non-meshed) world renderer.\n";
+				else std::cout << "Using (meshed) world renderer.\n";
 				break;
 			case SDLK_UP:
 				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();

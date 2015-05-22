@@ -19,8 +19,8 @@ using gl::TextureRegion;
 using gl::TexturePacker;
 using gl::SpriteBatch;
 
-
-struct Assets final {
+class Assets final {
+public:
 
 	Texture BLUE,
 	        GREEN,
@@ -38,13 +38,19 @@ struct Assets final {
 
 	SpriteBatch mSpriteBatch;
 
+	GLuint getCubeFaceTexture(Voxel voxel) const noexcept;
+	const TextureRegion& getCubeFaceTextureRegion(Voxel voxel) const noexcept;
+
+private:
 	Assets();
 	Assets(const Assets&) = delete;
 	Assets& operator= (const Assets&) = delete;
-
-	GLuint getCubeFaceTexture(Voxel voxel) const noexcept;
-	const TextureRegion& getCubeFaceTextureRegion(Voxel voxel) const noexcept;
+	
+	friend Assets& getAssets() noexcept;
 };
+
+/** @brief Gets the global Assets instance. */
+Assets& getAssets() noexcept;
 
 } // namespace vox
 

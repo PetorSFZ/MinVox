@@ -1,5 +1,8 @@
 #include "model/World.hpp"
 
+#include <new> // std::nothrow
+#include "rendering/Assets.hpp"
+
 #include <sfz/MSVC12HackON.hpp>
 
 namespace vox {
@@ -68,10 +71,11 @@ World::World(const std::string& name, const vec3f& camPos,
 	mVerticalRange{static_cast<int>(verticalRange)},
 	mNumChunks{calculateNumChunks(mHorizontalRange, mVerticalRange)},
 	mName{name},
-	mChunks{new Chunk[mNumChunks]},
-	mOffsets{new vec3i[mNumChunks]},
-	mAvailabilities{new bool[mNumChunks]},
-	mToBeReplaced{new bool[mNumChunks]}
+	mChunks{new (std::nothrow) Chunk[mNumChunks]},
+	mChunkMeshes{new (std::nothrow) ChunkMesh[mNumChunks]},
+	mOffsets{new (std::nothrow) vec3i[mNumChunks]},
+	mAvailabilities{new (std::nothrow) bool[mNumChunks]},
+	mToBeReplaced{new (std::nothrow) bool[mNumChunks]}
 {
 	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
 
@@ -164,6 +168,12 @@ const Chunk* World::chunkPtr(size_t index) const noexcept
 	return &mChunks[index];
 }
 
+const ChunkMesh& World::chunkMesh(size_t index) const noexcept
+{
+	sfz_assert_debug(index < mNumChunks);
+	return mChunkMeshes[index];
+}
+
 const vec3i World::chunkOffset(size_t index) const noexcept
 {
 	sfz_assert_debug(index < mNumChunks);
@@ -231,6 +241,7 @@ void World::loadChunks() noexcept
 				mChunks[currentWriteIndex] = generateChunk(itr);
 				writeChunk(mChunks[currentWriteIndex], itr[0], itr[1], itr[2], mName);
 			}
+			mChunkMeshes[currentWriteIndex].set(mChunks[currentWriteIndex], getAssets());
 			mOffsets[currentWriteIndex] = itr;
 			mAvailabilities[currentWriteIndex] = true;
 			mToBeReplaced[currentWriteIndex] = false;
