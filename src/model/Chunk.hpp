@@ -78,21 +78,6 @@ const ChunkIndex ChunkIterateEnd{uint16_t(1) << 12};
 // ChunkParts
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-#define COMPACT_CHUNK_PART_2
-
-#ifdef COMPACT_CHUNK_PART_2
-class ChunkPart2 {
-private:
-	uint8_t mVoxelData[2][2];
-public:
-	inline Voxel getVoxel(size_t x, size_t y, size_t z) const noexcept;
-	inline Voxel getVoxel(const vec3i& offset) const noexcept;
-	inline Voxel getVoxel(ChunkIndex index) const noexcept;
-	inline void setVoxel(size_t x, size_t y, size_t z, Voxel voxel) noexcept;
-	inline void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
-	inline void setVoxel(ChunkIndex index, Voxel voxel) noexcept;
-};
-#else
 class ChunkPart2 {
 private:
 	Voxel mVoxel[2][2][2];
@@ -104,7 +89,6 @@ public:
 	inline void setVoxel(const vec3i& offset, Voxel voxel) noexcept;
 	inline void setVoxel(ChunkIndex index, Voxel voxel) noexcept;
 };
-#endif
 
 struct ChunkPart4 {
 	ChunkPart2 mChunkPart2s[2][2][2];
