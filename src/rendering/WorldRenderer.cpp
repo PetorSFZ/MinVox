@@ -28,7 +28,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
-	glBindTexture(GL_TEXTURE_2D, getAssets().CUBE_FACE_ATLAS.texture());
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().CUBE_FACE_ATLAS.texture());
 
 	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
 		if (!mWorld.chunkAvailable(i)) continue;
@@ -49,7 +49,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
-	Assets& assets = getAssets();
+	const Assets& assets = Assets::INSTANCE();
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;

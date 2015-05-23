@@ -21,14 +21,15 @@ using gl::SpriteBatch;
 
 class Assets final {
 public:
+	static const Assets& INSTANCE() noexcept;
 
-	Texture BLUE,
-	        GREEN,
-	        ORANGE,
-	        VANILLA,
-			YELLOW;
+	const Texture BLUE,
+	              GREEN,
+	              ORANGE,
+	              VANILLA,
+				  YELLOW;
 
-	TexturePacker CUBE_FACE_ATLAS;
+	const TexturePacker CUBE_FACE_ATLAS;
 	const TextureRegion BLUE_TR,
 	                    GREEN_TR,
 						ORANGE_TR,
@@ -36,7 +37,7 @@ public:
 						YELLOW_TR;
 
 
-	SpriteBatch mSpriteBatch;
+	const SpriteBatch mSpriteBatch;
 
 	GLuint getCubeFaceTexture(Voxel voxel) const noexcept;
 	const TextureRegion& getCubeFaceTextureRegion(Voxel voxel) const noexcept;
@@ -45,12 +46,7 @@ private:
 	Assets() noexcept;
 	Assets(const Assets&) = delete;
 	Assets& operator= (const Assets&) = delete;
-	
-	friend Assets& getAssets() noexcept;
 };
-
-/** @brief Gets the global Assets instance. */
-Assets& getAssets() noexcept;
 
 } // namespace vox
 

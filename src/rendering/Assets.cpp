@@ -20,6 +20,12 @@ const std::string& cubeFacePath()
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+const Assets& Assets::INSTANCE() noexcept
+{
+	static Assets assets;
+	return assets;
+}
+
 Assets::Assets() noexcept
 :
 	BLUE{cubeFacePath() + "blue_b.png"},
@@ -77,13 +83,6 @@ const TextureRegion& Assets::getCubeFaceTextureRegion(Voxel voxel) const noexcep
 		std::cerr << "TextureRegion doesn't exist." << std::endl;
 		std::terminate();
 	}
-}
-
-/** @brief Gets the global Assets instance. */
-Assets& getAssets() noexcept
-{
-	static Assets assets;
-	return assets;
 }
 
 } // namespace vox

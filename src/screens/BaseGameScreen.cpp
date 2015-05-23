@@ -29,7 +29,7 @@ void drawLight(int modelMatrixLoc, const vec3f& lightPos) noexcept
 	// Render sun
 	sfz::translation(transform, lightPos);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, getAssets().YELLOW.mHandle);
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().YELLOW.mHandle);
 	cubeObj.render();
 }
 
@@ -42,7 +42,7 @@ void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 	// Render skycube
 	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, getAssets().VANILLA.mHandle);
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().VANILLA.mHandle);
 	skyCubeObj.render();
 }
 

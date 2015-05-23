@@ -289,7 +289,7 @@ void ChunkMesh::set(const Chunk& chunk) noexcept
 		}
 
 		addVoxelVertex(mVertexArray, mCurrentNumVoxels, index.voxelOffset());
-		addVoxelUV(mUVArray, mCurrentNumVoxels, getAssets().getCubeFaceTextureRegion(v));
+		addVoxelUV(mUVArray, mCurrentNumVoxels, Assets::INSTANCE().getCubeFaceTextureRegion(v));
 		mCurrentNumVoxels += 1;
 		index++;
 	}
