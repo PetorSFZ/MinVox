@@ -21,7 +21,7 @@ vec3f sphericalToCartesian(const vec3f& spherical) noexcept
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
-void drawLight(const Assets& assets, int modelMatrixLoc, const vec3f& lightPos) noexcept
+void drawLight(int modelMatrixLoc, const vec3f& lightPos) noexcept
 {
 	static CubeObject cubeObj;
 	mat4f transform = sfz::identityMatrix4<float>();
@@ -29,11 +29,11 @@ void drawLight(const Assets& assets, int modelMatrixLoc, const vec3f& lightPos) 
 	// Render sun
 	sfz::translation(transform, lightPos);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, assets.YELLOW.mHandle);
+	glBindTexture(GL_TEXTURE_2D, getAssets().YELLOW.mHandle);
 	cubeObj.render();
 }
 
-void drawSkyCube(const Assets& assets, int modelMatrixLoc, const Camera& cam) noexcept
+void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 {
 	static SkyCubeObject skyCubeObj;
 	static const vec3f halfSkyCubeSize{400.0f, 400.0f, 400.0f};
@@ -42,7 +42,7 @@ void drawSkyCube(const Assets& assets, int modelMatrixLoc, const Camera& cam) no
 	// Render skycube
 	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, assets.VANILLA.mHandle);
+	glBindTexture(GL_TEXTURE_2D, getAssets().VANILLA.mHandle);
 	skyCubeObj.render();
 }
 
@@ -60,7 +60,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	     (float)window.width()/(float)window.height(), 0.5f, 1000.0f},
 
 	mWindow{window},
-	mAssets{getAssets()},
 
 	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
@@ -72,7 +71,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 74.0f, 3000},
-	mWorldRenderer{mWorld, mAssets},
+	mWorldRenderer{mWorld},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
 	        65.0f, 1.0f, 3.0f, 120.0f}
@@ -277,10 +276,10 @@ void BaseGameScreen::render(float delta)
 
 	// Drawing objects
 	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader, "uModelMatrix");
-	drawSkyCube(mAssets, modelMatrixLocGBufferGen, mCam);
+	drawSkyCube(modelMatrixLocGBufferGen, mCam);
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, modelMatrixLocGBufferGen);
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
-	drawLight(mAssets, modelMatrixLocGBufferGen, mSunCam.mPos);
+	drawLight(modelMatrixLocGBufferGen, mSunCam.mPos);
 
 	mProfiler.endProfiling(1);
 

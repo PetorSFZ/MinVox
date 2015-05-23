@@ -14,10 +14,9 @@ namespace {
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-WorldRenderer::WorldRenderer(const World& world, const Assets& assets) noexcept
+WorldRenderer::WorldRenderer(const World& world) noexcept
 :
-	mWorld{world},
-	mAssets{assets}
+	mWorld{world}
 {
 	
 }
@@ -29,7 +28,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
-	glBindTexture(GL_TEXTURE_2D, mAssets.CUBE_FACE_ATLAS.texture());
+	glBindTexture(GL_TEXTURE_2D, getAssets().CUBE_FACE_ATLAS.texture());
 
 	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
 		if (!mWorld.chunkAvailable(i)) continue;
@@ -50,6 +49,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
+	Assets& assets = getAssets();
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
 		if (!mWorld.chunkAvailable(i)) continue;
@@ -85,7 +85,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 					sfz::translation(transform, offsetVec + index.voxelOffset());
 					gl::setUniform(modelMatrixLoc, transform);
 
-					glBindTexture(GL_TEXTURE_2D, mAssets.getCubeFaceTexture(v));
+					glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
 					mCubeObj.render();
 
 					index++;

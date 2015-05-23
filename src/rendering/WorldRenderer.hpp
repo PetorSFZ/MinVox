@@ -28,7 +28,7 @@ public:
 	WorldRenderer& operator= (const WorldRenderer&) = delete;
 	WorldRenderer& operator= (WorldRenderer&&) = delete;
 
-	WorldRenderer(const World& world, const Assets& assets) noexcept;
+	WorldRenderer(const World& world) noexcept;
 
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -41,8 +41,6 @@ private:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	const World& mWorld;
-	const Assets& mAssets;
-
 	CubeObject mCubeObj;
 };
 
