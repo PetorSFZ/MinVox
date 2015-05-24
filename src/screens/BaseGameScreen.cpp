@@ -287,7 +287,7 @@ void BaseGameScreen::render(float delta)
 
 	mProfiler.startProfiling();
 
-	GLuint occlusionTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
+	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
 	                                      mCam.mProjMatrix);
 
 	glUseProgram(mLightingShader);
@@ -310,8 +310,8 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mLightingShader, "uNormalTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, occlusionTex);
-	gl::setUniform(mLightingShader, "uOcclusionTexture", 3);
+	glBindTexture(GL_TEXTURE_2D, aoTex);
+	gl::setUniform(mLightingShader, "uAOTexture", 3);
 
 	// Shadow map uniform
 	glActiveTexture(GL_TEXTURE4);
@@ -428,8 +428,8 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mOutputSelectShader, "uNormalTexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, occlusionTex);
-	gl::setUniform(mOutputSelectShader, "uOcclusionTexture", 4);
+	glBindTexture(GL_TEXTURE_2D, aoTex);
+	gl::setUniform(mOutputSelectShader, "uAOTexture", 4);
 
 	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
 

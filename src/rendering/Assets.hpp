@@ -5,12 +5,14 @@
 #include "sfz/GL.hpp"
 #include "model/Voxel.hpp"
 #include <memory>
+#include <cstddef> // size_t
 
 #include <sfz/MSVC12HackON.hpp>
 
 namespace vox {
 
 using std::unique_ptr;
+using std::size_t;
 
 using gl::Texture;
 using gl::TextureRegion;
@@ -34,6 +36,7 @@ public:
 
 	static Assets& INSTANCE() noexcept;
 
+	inline size_t numVoxelTypes() const noexcept { return mNumVoxelTypes; }
 	GLuint cubeFaceDiffuseTexture() const noexcept;
 	const TextureRegion& cubeFaceRegion(Voxel voxel) const noexcept;
 
