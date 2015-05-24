@@ -34,13 +34,13 @@ inline Voxel generateVoxel(const vec3i& worldOffset) noexcept
 	auto heightFunc = [](int x, int z) -> int { return -0.05f*(x-10)*(x-20) - 0.05f*(z-10)*(z-20) + 4; };
 
 	// Ground
-	if (worldOffset[1] == 0) return Voxel{VoxelType::VANILLA, 0};
+	if (worldOffset[1] == 0) return Voxel{VOXEL_VANILLA};
 
 	if (worldOffset[1] == heightFunc(worldOffset[0], worldOffset[2])) {
-		return Voxel{VoxelType::BLUE, 0};
+		return Voxel{VOXEL_BLUE};
 	}
 	
-	return Voxel{VoxelType::AIR, 0};
+	return Voxel{VOXEL_AIR};
 	sfz_assert_debug(false);
 }
 

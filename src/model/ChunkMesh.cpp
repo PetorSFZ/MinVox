@@ -283,13 +283,13 @@ void ChunkMesh::set(const Chunk& chunk) noexcept
 	while (index != ChunkIterateEnd) {
 		Voxel v = chunk.getVoxel(index);
 
-		if (v.type() == VoxelType::AIR) {
+		if (v.mType == VOXEL_AIR) {
 			index++;
 			continue;
 		}
 
 		addVoxelVertex(mVertexArray, mCurrentNumVoxels, index.voxelOffset());
-		addVoxelUV(mUVArray, mCurrentNumVoxels, Assets::INSTANCE().getCubeFaceTextureRegion(v));
+		addVoxelUV(mUVArray, mCurrentNumVoxels, Assets::INSTANCE().cubeFaceRegion(v));
 		mCurrentNumVoxels += 1;
 		index++;
 	}

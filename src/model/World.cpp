@@ -193,7 +193,7 @@ Voxel World::getVoxel(const vec3i& offset) const noexcept
 	vec3i voxelOffset = offset - (chunkOffset*(int)CHUNK_SIZE);
 
 	int index = chunkIndex(chunkOffset);
-	if (index == -1) return Voxel{VoxelType::AIR, 0};
+	if (index == -1) return Voxel{VOXEL_AIR};
 	Chunk* chunkPtr = &mChunks[index];
 	return chunkPtr->getVoxel(voxelOffset);
 }

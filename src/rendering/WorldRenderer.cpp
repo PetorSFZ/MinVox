@@ -28,7 +28,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
 	mat4f transform = sfz::identityMatrix4<float>();
 	AABB aabb;
-	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().CUBE_FACE_ATLAS.texture());
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceDiffuseTexture());
 
 	for (size_t i = 0; i < mWorld.mNumChunks; ++i) {
 		if (!mWorld.chunkAvailable(i)) continue;
@@ -77,7 +77,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 				for (unsigned int voxeli = 0; voxeli < 64; voxeli++) {
 
 					Voxel v = chunkPtr->getVoxel(index);
-					if (v.type() == vox::VoxelType::AIR) {
+					if (v.mType == VOXEL_AIR) {
 						index++;
 						continue;
 					}
@@ -85,7 +85,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 					sfz::translation(transform, offsetVec + index.voxelOffset());
 					gl::setUniform(modelMatrixLoc, transform);
 
-					glBindTexture(GL_TEXTURE_2D, assets.getCubeFaceTexture(v));
+					glBindTexture(GL_TEXTURE_2D, assets.cubeFaceIndividualTexture(v));
 					mCubeObj.render();
 
 					index++;

@@ -80,8 +80,8 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 			case SDLK_SPACE:
 				vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
 				Voxel v = mWorld.getVoxel(pos);
-				if (v.type() != VoxelType::AIR) mWorld.setVoxel(pos, Voxel{VoxelType::AIR, 0});
-				else mWorld.setVoxel(pos, Voxel{VoxelType::ORANGE, 0});
+				if (v.mType != VOXEL_AIR) mWorld.setVoxel(pos, Voxel{VOXEL_AIR});
+				else mWorld.setVoxel(pos, Voxel{VOXEL_ORANGE});
 				break;
 			}
 				
@@ -136,8 +136,8 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	if (ctrl.mButtonA == sdl::Button::UP) {
 		vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
 		Voxel v = mWorld.getVoxel(pos);
-		if (v.type() != VoxelType::AIR) mWorld.setVoxel(pos, Voxel{VoxelType::AIR, 0});
-		else mWorld.setVoxel(pos, Voxel{VoxelType::ORANGE, 0});
+		if (v.mType != VOXEL_AIR) mWorld.setVoxel(pos, Voxel{VOXEL_AIR});
+		else mWorld.setVoxel(pos, Voxel{VOXEL_ORANGE});
 	}
 
 	// Menu buttons

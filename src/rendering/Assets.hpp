@@ -2,50 +2,63 @@
 #ifndef VOX_RENDERING_ASSETS_HPP
 #define VOX_RENDERING_ASSETS_HPP
 
-#include <iostream>
-#include <string>
-#include <exception>
 #include "sfz/GL.hpp"
-
 #include "model/Voxel.hpp"
-#include "io/IOUtils.hpp"
+#include <memory>
 
 #include <sfz/MSVC12HackON.hpp>
 
 namespace vox {
 
+using std::unique_ptr;
+
 using gl::Texture;
 using gl::TextureRegion;
 using gl::TexturePacker;
 using gl::SpriteBatch;
+using gl::FontRenderer;
+
+// Assets
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 class Assets final {
 public:
-	static const Assets& INSTANCE() noexcept;
+	// Public members
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	const Texture BLUE,
-	              GREEN,
-	              ORANGE,
-	              VANILLA,
-				  YELLOW;
+	SpriteBatch mSpriteBatch;
+	FontRenderer mFontRenderer;
 
-	const TexturePacker CUBE_FACE_ATLAS;
-	const TextureRegion BLUE_TR,
-	                    GREEN_TR,
-						ORANGE_TR,
-						VANILLA_TR,
-						YELLOW_TR;
+	// Public methods
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	static Assets& INSTANCE() noexcept;
 
-	const SpriteBatch mSpriteBatch;
+	GLuint cubeFaceDiffuseTexture() const noexcept;
+	const TextureRegion& cubeFaceRegion(Voxel voxel) const noexcept;
 
-	GLuint getCubeFaceTexture(Voxel voxel) const noexcept;
-	const TextureRegion& getCubeFaceTextureRegion(Voxel voxel) const noexcept;
+	GLuint cubeFaceIndividualTexture(Voxel voxel) const noexcept; // LEGACY
 
 private:
+	// Private constructors & destructors
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 	Assets() noexcept;
 	Assets(const Assets&) = delete;
 	Assets& operator= (const Assets&) = delete;
+
+	// Private members
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	const size_t mNumVoxelTypes;
+	TexturePacker CUBE_FACE_ATLAS;
+	unique_ptr<TextureRegion[]> mCubeFaceRegions;
+
+	Texture BLUE,
+	        GREEN,
+	        ORANGE,
+	        VANILLA,
+			YELLOW;
 };
 
 } // namespace vox

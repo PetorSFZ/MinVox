@@ -29,7 +29,7 @@ void drawLight(int modelMatrixLoc, const vec3f& lightPos) noexcept
 	// Render sun
 	sfz::translation(transform, lightPos);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().YELLOW.mHandle);
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(Voxel{VOXEL_YELLOW}));
 	cubeObj.render();
 }
 
@@ -42,7 +42,7 @@ void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 	// Render skycube
 	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().VANILLA.mHandle);
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(Voxel{VOXEL_VANILLA}));
 	skyCubeObj.render();
 }
 
@@ -70,7 +70,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 74.0f, 3000},
 	mWorldRenderer{mWorld},
 
 	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
@@ -364,35 +363,37 @@ void BaseGameScreen::render(float delta)
 
 	float fontSize = 2.8f;
 
+	FontRenderer& font = Assets::INSTANCE().mFontRenderer;
+
 	if (mCfg.mPrintFPS) {
-		mFontRenderer.horizontalAlign(HorizontalAlign::LEFT);
-		mFontRenderer.verticalAlign(VerticalAlign::TOP);
+		font.horizontalAlign(HorizontalAlign::LEFT);
+		font.verticalAlign(VerticalAlign::TOP);
 
 		// Drop shadow
 		float xPos = 1.15f;
-		mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, "FPS: ");
-		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(fps));
-		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, ", Mean: ");
-		xPos = mFontRenderer.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(mFPSMean));
+		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, "FPS: ");
+		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(fps));
+		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, ", Mean: ");
+		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(mFPSMean));
 		for (size_t i = 0; i < mProfiler.size(); ++i) {
-			mFontRenderer.write(vec2f{1.0f, 99.85f - fontSize*(i+1)}, fontSize,
+			font.write(vec2f{1.0f, 99.85f - fontSize*(i+1)}, fontSize,
 			                    mProfiler.completeString(i));
 		}
-		mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
+		font.end(mLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
 
 		xPos = 1.0f;
-		mFontRenderer.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, "FPS: ");
-		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(fps));
-		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, ", Mean: ");
-		xPos = mFontRenderer.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(mFPSMean));
+		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, "FPS: ");
+		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(fps));
+		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, ", Mean: ");
+		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(mFPSMean));
 		for (size_t i = 0; i < mProfiler.size(); ++i) {
-			mFontRenderer.write(vec2f{1.0f, 100.0f - fontSize*(i+1)}, fontSize,
+			font.write(vec2f{1.0f, 100.0f - fontSize*(i+1)}, fontSize,
 			                    mProfiler.completeString(i));
 		}
-		mFontRenderer.end(mLightingFramebuffer.mFBO, lightingViewport,
+		font.end(mLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
 	}
 
