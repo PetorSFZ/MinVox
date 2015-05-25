@@ -24,12 +24,13 @@ vec3f sphericalToCartesian(const vec3f& spherical) noexcept
 void drawLight(int modelMatrixLoc, const vec3f& lightPos) noexcept
 {
 	static CubeObject cubeObj;
-	mat4f transform = sfz::identityMatrix4<float>();
+	static vec3f halfLightSize{2.0f, 2.0f, 2.0f};
+	mat4f transform = sfz::scalingMatrix4<float>(4.0f);
 
 	// Render sun
-	sfz::translation(transform, lightPos);
+	sfz::translation(transform, lightPos - halfLightSize);
 	gl::setUniform(modelMatrixLoc, transform);
-	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(Voxel{VOXEL_YELLOW}));
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(Voxel{VOXEL_ORANGE}));
 	cubeObj.render();
 }
 
@@ -281,9 +282,21 @@ void BaseGameScreen::render(float delta)
 
 	// Drawing objects
 	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader, "uModelMatrix");
+
+	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
+	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.75f, 0.75f, 0.8f});
+	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
 	drawSkyCube(modelMatrixLocGBufferGen, mCam);
+
+	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
+	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.0f, 0.0f, 0.0f});
+	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{1.0, 0.50, 0.25});
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, modelMatrixLocGBufferGen);
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
+
+	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
+	gl::setUniform(mGBufferGenShader, "uEmissive", mLightColor*0.5f);
+	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
 	drawLight(modelMatrixLocGBufferGen, mSunCam.mPos);
 
 	mProfiler.endProfiling(1);

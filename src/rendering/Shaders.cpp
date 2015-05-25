@@ -158,14 +158,24 @@ GLuint compileGBufferGenShaderProgram() noexcept
 
 		// Uniforms
 		uniform sampler2D uDiffuseTexture;
+		uniform sampler2D uEmissiveTexture;
+
+		uniform int uHasEmissiveTexture = 0;
+		uniform vec3 uEmissive = vec3(0.0, 0.0, 0.0);
+		uniform vec3 uMaterial = vec3(1.0 /*ambient*/, 1.0 /*diffuse*/, 1.0 /*specular*/);
 
 		void main()
 		{
 			fragmentDiffuse = vec4(texture(uDiffuseTexture, texCoord).rgb, 1.0);
 			fragmentPosition = vec4(vsPos, 1.0);
 			fragmentNormal = vec4(vsNormal, 1.0);
-			fragmentEmissive = vec4(vec3(0.0, 0.0, 0.0), 1.0);
-			fragmentMaterial = vec4(1.0 /*ambient*/, 0.30 /*diffuse*/, 0.35 /*specular*/, 1.0);
+			if (uHasEmissiveTexture != 0) {
+				vec4 texEmissive = texture(uEmissiveTexture, texCoord);
+				fragmentEmissive = vec4(texEmissive.rgb * texEmissive.a, 1.0);
+			} else {
+				fragmentEmissive = vec4(uEmissive, 1.0);
+			}
+			fragmentMaterial = vec4(uMaterial, 1.0);
 		}
 	)");
 
@@ -376,11 +386,9 @@ GLuint compileLightingShaderProgram() noexcept
 				specularLightIntensity = pow(specularAngle, materialShininess);
 				specularLightIntensity *= ((materialShininess + 2.0) / 8.0); // Normalization
 				// Fresnel effect
-				/*float fresnelBase = max(1.0 - diffuseLightIntensity, 0.0);
-				float fresnelExp = pow(fresnelBase, 5.0);
-				float fresnel = materialSpecular + (1.0-materialSpecular) * fresnelExp;
-				specularLightIntensity *= fresnel;*/
-
+				float fresnelBase = max(1.0 - max(dot(vsNormal, toCam), 0.0), 0.0);
+				float fresnel = pow(fresnelBase, 5.0);
+				materialSpecular = materialSpecular + (1.0-materialSpecular) * fresnel;
 			}
 			vec3 diffuseLight = uLightColor * diffuseLightIntensity * shadow;
 			vec3 specularLight = uLightColor * specularLightIntensity * shadow;
@@ -388,7 +396,7 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 shading = emissive
 			             + materialAmbient * ambientLight * diffuseColor * ao
 			             + materialDiffuse * diffuseLight * diffuseColor
-						 + materialSpecular * specularLight //* diffuseColor
+						 + materialSpecular * specularLight
 						 + uLightShaftExposure * lightShaftFactor(vsPos, 32) * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
