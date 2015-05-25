@@ -171,6 +171,12 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case '5':
 				mRenderMode = 5;
 				break;
+			case '6':
+				mRenderMode = 6;
+				break;
+			case '7':
+				mRenderMode = 7;
+				break;
 			case 'l':
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
@@ -310,13 +316,21 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mLightingShader, "uNormalTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
+	gl::setUniform(mOutputSelectShader, "uEmissiveTexture", 3);
+
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+	gl::setUniform(mOutputSelectShader, "uMaterialTexture", 4);
+
+	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, aoTex);
-	gl::setUniform(mLightingShader, "uAOTexture", 3);
+	gl::setUniform(mLightingShader, "uAOTexture", 5);
 
 	// Shadow map uniform
-	glActiveTexture(GL_TEXTURE4);
+	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
-	gl::setUniform(mLightingShader, "uShadowMap", 4);
+	gl::setUniform(mLightingShader, "uShadowMap", 6);
 
 	// Set view matrix uniform
 	gl::setUniform(mLightingShader, "uViewMatrix", mCam.mViewMatrix);
@@ -428,8 +442,16 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mOutputSelectShader, "uNormalTexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
+	gl::setUniform(mOutputSelectShader, "uEmissiveTexture", 4);
+
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+	gl::setUniform(mOutputSelectShader, "uMaterialTexture", 5);
+
+	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, aoTex);
-	gl::setUniform(mOutputSelectShader, "uAOTexture", 4);
+	gl::setUniform(mOutputSelectShader, "uAOTexture", 6);
 
 	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
 

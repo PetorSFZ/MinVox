@@ -12,7 +12,8 @@
 namespace vox {
 
 struct GBuffer final {
-	GLuint mFBO, mDepthBuffer, mDiffuseTexture, mPositionTexture, mNormalTexture;
+	GLuint mFBO, mDepthBuffer, mDiffuseTexture, mPositionTexture, mNormalTexture, mEmissiveTexture,
+	       mMaterialTexture;
 	int mWidth, mHeight;
 
 	GBuffer() = delete;

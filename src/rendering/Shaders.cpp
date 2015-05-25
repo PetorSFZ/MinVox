@@ -153,6 +153,8 @@ GLuint compileGBufferGenShaderProgram() noexcept
 		layout(location = 0) out vec4 fragmentDiffuse;
 		layout(location = 1) out vec4 fragmentPosition;
 		layout(location = 2) out vec4 fragmentNormal;
+		layout(location = 3) out vec4 fragmentEmissive;
+		layout(location = 4) out vec4 fragmentMaterial;
 
 		// Uniforms
 		uniform sampler2D uDiffuseTexture;
@@ -162,6 +164,8 @@ GLuint compileGBufferGenShaderProgram() noexcept
 			fragmentDiffuse = vec4(texture(uDiffuseTexture, texCoord).rgb, 1.0);
 			fragmentPosition = vec4(vsPos, 1.0);
 			fragmentNormal = vec4(vsNormal, 1.0);
+			fragmentEmissive = vec4(vec3(0.0, 0.0, 0.0), 1.0);
+			fragmentMaterial = vec4(1.0 /*ambient*/, 0.30 /*diffuse*/, 0.35 /*specular*/, 1.0);
 		}
 	)");
 
@@ -178,6 +182,8 @@ GLuint compileGBufferGenShaderProgram() noexcept
 	glBindFragDataLocation(shaderProgram, 0, "fragmentDiffuse");
 	glBindFragDataLocation(shaderProgram, 1, "fragmentPosition");
 	glBindFragDataLocation(shaderProgram, 2, "fragmentNormal");
+	glBindFragDataLocation(shaderProgram, 3, "fragmentEmissive");
+	glBindFragDataLocation(shaderProgram, 4, "fragmentMaterial");
 
 	gl::linkProgram(shaderProgram);
 
@@ -301,6 +307,8 @@ GLuint compileLightingShaderProgram() noexcept
 		uniform sampler2D uDiffuseTexture;
 		uniform sampler2D uPositionTexture;
 		uniform sampler2D uNormalTexture;
+		uniform sampler2D uEmissiveTexture;
+		uniform sampler2D uMaterialTexture;
 		uniform sampler2D uAOTexture;
 		uniform sampler2DShadow uShadowMap;
 
@@ -338,17 +346,19 @@ GLuint compileLightingShaderProgram() noexcept
 
 		void main()
 		{
-			// Material constants
+			// Constants (that should probably be externally defined)
 			const float materialShininess = 8;
-			const float materialAmbient = 1.0;
-			const float materialDiffuse = 0.3;
-			const float materialSpecular = 0.35;
 			const vec3 ambientLight = vec3(0.35);
 
 			// Values from textures
 			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
 			vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
 			vec3 vsNormal = normalize(texture(uNormalTexture, texCoord).xyz);
+			vec3 emissive = texture(uEmissiveTexture, texCoord).rgb;
+			vec3 material = texture(uMaterialTexture, texCoord).xyz;
+			float materialAmbient = material.x;
+			float materialDiffuse = material.y;
+			float materialSpecular = material.z;
 			float ao = texture(uAOTexture, texCoord).r;
 			float shadow = sampleShadowMap(uLightMatrix * vec4(vsPos, 1.0));
 
@@ -375,9 +385,10 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 diffuseLight = uLightColor * diffuseLightIntensity * shadow;
 			vec3 specularLight = uLightColor * specularLightIntensity * shadow;
 
-			vec3 shading = ambientLight * materialAmbient * diffuseColor * ao
-			             + diffuseLight * materialDiffuse * diffuseColor
-						 + specularLight * materialSpecular //* diffuseColor
+			vec3 shading = emissive
+			             + materialAmbient * ambientLight * diffuseColor * ao
+			             + materialDiffuse * diffuseLight * diffuseColor
+						 + materialSpecular * specularLight //* diffuseColor
 						 + uLightShaftExposure * lightShaftFactor(vsPos, 32) * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
@@ -406,6 +417,8 @@ GLuint compileOutputSelectShaderProgram() noexcept
 		uniform sampler2D uDiffuseTexture;
 		uniform sampler2D uPositionTexture;
 		uniform sampler2D uNormalTexture;
+		uniform sampler2D uEmissiveTexture;
+		uniform sampler2D uMaterialTexture;
 		
 		// SSAO
 		uniform sampler2D uAOTexture;
@@ -419,7 +432,9 @@ GLuint compileOutputSelectShaderProgram() noexcept
 			case 2: fragmentColor = vec4(texture(uDiffuseTexture, texCoord).rgb, 1.0); break;
 			case 3: fragmentColor = vec4(texture(uPositionTexture, texCoord).xyz, 1.0); break;
 			case 4: fragmentColor = vec4(texture(uNormalTexture, texCoord).xyz, 1.0); break;
-			case 5: fragmentColor = vec4(vec3(texture(uAOTexture, texCoord).r), 1.0); break;
+			case 5: fragmentColor = vec4(texture(uEmissiveTexture, texCoord).rgb, 1.0); break;
+			case 6: fragmentColor = vec4(texture(uMaterialTexture, texCoord).xyz, 1.0); break;
+			case 7: fragmentColor = vec4(vec3(texture(uAOTexture, texCoord).r), 1.0); break;
 			}
 		}
 	)");

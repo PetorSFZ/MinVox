@@ -54,9 +54,29 @@ GBuffer::GBuffer(int width, int height) noexcept
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, mNormalTexture, 0);
 
+	// Emissive Texture
+	glGenTextures(1, &mEmissiveTexture);
+	glBindTexture(GL_TEXTURE_2D, mEmissiveTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, mEmissiveTexture, 0);
 
-	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-	glDrawBuffers(3, drawBuffers);
+	// Material Texture
+	glGenTextures(1, &mMaterialTexture);
+	glBindTexture(GL_TEXTURE_2D, mMaterialTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, mMaterialTexture, 0);
+
+
+	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4};
+	glDrawBuffers(5, drawBuffers);
 
 	// Check that framebuffer is okay
 	sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
@@ -73,12 +93,16 @@ GBuffer::GBuffer(GBuffer&& other) noexcept
 	glGenTextures(1, &mDiffuseTexture);
 	glGenTextures(1, &mPositionTexture);
 	glGenTextures(1, &mNormalTexture);
+	glGenTextures(1, &mEmissiveTexture);
+	glGenTextures(1, &mMaterialTexture);
 
 	std::swap(mFBO, other.mFBO);
 	std::swap(mDepthBuffer, other.mDepthBuffer);
 	std::swap(mDiffuseTexture, other.mDiffuseTexture);
 	std::swap(mPositionTexture, other.mPositionTexture);
 	std::swap(mNormalTexture, other.mNormalTexture);
+	std::swap(mEmissiveTexture, other.mEmissiveTexture);
+	std::swap(mMaterialTexture, other.mMaterialTexture);
 
 	std::swap(mWidth, other.mWidth);
 	std::swap(mHeight, other.mHeight);
@@ -91,6 +115,8 @@ GBuffer& GBuffer::operator= (GBuffer&& other) noexcept
 	std::swap(mDiffuseTexture, other.mDiffuseTexture);
 	std::swap(mPositionTexture, other.mPositionTexture);
 	std::swap(mNormalTexture, other.mNormalTexture);
+	std::swap(mEmissiveTexture, other.mEmissiveTexture);
+	std::swap(mMaterialTexture, other.mMaterialTexture);
 
 	std::swap(mWidth, other.mWidth);
 	std::swap(mHeight, other.mHeight);
@@ -104,6 +130,8 @@ GBuffer::~GBuffer() noexcept
 	glDeleteTextures(1, &mDiffuseTexture);
 	glDeleteTextures(1, &mPositionTexture);
 	glDeleteTextures(1, &mNormalTexture);
+	glDeleteTextures(1, &mEmissiveTexture);
+	glDeleteTextures(1, &mMaterialTexture);
 	glDeleteFramebuffers(1, &mFBO);
 }
 
