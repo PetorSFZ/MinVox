@@ -9,6 +9,11 @@ namespace vox {
 
 namespace {
 
+void checkGLErrorsMessage(const std::string& msg)
+{
+	if (gl::checkAllGLErrors()) std::cerr << msg << std::endl;
+}
+
 vec3f sphericalToCartesian(float r, float theta, float phi) noexcept
 {
 	using std::sinf;
@@ -219,6 +224,8 @@ void BaseGameScreen::render(float delta)
 	// Enable culling
 	glEnable(GL_CULL_FACE);
 
+	checkGLErrorsMessage("^^^ Errors caused by: render() setup.");
+
 	// Draw shadow map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -258,6 +265,8 @@ void BaseGameScreen::render(float delta)
 	//glCullFace(GL_BACK);
 
 	mProfiler.endProfiling(0);
+
+	checkGLErrorsMessage("^^^ Errors caused by: render() ShadowMap.");
 
 	// Draw GBuffer
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -301,6 +310,8 @@ void BaseGameScreen::render(float delta)
 
 	mProfiler.endProfiling(1);
 
+	checkGLErrorsMessage("^^^ Errors caused by: render() GBuffer.");
+
 	// Lighting
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -330,11 +341,11 @@ void BaseGameScreen::render(float delta)
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
-	gl::setUniform(mOutputSelectShader, "uEmissiveTexture", 3);
+	gl::setUniform(mLightingShader, "uEmissiveTexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
-	gl::setUniform(mOutputSelectShader, "uMaterialTexture", 4);
+	gl::setUniform(mLightingShader, "uMaterialTexture", 4);
 
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, aoTex);
@@ -367,6 +378,8 @@ void BaseGameScreen::render(float delta)
 	glUseProgram(0);
 
 	mProfiler.endProfiling(2);
+
+	checkGLErrorsMessage("^^^ Errors caused by: render() lighting.");
 
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -426,6 +439,8 @@ void BaseGameScreen::render(float delta)
 
 	mProfiler.endProfiling(3);
 
+	checkGLErrorsMessage("^^^ Errors caused by: render() text rendering.");
+
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -472,6 +487,8 @@ void BaseGameScreen::render(float delta)
 	
 	glUseProgram(0);
 
+	checkGLErrorsMessage("^^^ Errors caused by: render() output select.");
+
 	// Blitting post-processed framebuffer to screen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -489,6 +506,8 @@ void BaseGameScreen::render(float delta)
 	mProfiler.endProfiling(4);
 
 	mProfiler.startProfiling();
+
+	checkGLErrorsMessage("^^^ Errors caused by: render() blitting.");
 }
 
 std::unique_ptr<IScreen> BaseGameScreen::changeScreen()
