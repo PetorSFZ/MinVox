@@ -184,6 +184,9 @@ int main()
 
 		SDL_GL_SwapWindow(window.mPtr);
 
+		// Hack that silences OpenGL warnings from SDL_GL_SwapWindow() on MSVC12 for some reason.
+		int val; SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &val); 
+
 		checkGLErrorsMessage("^^^ Above errors likely caused by game loop.");
 	}
 
