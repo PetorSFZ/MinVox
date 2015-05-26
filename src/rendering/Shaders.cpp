@@ -337,10 +337,10 @@ GLuint compileLightingShaderProgram() noexcept
 			return shadow;
 		}
 
-		float lightShaftFactor(vec3 vsPos, int numSamples)
+		float lightShaftFactor(vec3 vsPos, int numSamples, float maxSampleDist)
 		{
 			vec3 camDir = normalize(vsPos);
-			float sampleLength = length(vsPos) / float(numSamples+1);
+			float sampleLength = min(length(vsPos), maxSampleDist) / float(numSamples+1);
 			vec3 toNextSamplePos = camDir * sampleLength;
 	
 			vec3 currentSamplePos = toNextSamplePos;
@@ -397,7 +397,7 @@ GLuint compileLightingShaderProgram() noexcept
 			             + materialAmbient * ambientLight * diffuseColor * ao
 			             + materialDiffuse * diffuseLight * diffuseColor
 						 + materialSpecular * specularLight
-						 + uLightShaftExposure * lightShaftFactor(vsPos, 32) * uLightColor;
+						 + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0) * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
 		}
