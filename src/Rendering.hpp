@@ -7,6 +7,7 @@
 #include "rendering/CubeObject.hpp"
 #include "rendering/FullscreenQuadObject.hpp"
 #include "rendering/GBuffer.hpp"
+#include "rendering/Light.hpp"
 #include "rendering/InGameProfiler.hpp"
 #include "rendering/PostProcessFramebuffer.hpp"
 #include "rendering/Shaders.hpp"

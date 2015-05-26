@@ -62,8 +62,8 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mCfg{getGlobalConfig()},
 
 	mWorld{worldName, vec3f{-3.0f, 1.2f, 0.2f}, mCfg.mHorizontalRange, mCfg.mVerticalRange},
-	mCam{vec3f{-3.0f, 1.2f, 0.2f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f}, 75.0f,
-	     (float)window.width()/(float)window.height(), 0.5f, 1000.0f},
+	mCam{vec3f{-3.0f, 2.5f, 0.2f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f}, 75.0f,
+	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
 
 	mWindow{window},
 
@@ -78,8 +78,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
-	mSunCam{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f},
-	        65.0f, 1.0f, 3.0f, 120.0f}
+	mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
 	mProfiler = InGameProfiler{{"ShadowMap",
 	                            "GBuffer Gen",
@@ -90,7 +89,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
-	mLightColor = vec3f{1.0f, 0.85f, 0.75f};
 
 	mProfiler.startProfiling();
 }
@@ -187,8 +185,8 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
 				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
-				mLightColor = vec3f{distr(gen), distr(gen), distr(gen)};
-				std::cout << "New random light color: " << mLightColor << std::endl;
+				mSun.mColor = vec3f{distr(gen), distr(gen), distr(gen)};
+				std::cout << "New random light color: " << mSun.mColor << std::endl;
 				break;
 			}
 			break;
@@ -236,13 +234,12 @@ void BaseGameScreen::render(float delta)
 	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
 
 	// Light position and matrices
-	mSunCam.mPos = sphericalToCartesian(mLightPosSpherical);
-	mSunCam.mDir = (mLightTarget - mSunCam.mPos).normalize();
-	mSunCam.updateMatrices();
-	mSunCam.updatePlanes();
+	mSun.mCam.mPos = sphericalToCartesian(mLightPosSpherical);
+	mSun.mCam.mDir = (mLightTarget - mSun.mCam.mPos).normalize();
+	mSun.update();
 	
-	gl::setUniform(mShadowMapShader, "uViewMatrix", mSunCam.mViewMatrix);
-	gl::setUniform(mShadowMapShader, "uProjectionMatrix", mSunCam.mProjMatrix);
+	gl::setUniform(mShadowMapShader, "uViewMatrix", mSun.mCam.mViewMatrix);
+	gl::setUniform(mShadowMapShader, "uProjectionMatrix", mSun.mCam.mProjMatrix);
 
 	// Clear shadow map
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -256,8 +253,8 @@ void BaseGameScreen::render(float delta)
 
 	// Draw shadow casters
 	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
-	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSunCam, modelMatrixLocShadowMap);
-	else mWorldRenderer.drawWorldOld(mSunCam, modelMatrixLocShadowMap);
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSun.mCam, modelMatrixLocShadowMap);
+	else mWorldRenderer.drawWorldOld(mSun.mCam, modelMatrixLocShadowMap);
 
 	// Cleanup
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -304,9 +301,9 @@ void BaseGameScreen::render(float delta)
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
 
 	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", mLightColor*0.5f);
+	gl::setUniform(mGBufferGenShader, "uEmissive", mSun.mColor*0.5f);
 	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
-	drawLight(modelMatrixLocGBufferGen, mSunCam.mPos);
+	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);
 
 	mProfiler.endProfiling(1);
 
@@ -360,17 +357,13 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mLightingShader, "uViewMatrix", mCam.mViewMatrix);
 
 	// Calculate and set lightMatrix
-	mat4f lightMatrix = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
-	                  * sfz::scalingMatrix4(0.5f)
-	                  * mSunCam.mProjMatrix
-	                  * mSunCam.mViewMatrix
-	                  * inverse(mCam.mViewMatrix);
-	gl::setUniform(mLightingShader, "uLightMatrix", lightMatrix);
+	mat4f inverseViewMatrix = inverse(mCam.mViewMatrix);
+	gl::setUniform(mLightingShader, "uLightMatrix", mSun.lightMatrix(inverseViewMatrix));
 
 	// Set light position uniform
-	gl::setUniform(mLightingShader, "uLightPos", mSunCam.mPos);
-	gl::setUniform(mLightingShader, "uLightColor", mLightColor);
-
+	gl::setUniform(mLightingShader, "uLightPos", mSun.mCam.mPos);
+	gl::setUniform(mLightingShader, "uLightColor", mSun.mColor);
+	
 	gl::setUniform(mLightingShader, "uLightShaftExposure", mLightShaftExposure);
 
 	mFullscreenQuad.render();

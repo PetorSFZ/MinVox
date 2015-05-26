@@ -76,8 +76,8 @@ protected:
 	bool mOldWorldRenderer = false;
 	int mRenderMode = 1;
 
-	Camera mSunCam;
-	vec3f mLightPosSpherical, mLightTarget, mLightColor;
+	DirectionalLight mSun;
+	vec3f mLightPosSpherical, mLightTarget;
 
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;
