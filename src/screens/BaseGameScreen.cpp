@@ -71,7 +71,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
 	mLightingShader{compileLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
-	mShadowMap{4096, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
+	mShadowMap{2048, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
@@ -293,7 +293,7 @@ void BaseGameScreen::render(float delta)
 	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader, "uModelMatrix");
 
 	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.75f, 0.75f, 0.8f});
+	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.65f, 0.65f, 0.7f});
 	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
 	drawSkyCube(modelMatrixLocGBufferGen, mCam);
 
