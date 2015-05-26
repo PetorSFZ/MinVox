@@ -330,9 +330,10 @@ GLuint compileLightingShaderProgram() noexcept
 
 		uniform float uLightShaftExposure = 0.4;
 
-		float sampleShadowMap(vec4 smCoord)
+		float sampleShadowMap(vec3 vsSamplePos)
 		{
 			float shadow = 0.0;
+			vec4 smCoord = uLightMatrix * vec4(vsSamplePos, 1.0);
 			if (smCoord.z > 0.0) shadow = textureProj(uShadowMap, smCoord);
 			return shadow;
 		}
@@ -346,7 +347,7 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 currentSamplePos = toNextSamplePos;
 			float factor = 0.0;
 			for (int i = 0; i < numSamples; i++) {
-				factor += sampleShadowMap(uLightMatrix * vec4(currentSamplePos, 1.0));
+				factor += sampleShadowMap(currentSamplePos);
 				currentSamplePos += toNextSamplePos;
 			}
 			factor /= float(numSamples);
@@ -357,8 +358,8 @@ GLuint compileLightingShaderProgram() noexcept
 		void main()
 		{
 			// Constants (that should probably be externally defined)
-			const float materialShininess = 8;
-			const vec3 ambientLight = vec3(0.35);
+			const float materialShininess = 6;
+			const vec3 ambientLight = vec3(0.25);
 
 			// Values from textures
 			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
@@ -370,7 +371,7 @@ GLuint compileLightingShaderProgram() noexcept
 			float materialDiffuse = material.y;
 			float materialSpecular = material.z;
 			float ao = texture(uAOTexture, texCoord).r;
-			float shadow = sampleShadowMap(uLightMatrix * vec4(vsPos, 1.0));
+			float shadow = sampleShadowMap(vsPos);
 
 			// Light calculation positions
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
@@ -384,7 +385,7 @@ GLuint compileLightingShaderProgram() noexcept
 			if (diffuseLightIntensity > 0.0) {
 				float specularAngle = max(dot(vsNormal, halfVec), 0.0);
 				specularLightIntensity = pow(specularAngle, materialShininess);
-				specularLightIntensity *= ((materialShininess + 2.0) / 8.0); // Normalization
+				//specularLightIntensity *= ((materialShininess + 2.0) / 8.0); // Normalization
 				// Fresnel effect
 				float fresnelBase = max(1.0 - max(dot(vsNormal, toCam), 0.0), 0.0);
 				float fresnel = pow(fresnelBase, 5.0);

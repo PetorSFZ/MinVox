@@ -12,9 +12,9 @@ GlobalConfig::GlobalConfig() noexcept
 	mWindowResolutionY = 800;
 	mRetinaAware = false;
 
-	mSSAONumSamples = 16;
-	mSSAORadius = 3.0f;
-	mSSAOExp = 1.5f;
+	mSSAONumSamples = 32;
+	mSSAORadius = 2.0f;
+	mSSAOExp = 1.3f;
 
 	mHorizontalRange = 2;
 	mVerticalRange = 1;
