@@ -203,103 +203,6 @@ GLuint compileGBufferGenShaderProgram() noexcept
 	return shaderProgram;
 }
 
-/*GLuint compileLightingShaderProgram() noexcept
-{
-	return compilePostProcessShaderProgram(R"(
-		#version 330
-
-		precision highp float; // required by GLSL spec Sect 4.5.3
-		
-		// Input
-		in vec2 texCoord;
-
-		// Output
-		out vec4 fragmentColor;
-
-		// Uniforms
-		uniform sampler2D uDiffuseTexture;
-		uniform sampler2D uPositionTexture;
-		uniform sampler2D uNormalTexture;
-		uniform sampler2D uOcclusionTexture;
-		uniform sampler2DShadow uShadowMap;
-
-		uniform mat4 uViewMatrix;
-
-		uniform mat4 uLightMatrix;
-		uniform vec3 uLightPos;
-		uniform vec3 uLightColor;
-
-		uniform float uLightShaftExposure = 0.4;
-
-		float lightShaftFactor(vec3 vsPos, int numSamples)
-		{
-			vec3 camDir = normalize(vsPos);
-			float sampleLength = length(vsPos) / float(numSamples+1);
-			vec3 toNextSamplePos = camDir * sampleLength;
-	
-			vec3 currentSamplePos = toNextSamplePos;
-			float factor = 0.0;
-			for (int i = 0; i < numSamples; i++) {
-				vec4 smCoord = uLightMatrix * vec4(currentSamplePos, 1.0);
-				float temp;
-				if (smCoord.z <= 0) temp = 0.0;
-				else temp = textureProj(uShadowMap, smCoord);
-				factor += temp;
-				currentSamplePos += toNextSamplePos;
-			}
-			factor /= float(numSamples);
-			
-			return factor;
-		}
-
-		void main()
-		{
-			// Values from textures
-			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
-			vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
-			vec3 vsNormal = normalize(texture(uNormalTexture, texCoord).xyz);
-			float occlusion = texture(uOcclusionTexture, texCoord).r;
-
-			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
-			vec4 shadowMapCoord = uLightMatrix * vec4(vsPos, 1.0);
-
-			// Texture and materials
-			vec3 ambientLight = vec3(0.35, 0.35, 0.35);
-			vec3 materialAmbient = vec3(1.0, 1.0, 1.0) * diffuseColor;
-			vec3 materialDiffuse = vec3(0.3, 0.3, 0.3) * diffuseColor;
-			vec3 materialSpecular = vec3(0.35, 0.35, 0.35);
-			vec3 materialEmissive = vec3(0, 0, 0);
-			float materialShininess = 8;
-
-			// Variables used to calculate scaling factors for different components
-			vec3 toLight = normalize(vsLightPos - vsPos);
-			float lightDistance = length(vsLightPos - vsPos);
-			vec3 toCam = normalize(-vsPos);
-			vec3 halfVec = normalize(toLight + toCam);
-			float specularNormalization = ((materialShininess + 2.0) / 8.0);
-			
-			float temp;
-			if (shadowMapCoord.z <= 0) temp = 0.0;
-			else temp = textureProj(uShadowMap, shadowMapCoord);
-			float lightVisibility = temp;
-			float lightShafts = lightShaftFactor(vsPos, 42);
-
-			// Scaling factors for different components
-			float diffuseFactor = clamp(dot(vsNormal, toLight), 0, 1);
-			float specularFactor = specularNormalization * pow(clamp(dot(vsNormal, halfVec), 0, 1), materialShininess);
-
-			// Calculate shading
-			vec3 shading = ambientLight * materialAmbient * occlusion
-			             + diffuseFactor * materialDiffuse * uLightColor * lightVisibility
-			             + specularFactor * materialSpecular * uLightColor * lightVisibility
-			             + materialEmissive
-			             + uLightShaftExposure * lightShafts * uLightColor;
-
-			fragmentColor = vec4(shading, 1.0);
-		}
-	)");
-}*/
-
 GLuint compileLightingShaderProgram() noexcept
 {
 	return compilePostProcessShaderProgram(R"(
@@ -327,6 +230,7 @@ GLuint compileLightingShaderProgram() noexcept
 		uniform mat4 uLightMatrix;
 		uniform vec3 uLightPos;
 		uniform vec3 uLightColor = vec3(1.0, 1.0, 1.0);
+		uniform float uLightRange;
 
 		uniform float uLightShaftExposure = 0.4;
 
@@ -379,6 +283,12 @@ GLuint compileLightingShaderProgram() noexcept
 			vec3 toCam = normalize(-vsPos);
 			vec3 halfVec = normalize(toLight + toCam);
 
+			// Light scaling
+			float lightDist = length(vsLightPos - vsPos);
+			//float lightScale = max((-1.0/uLightRange)*lightDist + 1.0, 0); // Linear
+			float lightScale = max((-1.0/(uLightRange*uLightRange)*
+			                   (lightDist*lightDist - uLightRange*uLightRange), 0); // Quadratic
+
 			// Calculates diffuse and specular light
 			float diffuseLightIntensity = max(dot(vsNormal, toLight), 0.0);
 			float specularLightIntensity = 0.0;
@@ -391,14 +301,14 @@ GLuint compileLightingShaderProgram() noexcept
 				float fresnel = pow(fresnelBase, 5.0);
 				materialSpecular = materialSpecular + (1.0-materialSpecular) * fresnel;
 			}
-			vec3 diffuseLight = uLightColor * diffuseLightIntensity * shadow;
-			vec3 specularLight = uLightColor * specularLightIntensity * shadow;
+			vec3 diffuseLight = uLightColor * diffuseLightIntensity * shadow * lightScale;
+			vec3 specularLight = uLightColor * specularLightIntensity * shadow * lightScale;
 
 			vec3 shading = emissive
 			             + materialAmbient * ambientLight * diffuseColor * ao
 			             + materialDiffuse * diffuseLight * diffuseColor
 						 + materialSpecular * specularLight
-						 + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0) * uLightColor;
+						 + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0) * uLightColor * lightScale;
 
 			fragmentColor = vec4(shading, 1.0);
 		}

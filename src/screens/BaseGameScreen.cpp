@@ -71,14 +71,14 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
 	mLightingShader{compileLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
-	mShadowMap{2048, ShadowMapRes::BITS_32, true, vec4f{1.f, 1.f, 1.f, 1.f}},
+	mShadowMap{2048, ShadowMapRes::BITS_32, true, vec4f{0.f, 0.f, 0.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
 	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
-	mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f}}
+	mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
 	mProfiler = InGameProfiler{{"ShadowMap",
 	                            "GBuffer Gen",
@@ -362,6 +362,7 @@ void BaseGameScreen::render(float delta)
 
 	// Set light position uniform
 	gl::setUniform(mLightingShader, "uLightPos", mSun.mCam.mPos);
+	gl::setUniform(mLightingShader, "uLightRange", mSun.mRange);
 	gl::setUniform(mLightingShader, "uLightColor", mSun.mColor);
 	
 	gl::setUniform(mLightingShader, "uLightShaftExposure", mLightShaftExposure);
