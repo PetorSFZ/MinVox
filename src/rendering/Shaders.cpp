@@ -286,8 +286,8 @@ GLuint compileLightingShaderProgram() noexcept
 			// Light scaling
 			float lightDist = length(vsLightPos - vsPos);
 			//float lightScale = max((-1.0/uLightRange)*lightDist + 1.0, 0); // Linear
-			float lightScale = max((-1.0/(uLightRange*uLightRange)*
-			                   (lightDist*lightDist - uLightRange*uLightRange), 0); // Quadratic
+			float lightScale = max((-1.0/(uLightRange*uLightRange))
+							 *(lightDist*lightDist - uLightRange*uLightRange), 0); // Quadratic
 
 			// Calculates diffuse and specular light
 			float diffuseLightIntensity = max(dot(vsNormal, toLight), 0.0);
