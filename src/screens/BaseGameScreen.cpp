@@ -78,9 +78,9 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mGlobalLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mWorldRenderer{mWorld},
+	mWorldRenderer{mWorld}
 
-	mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
+	//mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
 	mProfiler = InGameProfiler{{"GBuffer Gen",
 	                            "Global Lighting (+Shadows Map and SSAO)",
@@ -89,8 +89,11 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	                            "Output Select + Blitting",
 	                            "Between Frames"}};
 
-	mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
-	mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
+	//mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
+	//mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
+	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f});
+	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{0.0f, 0.0f, 1.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.8f, 0.25f});
+	mLights.emplace_back(vec3f{-20.0f, 5.0f, 10.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f});
 
 	mProfiler.startProfiling();
 }
@@ -187,13 +190,13 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				mRenderMode = 8;
 				break;
 
-			case 'l':
+			/*case 'l':
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
 				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
 				mSun.mColor = vec3f{distr(gen), distr(gen), distr(gen)};
 				std::cout << "New random light color: " << mSun.mColor << std::endl;
-				break;
+				break;*/
 			}
 			break;
 		}
@@ -202,11 +205,11 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 
 	updateSpecific(events, ctrl, delta);
 
-	if (currentLightAxis != -1) {
+	/*if (currentLightAxis != -1) {
 		mLightPosSpherical[currentLightAxis] += delta * lightCurrentSpeed;
 		mLightPosSpherical[currentLightAxis] = std::fmod(mLightPosSpherical[currentLightAxis],
 		                                                (sfz::PI()*2.0f));
-	}
+	}*/
 
 	mCam.updateMatrices();
 	mCam.updatePlanes();
@@ -265,107 +268,109 @@ void BaseGameScreen::render(float delta)
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, modelMatrixLocGBufferGen);
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
 
-	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
+	/*gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
 	gl::setUniform(mGBufferGenShader, "uEmissive", mSun.mColor*0.5f);
 	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
-	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);
+	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);*/
 
 	mProfiler.endProfiling(0);
 
 	checkGLErrorsMessage("^^^ Errors caused by: render() GBuffer.");
 
-	// Draw shadow map
+	// Directional Lights (+Shadow Maps)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	mProfiler.startProfiling();
 
-	glUseProgram(mShadowMapShader);
-	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
-	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
-
-	// Light position and matrices
-	mSun.mCam.mPos = sphericalToCartesian(mLightPosSpherical);
-	mSun.mCam.mDir = (mLightTarget - mSun.mCam.mPos).normalize();
-	mSun.update();
-	
-	gl::setUniform(mShadowMapShader, "uViewMatrix", mSun.mCam.mViewMatrix);
-	gl::setUniform(mShadowMapShader, "uProjectionMatrix", mSun.mCam.mProjMatrix);
-
-	// Clear shadow map
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Fix surface acne
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(5.0f, 25.0f);
-	//glCullFace(GL_FRONT);
-
-	// Draw shadow casters
-	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
-	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSun.mCam, modelMatrixLocShadowMap);
-	else mWorldRenderer.drawWorldOld(mSun.mCam, modelMatrixLocShadowMap);
-
-	// Cleanup
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glCullFace(GL_BACK);
-
-	checkGLErrorsMessage("^^^ Errors caused by: render() ShadowMap.");
-
-	// Directional Lights
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
+	// Clear directional lighting texture
 	glUseProgram(mDirLightingShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.mFBO);
 	glViewport(0, 0, mDirLightFramebuffer.mWidth, mDirLightFramebuffer.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Texture uniforms
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
-	gl::setUniform(mDirLightingShader, "uDiffuseTexture", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
-	gl::setUniform(mDirLightingShader, "uPositionTexture", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
-	gl::setUniform(mDirLightingShader, "uNormalTexture", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
-	gl::setUniform(mDirLightingShader, "uMaterialTexture", 3);
-
-	// Shadow map uniform
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
-	gl::setUniform(mDirLightingShader, "uShadowMap", 4);
-
-	// Set view matrix uniform
-	gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
-
-	// Calculate and set lightMatrix
 	mat4f inverseViewMatrix = inverse(mCam.mViewMatrix);
-	gl::setUniform(mDirLightingShader, "uLightMatrix", mSun.lightMatrix(inverseViewMatrix));
 
-	// Set light position uniform
-	gl::setUniform(mDirLightingShader, "uLightPos", mSun.mCam.mPos);
-	gl::setUniform(mDirLightingShader, "uLightRange", mSun.mRange);
-	gl::setUniform(mDirLightingShader, "uLightColor", mSun.mColor);
-	
-	gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
+	for (auto& light : mLights) {
+		// Shadow map
+		glUseProgram(mShadowMapShader);
+		glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
+		glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	mFullscreenQuad.render();
+		light.update();
+		gl::setUniform(mShadowMapShader, "uViewMatrix", light.mCam.mViewMatrix);
+		gl::setUniform(mShadowMapShader, "uProjectionMatrix", light.mCam.mProjMatrix);
+
+		// Fix surface acne
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(5.0f, 25.0f);
+		//glCullFace(GL_FRONT);
+
+		// Draw shadow casters
+		int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
+		if (!mOldWorldRenderer) mWorldRenderer.drawWorld(light.mCam, modelMatrixLocShadowMap);
+		else mWorldRenderer.drawWorldOld(light.mCam, modelMatrixLocShadowMap);
+
+		// Shadow Map: Cleanup
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glCullFace(GL_BACK);
+
+		// Render light
+		glUseProgram(mDirLightingShader);
+		glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.mFBO);
+		glViewport(0, 0, mDirLightFramebuffer.mWidth, mDirLightFramebuffer.mHeight);
+
+		// Texture uniforms
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+		gl::setUniform(mDirLightingShader, "uDiffuseTexture", 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
+		gl::setUniform(mDirLightingShader, "uPositionTexture", 1);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
+		gl::setUniform(mDirLightingShader, "uNormalTexture", 2);
+
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+		gl::setUniform(mDirLightingShader, "uMaterialTexture", 3);
+
+		// Shadow map uniform
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
+		gl::setUniform(mDirLightingShader, "uShadowMap", 4);
+
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
+		gl::setUniform(mDirLightingShader, "uDirectionalLightingTexture", 5);
+
+		// Set view matrix uniform
+		gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
+
+		// Calculate and set lightMatrix
+		gl::setUniform(mDirLightingShader, "uLightMatrix", light.lightMatrix(inverseViewMatrix));
+
+		// Set light position uniform
+		gl::setUniform(mDirLightingShader, "uLightPos", light.mCam.mPos);
+		gl::setUniform(mDirLightingShader, "uLightRange", light.mRange);
+		gl::setUniform(mDirLightingShader, "uLightColor", light.mColor);
 	
-	glUseProgram(0);
+		gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
+
+		mFullscreenQuad.render();
+	
+		glUseProgram(0);
+	}
 
 	mProfiler.endProfiling(1);
 
 	checkGLErrorsMessage("^^^ Errors caused by: render() directional lights.");
-
 
 	// Global Lighting + SSAO + Shadow Map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

@@ -222,6 +222,7 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 		uniform sampler2D uNormalTexture;
 		uniform sampler2D uMaterialTexture;
 		uniform sampler2DShadow uShadowMap;
+		uniform sampler2D uDirectionalLightingTexture;
 
 		uniform mat4 uViewMatrix;
 
@@ -270,6 +271,7 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			float materialDiffuse = material.y;
 			float materialSpecular = material.z;
 			float shadow = sampleShadowMap(vsPos);
+			vec3 dirLights = texture(uDirectionalLightingTexture, texCoord).rgb;
 
 			// Light calculation positions
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
@@ -298,7 +300,8 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			vec3 diffuseLight = uLightColor * diffuseLightIntensity * shadow * lightScale;
 			vec3 specularLight = uLightColor * specularLightIntensity * shadow * lightScale;
 
-			vec3 shading = materialDiffuse * diffuseLight * diffuseColor
+			vec3 shading = dirLights
+			             + materialDiffuse * diffuseLight * diffuseColor
 			             + materialSpecular * specularLight
 			             + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0) * uLightColor * lightScale;
 

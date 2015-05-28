@@ -96,11 +96,11 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {
 		currentSpeed += (ctrl.mLeftTrigger * 12.0f);
 	}
-	if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
+	/*if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
 		lightCurrentSpeed = ctrl.mRightTrigger * lightMaxSpeed;
 	} else {
 		lightCurrentSpeed = lightNormalSpeed;
-	}
+	}*/
 
 	// Analogue Sticks
 	if (ctrl.mRightStick.norm() > ctrl.mRightStickDeadzone) {
@@ -124,7 +124,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	}
 
 	// Face buttons
-	if (ctrl.mButtonY == sdl::Button::UP) {
+	/*if (ctrl.mButtonY == sdl::Button::UP) {
 		currentLightAxis = -1;
 	}
 	if (ctrl.mButtonX == sdl::Button::UP) {
@@ -132,7 +132,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	}
 	if (ctrl.mButtonB == sdl::Button::UP) {
 		currentLightAxis = 2;
-	}
+	}*/
 	if (ctrl.mButtonA == sdl::Button::UP) {
 		vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
 		Voxel v = mWorld.getVoxel(pos);

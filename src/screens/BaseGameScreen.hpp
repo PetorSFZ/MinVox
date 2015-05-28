@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <random>
+#include <vector>
 
 #include "sfz/GL.hpp"
 
@@ -21,6 +22,8 @@ namespace vox {
 using sfz::vec3f;
 using sfz::vec4f;
 using sfz::mat4f;
+
+using std::vector;
 
 class BaseGameScreen : public IScreen {
 public:
@@ -77,15 +80,17 @@ protected:
 	bool mOldWorldRenderer = false;
 	int mRenderMode = 1;
 
-	DirectionalLight mSun;
+	/*DirectionalLight mSun;
 	vec3f mLightPosSpherical, mLightTarget;
 
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;
-	float lightMaxSpeed = sfz::PI();
+	float lightMaxSpeed = sfz::PI();*/
 
-	float mLightShaftExposure = 0.3f;
+	vector<DirectionalLight> mLights;
+
+	float mLightShaftExposure = 0.4f;
 
 	float mFPSMean = 0.0f;
 	long mFPSSamples = 0;
