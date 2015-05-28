@@ -69,7 +69,8 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
-	mLightingShader{compileLightingShaderProgram()},
+	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
+	mDirLightingShader{compileDirectionalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
 	mShadowMap{2048, ShadowMapRes::BITS_32, true, vec4f{0.f, 0.f, 0.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
@@ -317,7 +318,7 @@ void BaseGameScreen::render(float delta)
 	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
 	                                      mCam.mProjMatrix);
 
-	glUseProgram(mLightingShader);
+	glUseProgram(mDirLightingShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mLightingFramebuffer.mFBO);
 	glViewport(0, 0, mLightingFramebuffer.mWidth, mLightingFramebuffer.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -326,46 +327,46 @@ void BaseGameScreen::render(float delta)
 	// Texture uniforms
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
-	gl::setUniform(mLightingShader, "uDiffuseTexture", 0);
+	gl::setUniform(mDirLightingShader, "uDiffuseTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
-	gl::setUniform(mLightingShader, "uPositionTexture", 1);
+	gl::setUniform(mDirLightingShader, "uPositionTexture", 1);
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
-	gl::setUniform(mLightingShader, "uNormalTexture", 2);
+	gl::setUniform(mDirLightingShader, "uNormalTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
-	gl::setUniform(mLightingShader, "uEmissiveTexture", 3);
+	gl::setUniform(mDirLightingShader, "uEmissiveTexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
-	gl::setUniform(mLightingShader, "uMaterialTexture", 4);
+	gl::setUniform(mDirLightingShader, "uMaterialTexture", 4);
 
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, aoTex);
-	gl::setUniform(mLightingShader, "uAOTexture", 5);
+	gl::setUniform(mDirLightingShader, "uAOTexture", 5);
 
 	// Shadow map uniform
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
-	gl::setUniform(mLightingShader, "uShadowMap", 6);
+	gl::setUniform(mDirLightingShader, "uShadowMap", 6);
 
 	// Set view matrix uniform
-	gl::setUniform(mLightingShader, "uViewMatrix", mCam.mViewMatrix);
+	gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
 
 	// Calculate and set lightMatrix
 	mat4f inverseViewMatrix = inverse(mCam.mViewMatrix);
-	gl::setUniform(mLightingShader, "uLightMatrix", mSun.lightMatrix(inverseViewMatrix));
+	gl::setUniform(mDirLightingShader, "uLightMatrix", mSun.lightMatrix(inverseViewMatrix));
 
 	// Set light position uniform
-	gl::setUniform(mLightingShader, "uLightPos", mSun.mCam.mPos);
-	gl::setUniform(mLightingShader, "uLightRange", mSun.mRange);
-	gl::setUniform(mLightingShader, "uLightColor", mSun.mColor);
+	gl::setUniform(mDirLightingShader, "uLightPos", mSun.mCam.mPos);
+	gl::setUniform(mDirLightingShader, "uLightRange", mSun.mRange);
+	gl::setUniform(mDirLightingShader, "uLightColor", mSun.mColor);
 	
-	gl::setUniform(mLightingShader, "uLightShaftExposure", mLightShaftExposure);
+	gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
 
 	mFullscreenQuad.render();
 	

@@ -19,7 +19,9 @@ GLuint compileShadowMapShaderProgram() noexcept;
 
 GLuint compileGBufferGenShaderProgram() noexcept;
 
-GLuint compileLightingShaderProgram() noexcept;
+GLuint compileGlobalLightingShaderProgram() noexcept;
+
+GLuint compileDirectionalLightingShaderProgram() noexcept;
 
 GLuint compileOutputSelectShaderProgram() noexcept;
 

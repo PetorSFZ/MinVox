@@ -65,7 +65,8 @@ protected:
 
 	sdl::Window& mWindow;
 
-	GLuint mShadowMapShader, mGBufferGenShader, mLightingShader, mOutputSelectShader;
+	GLuint mShadowMapShader, mGBufferGenShader, mGlobalLightingShader, mDirLightingShader,
+	       mOutputSelectShader;
 	ShadowMap mShadowMap;
 	GBuffer mGBuffer;
 	PostProcessFramebuffer mLightingFramebuffer, mOutputSelectFramebuffer;

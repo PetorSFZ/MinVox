@@ -203,7 +203,30 @@ GLuint compileGBufferGenShaderProgram() noexcept
 	return shaderProgram;
 }
 
-GLuint compileLightingShaderProgram() noexcept
+
+GLuint compileGlobalLightingShaderProgram() noexcept
+{
+	return compilePostProcessShaderProgram(R"(
+		#version 330
+
+		precision highp float; // required by GLSL spect Sect 4.5.3
+
+		// Input
+		in vec2 texCoord;
+
+		// Output
+		out vec4 fragmentColor;
+
+		// Uniforms
+
+		void main()
+		{
+			fragmentColor = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+	)");
+}
+
+GLuint compileDirectionalLightingShaderProgram() noexcept
 {
 	return compilePostProcessShaderProgram(R"(
 		#version 330
