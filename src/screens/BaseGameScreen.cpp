@@ -69,21 +69,22 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
-	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mDirLightingShader{compileDirectionalLightingShaderProgram()},
+	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
 	mShadowMap{2048, ShadowMapRes::BITS_32, true, vec4f{0.f, 0.f, 0.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
-	mLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
+	mDirLightFramebuffer{window.drawableWidth(), window.drawableHeight()},
+	mGlobalLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
 	mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
-	mProfiler = InGameProfiler{{"ShadowMap",
-	                            "GBuffer Gen",
-								"SSAO + Lighting",
+	mProfiler = InGameProfiler{{"GBuffer Gen",
+	                            "Global Lighting (+Shadows Map and SSAO)",
+	                            "Directional Lights (+Shadow Maps)",
 	                            "Text Rendering",
 	                            "Output Select + Blitting",
 	                            "Between Frames"}};
@@ -182,6 +183,10 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			case '7':
 				mRenderMode = 7;
 				break;
+			case '8':
+				mRenderMode = 8;
+				break;
+
 			case 'l':
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
@@ -225,47 +230,6 @@ void BaseGameScreen::render(float delta)
 
 	checkGLErrorsMessage("^^^ Errors caused by: render() setup.");
 
-	// Draw shadow map
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	mProfiler.startProfiling();
-
-	glUseProgram(mShadowMapShader);
-	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
-	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
-
-	// Light position and matrices
-	mSun.mCam.mPos = sphericalToCartesian(mLightPosSpherical);
-	mSun.mCam.mDir = (mLightTarget - mSun.mCam.mPos).normalize();
-	mSun.update();
-	
-	gl::setUniform(mShadowMapShader, "uViewMatrix", mSun.mCam.mViewMatrix);
-	gl::setUniform(mShadowMapShader, "uProjectionMatrix", mSun.mCam.mProjMatrix);
-
-	// Clear shadow map
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Fix surface acne
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(5.0f, 25.0f);
-	//glCullFace(GL_FRONT);
-
-	// Draw shadow casters
-	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
-	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSun.mCam, modelMatrixLocShadowMap);
-	else mWorldRenderer.drawWorldOld(mSun.mCam, modelMatrixLocShadowMap);
-
-	// Cleanup
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glCullFace(GL_BACK);
-
-	mProfiler.endProfiling(0);
-
-	checkGLErrorsMessage("^^^ Errors caused by: render() ShadowMap.");
-
 	// Draw GBuffer
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -306,21 +270,55 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
 	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);
 
-	mProfiler.endProfiling(1);
+	mProfiler.endProfiling(0);
 
 	checkGLErrorsMessage("^^^ Errors caused by: render() GBuffer.");
 
-	// Lighting
+	// Draw shadow map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	mProfiler.startProfiling();
 
-	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
-	                                      mCam.mProjMatrix);
+	glUseProgram(mShadowMapShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
+	glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
+
+	// Light position and matrices
+	mSun.mCam.mPos = sphericalToCartesian(mLightPosSpherical);
+	mSun.mCam.mDir = (mLightTarget - mSun.mCam.mPos).normalize();
+	mSun.update();
+	
+	gl::setUniform(mShadowMapShader, "uViewMatrix", mSun.mCam.mViewMatrix);
+	gl::setUniform(mShadowMapShader, "uProjectionMatrix", mSun.mCam.mProjMatrix);
+
+	// Clear shadow map
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Fix surface acne
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(5.0f, 25.0f);
+	//glCullFace(GL_FRONT);
+
+	// Draw shadow casters
+	int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader, "uModelMatrix");
+	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mSun.mCam, modelMatrixLocShadowMap);
+	else mWorldRenderer.drawWorldOld(mSun.mCam, modelMatrixLocShadowMap);
+
+	// Cleanup
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glCullFace(GL_BACK);
+
+	checkGLErrorsMessage("^^^ Errors caused by: render() ShadowMap.");
+
+	// Directional Lights
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mDirLightingShader);
-	glBindFramebuffer(GL_FRAMEBUFFER, mLightingFramebuffer.mFBO);
-	glViewport(0, 0, mLightingFramebuffer.mWidth, mLightingFramebuffer.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.mFBO);
+	glViewport(0, 0, mDirLightFramebuffer.mWidth, mDirLightFramebuffer.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -338,21 +336,13 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mDirLightingShader, "uNormalTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
-	gl::setUniform(mDirLightingShader, "uEmissiveTexture", 3);
-
-	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
-	gl::setUniform(mDirLightingShader, "uMaterialTexture", 4);
-
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, aoTex);
-	gl::setUniform(mDirLightingShader, "uAOTexture", 5);
+	gl::setUniform(mDirLightingShader, "uMaterialTexture", 3);
 
 	// Shadow map uniform
-	glActiveTexture(GL_TEXTURE6);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
-	gl::setUniform(mDirLightingShader, "uShadowMap", 6);
+	gl::setUniform(mDirLightingShader, "uShadowMap", 4);
 
 	// Set view matrix uniform
 	gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
@@ -372,9 +362,55 @@ void BaseGameScreen::render(float delta)
 	
 	glUseProgram(0);
 
+	mProfiler.endProfiling(1);
+
+	checkGLErrorsMessage("^^^ Errors caused by: render() directional lights.");
+
+
+	// Global Lighting + SSAO + Shadow Map
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	mProfiler.startProfiling();
+
+	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
+	                                      mCam.mProjMatrix);
+
+	glUseProgram(mGlobalLightingShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.mFBO);
+	glViewport(0, 0, mGlobalLightingFramebuffer.mWidth, mGlobalLightingFramebuffer.mHeight);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Texture uniforms
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+	gl::setUniform(mGlobalLightingShader, "uDiffuseTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
+	gl::setUniform(mGlobalLightingShader, "uEmissiveTexture", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+	gl::setUniform(mGlobalLightingShader, "uMaterialTexture", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, aoTex);
+	gl::setUniform(mGlobalLightingShader, "uAOTexture", 3);
+
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
+	gl::setUniform(mGlobalLightingShader, "uDirectionalLightsTexture", 4);
+
+	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3f{0.25f, 0.25f, 0.25f});
+
+	mFullscreenQuad.render();
+	
+	glUseProgram(0);
+
 	mProfiler.endProfiling(2);
 
-	checkGLErrorsMessage("^^^ Errors caused by: render() lighting.");
+	checkGLErrorsMessage("^^^ Errors caused by: render() Global Lighting + SSAO + Shadow Map");
 
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -384,9 +420,9 @@ void BaseGameScreen::render(float delta)
 	using gl::HorizontalAlign;
 	using gl::VerticalAlign;
 
-	float aspect = (float)mLightingFramebuffer.mWidth / (float)mLightingFramebuffer.mHeight;
+	float aspect = (float)mGlobalLightingFramebuffer.mWidth / (float)mGlobalLightingFramebuffer.mHeight;
 	vec2f fontWindowDimensions{100.0f * aspect, 100.0f};
-	vec2f lightingViewport{(float)mLightingFramebuffer.mWidth, (float)mLightingFramebuffer.mHeight};
+	vec2f lightingViewport{(float)mGlobalLightingFramebuffer.mWidth, (float)mGlobalLightingFramebuffer.mHeight};
 
 	float fps = 1.0f/delta;
 	if (fps > 10000.0f) fps = 10000.0f; // Small hack
@@ -415,7 +451,7 @@ void BaseGameScreen::render(float delta)
 			font.write(vec2f{1.0f, 99.85f - fontSize*(i+1)}, fontSize,
 			                    mProfiler.completeString(i));
 		}
-		font.end(mLightingFramebuffer.mFBO, lightingViewport,
+		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
 
 		xPos = 1.0f;
@@ -428,7 +464,7 @@ void BaseGameScreen::render(float delta)
 			font.write(vec2f{1.0f, 100.0f - fontSize*(i+1)}, fontSize,
 			                    mProfiler.completeString(i));
 		}
-		font.end(mLightingFramebuffer.mFBO, lightingViewport,
+		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
 	}
 
@@ -449,7 +485,7 @@ void BaseGameScreen::render(float delta)
 
 	// Texture uniforms
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mLightingFramebuffer.mTexture);
+	glBindTexture(GL_TEXTURE_2D, mGlobalLightingFramebuffer.mTexture);
 	gl::setUniform(mOutputSelectShader, "uFinishedTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -475,6 +511,10 @@ void BaseGameScreen::render(float delta)
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, aoTex);
 	gl::setUniform(mOutputSelectShader, "uAOTexture", 6);
+
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
+	gl::setUniform(mOutputSelectShader, "uDirectionalLightsTexture", 7);
 
 	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
 
@@ -534,7 +574,8 @@ void BaseGameScreen::changeScreen(IScreen* newScreen) noexcept
 void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {
 	mGBuffer = GBuffer{width, height};
-	mLightingFramebuffer = PostProcessFramebuffer{width, height};
+	mDirLightFramebuffer = PostProcessFramebuffer{width, height};
+	mGlobalLightingFramebuffer = PostProcessFramebuffer{width, height};
 	mOutputSelectFramebuffer = PostProcessFramebuffer{width, height};
 }
 
