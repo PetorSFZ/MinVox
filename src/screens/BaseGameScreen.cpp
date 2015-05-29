@@ -83,17 +83,16 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	//mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
 	mProfiler = InGameProfiler{{"GBuffer Gen",
+								"Directional Lights (+Shadow Maps)",
 	                            "Global Lighting (+Shadows Map and SSAO)",
-	                            "Directional Lights (+Shadow Maps)",
 	                            "Text Rendering",
 	                            "Output Select + Blitting",
 	                            "Between Frames"}};
 
 	//mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	//mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
-	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f});
-	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{0.0f, 0.0f, 1.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.8f, 0.25f});
-	mLights.emplace_back(vec3f{-20.0f, 5.0f, 10.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f});
+	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 60.0f, vec3f{0.2f, 0.25f, 0.8f});
+	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{0.0f, 0.0f, 1.0f}, 3.0f, 30.0f, vec3f{0.2f, 0.8f, 0.25f});
 
 	mProfiler.startProfiling();
 }

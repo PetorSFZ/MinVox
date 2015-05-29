@@ -241,7 +241,14 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			return shadow;
 		}
 
-		float lightShaftFactor(vec3 vsPos, int numSamples, float maxSampleDist)
+		float calcLightScale(vec3 samplePos, vec3 vsLightPos)
+		{
+			float lightDist = length(vsLightPos - samplePos);
+			return max((-1.0/uLightRange)*lightDist + 1.0, 0); // Linear
+			return max((-1.0/(uLightRange*uLightRange))*(lightDist*lightDist-uLightRange*uLightRange), 0); // Quadratic*/
+		}
+
+		float lightShaftFactor(vec3 vsPos, int numSamples, float maxSampleDist, vec3 vsLightPos)
 		{
 			vec3 camDir = normalize(vsPos);
 			float sampleLength = min(length(vsPos), maxSampleDist) / float(numSamples+1);
@@ -250,7 +257,7 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			vec3 currentSamplePos = toNextSamplePos;
 			float factor = 0.0;
 			for (int i = 0; i < numSamples; i++) {
-				factor += sampleShadowMap(currentSamplePos);
+				factor += sampleShadowMap(currentSamplePos) * calcLightScale(currentSamplePos, vsLightPos);
 				currentSamplePos += toNextSamplePos;
 			}
 			factor /= float(numSamples);
@@ -280,10 +287,7 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			vec3 halfVec = normalize(toLight + toCam);
 
 			// Light scaling
-			float lightDist = length(vsLightPos - vsPos);
-			//float lightScale = max((-1.0/uLightRange)*lightDist + 1.0, 0); // Linear
-			float lightScale = max((-1.0/(uLightRange*uLightRange))
-							 *(lightDist*lightDist - uLightRange*uLightRange), 0); // Quadratic
+			float lightScale = calcLightScale(vsPos, vsLightPos);
 
 			// Calculates diffuse and specular light
 			float diffuseLightIntensity = max(dot(vsNormal, toLight), 0.0);
@@ -303,7 +307,7 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			vec3 shading = dirLights
 			             + materialDiffuse * diffuseLight * diffuseColor
 			             + materialSpecular * specularLight
-			             + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0) * uLightColor * lightScale;
+			             + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0, vsLightPos) * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
 		}
