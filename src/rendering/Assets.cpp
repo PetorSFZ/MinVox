@@ -4,7 +4,6 @@
 #include <sfz/Assert.hpp>
 #include "io/IOUtils.hpp"
 #include <iostream>
-#include <string>
 #include <exception>
 #include <new> // std::nothrow
 
@@ -19,9 +18,9 @@ using sfz::vec2f;
 
 namespace {
 
-const std::string& cubeFacePath()
+const string& cubeFacePath()
 {
-	static const std::string CUBE_FACE_128_PATH{assetsPath() + "cube_faces_128pix/"};
+	static const string CUBE_FACE_128_PATH{assetsPath() + "cube_faces_128pix/"};
 	return CUBE_FACE_128_PATH;
 }
 
@@ -42,6 +41,12 @@ const TextureRegion& Assets::cubeFaceRegion(Voxel voxel) const noexcept
 	sfz_assert_debug(voxel.mType != VOXEL_AIR);
 	sfz_assert_debug(voxel.mType != VOXEL_LIGHT);
 	return mCubeFaceRegions[voxel.mType];
+}
+
+const string& Assets::cubeFaceName(Voxel voxel) const noexcept
+{
+	sfz_assert_debug(voxel.mType < mNumVoxelTypes);
+	return mCubeFaceNames[voxel.mType];
 }
 
 GLuint Assets::cubeFaceIndividualTexture(Voxel voxel) const noexcept
@@ -80,6 +85,7 @@ Assets::Assets() noexcept
 	                                 "yellow_b.png"}},
 
 	mCubeFaceRegions{new (std::nothrow) TextureRegion[mNumVoxelTypes]},
+	mCubeFaceNames{new (std::nothrow) string[mNumVoxelTypes]},
 
 	BLUE{cubeFacePath() + "blue_b.png"},
 	GREEN{cubeFacePath() + "green_b.png"},
@@ -94,6 +100,14 @@ Assets::Assets() noexcept
 	mCubeFaceRegions[VOXEL_ORANGE] = *CUBE_FACE_ATLAS.textureRegion("orange_b.png");
 	mCubeFaceRegions[VOXEL_VANILLA] = *CUBE_FACE_ATLAS.textureRegion("vanilla_b.png");
 	mCubeFaceRegions[VOXEL_YELLOW] = *CUBE_FACE_ATLAS.textureRegion("yellow_b.png");
+
+	mCubeFaceNames[VOXEL_AIR] = "AIR";
+	mCubeFaceNames[VOXEL_LIGHT] = "LIGHT";
+	mCubeFaceNames[VOXEL_BLUE] = "BLUE";
+	mCubeFaceNames[VOXEL_GREEN] = "GREEN";
+	mCubeFaceNames[VOXEL_ORANGE] = "ORANGE";
+	mCubeFaceNames[VOXEL_VANILLA] = "VANILLA";
+	mCubeFaceNames[VOXEL_YELLOW] = "YELLOW";
 }
 
 } // namespace vox

@@ -115,6 +115,21 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		mCam.mPos += ((mCam.mDir * ctrl.mLeftStick[1] + right * ctrl.mLeftStick[0]) * currentSpeed * delta);
 	}
 
+	// Control Pad
+	if (ctrl.mButtonDPADUp == sdl::Button::DOWN) {
+		
+	} else if (ctrl.mButtonDPADDown == sdl::Button::DOWN) {
+	
+	} else if (ctrl.mButtonDPADLeft == sdl::Button::DOWN) {
+		if (mCurrentVoxel.mType >= 1) {
+			mCurrentVoxel = Voxel(mCurrentVoxel.mType - uint8_t(1));
+		}
+	} else if (ctrl.mButtonDPADRight == sdl::Button::DOWN) {
+		if (mCurrentVoxel.mType < Assets::INSTANCE().numVoxelTypes() - 1) {
+			mCurrentVoxel = Voxel(mCurrentVoxel.mType + uint8_t(1));
+		}
+	}
+
 	// Shoulder buttons
 	if (ctrl.mButtonLeftShoulder == sdl::Button::DOWN || ctrl.mButtonLeftShoulder == sdl::Button::HELD) {
 		mCam.mPos -= (sfz::vec3f{0,1,0} * currentSpeed * delta);
@@ -137,7 +152,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
 		Voxel v = mWorld.getVoxel(pos);
 		if (v.mType != VOXEL_AIR) mWorld.setVoxel(pos, Voxel{VOXEL_AIR});
-		else mWorld.setVoxel(pos, Voxel{VOXEL_ORANGE});
+		else mWorld.setVoxel(pos, mCurrentVoxel);
 	}
 
 	// Menu buttons

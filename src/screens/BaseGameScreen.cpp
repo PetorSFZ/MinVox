@@ -78,8 +78,9 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mGlobalLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mWorldRenderer{mWorld}
+	mWorldRenderer{mWorld},
 
+	mCurrentVoxel{VOXEL_VANILLA}
 	//mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
 	mProfiler = InGameProfiler{{"GBuffer Gen",
@@ -478,6 +479,24 @@ void BaseGameScreen::render(float delta)
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
 	}
+
+	// Draw GUI
+	font.horizontalAlign(HorizontalAlign::LEFT);
+	font.verticalAlign(VerticalAlign::BOTTOM);
+
+	// Drop shadow
+	float xPos = 1.15f;
+	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+	xPos = font.write(vec2f{xPos, 0.2f}, 4.0f, "Voxel: ");
+	font.write(vec2f{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
+	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4f{0.0f, 0.0f, 0.0f, 1.0f});
+
+	xPos = 1.15f;
+	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
+	xPos = font.write(vec2f{xPos, 0.5f}, 4.0f, "Voxel: ");
+	font.write(vec2f{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
+	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4f{1.0f, 1.0f, 1.0f, 1.0f});
+
 
 	mProfiler.endProfiling(3);
 

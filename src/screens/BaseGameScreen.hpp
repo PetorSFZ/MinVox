@@ -80,6 +80,8 @@ protected:
 	bool mOldWorldRenderer = false;
 	int mRenderMode = 1;
 
+	Voxel mCurrentVoxel; // TODO: Move this to CreationGameScreen
+
 	/*DirectionalLight mSun;
 	vec3f mLightPosSpherical, mLightTarget;
 
