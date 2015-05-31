@@ -38,8 +38,8 @@ GLuint Assets::cubeFaceDiffuseTexture() const noexcept
 const TextureRegion& Assets::cubeFaceRegion(Voxel voxel) const noexcept
 {
 	sfz_assert_debug(voxel.mType < mNumVoxelTypes);
-	sfz_assert_debug(voxel.mType != VOXEL_AIR);
-	sfz_assert_debug(voxel.mType != VOXEL_LIGHT);
+	//sfz_assert_debug(voxel.mType != VOXEL_AIR);
+	//sfz_assert_debug(voxel.mType != VOXEL_LIGHT);
 	return mCubeFaceRegions[voxel.mType];
 }
 

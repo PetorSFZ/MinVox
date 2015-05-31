@@ -52,6 +52,14 @@ void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 	skyCubeObj.render();
 }
 
+void drawPlacementCube(int modelMatrixLoc, const vec3f& pos, Voxel voxel) noexcept
+{
+	static CubeObject cubeObj;
+	gl::setUniform(modelMatrixLoc, sfz::translationMatrix<float>(pos));
+	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(voxel));
+	cubeObj.render();
+}
+
 } // anonymous namespace
 
 // Constructors & destructors
@@ -80,7 +88,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
-	mCurrentVoxel{VOXEL_VANILLA}
+	mCurrentVoxel{VOXEL_AIR}
 	//mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
 	mProfiler = InGameProfiler{{"GBuffer Gen",
@@ -279,6 +287,13 @@ void BaseGameScreen::render(float delta)
 	gl::setUniform(mGBufferGenShader, "uEmissive", mSun.mColor*0.5f);
 	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
 	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);*/
+	
+	if (mCurrentVoxel.mType != VOXEL_AIR && mCurrentVoxel.mType != VOXEL_LIGHT) {
+		gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
+		gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.0f, 0.0f, 0.0f});
+		gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{1.0, 0.50, 0.25});
+		drawPlacementCube(modelMatrixLocGBufferGen, mCurrentVoxelPos, mCurrentVoxel);
+	}
 
 	mProfiler.endProfiling(0);
 
