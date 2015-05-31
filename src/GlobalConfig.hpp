@@ -16,7 +16,12 @@ struct GlobalConfig {
 	bool mLockedResolution;
 	int mLockedResolutionY;
 	bool mRetinaAware;
-	
+
+	int mShadowResolution;
+	bool mShadowPCF;
+	int mLightShaftSamples;
+	float mLightShaftRange;
+
 	size_t mSSAONumSamples;
 	float mSSAORadius, mSSAOExp;
 

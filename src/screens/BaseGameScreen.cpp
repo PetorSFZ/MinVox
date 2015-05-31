@@ -80,7 +80,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mDirLightingShader{compileDirectionalLightingShaderProgram()},
 	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
-	mShadowMap{2048, ShadowMapRes::BITS_32, true, vec4f{0.f, 0.f, 0.f, 1.f}},
+	mShadowMap{mCfg.mShadowResolution, ShadowMapRes::BITS_16, mCfg.mShadowPCF, vec4f{0.f, 0.f, 0.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
 	mDirLightFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mGlobalLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
@@ -389,6 +389,8 @@ void BaseGameScreen::render(float delta)
 		gl::setUniform(mDirLightingShader, "uLightColor", light.mColor);
 	
 		gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
+		gl::setUniform(mDirLightingShader, "uLightShaftRange", mCfg.mLightShaftRange);
+		gl::setUniform(mDirLightingShader, "uLightShaftSamples", mCfg.mLightShaftSamples);
 
 		mFullscreenQuad.render();
 	

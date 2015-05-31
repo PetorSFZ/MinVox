@@ -232,6 +232,8 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 		uniform float uLightRange;
 
 		uniform float uLightShaftExposure = 0.4;
+		uniform float uLightShaftRange;
+		uniform int uLightShaftSamples;
 
 		float sampleShadowMap(vec3 vsSamplePos)
 		{
@@ -304,10 +306,12 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			vec3 diffuseLight = uLightColor * diffuseLightIntensity * shadow * lightScale;
 			vec3 specularLight = uLightColor * specularLightIntensity * shadow * lightScale;
 
+			float lightShafts = lightShaftFactor(vsPos, uLightShaftSamples, uLightShaftRange, vsLightPos);
+
 			vec3 shading = dirLights
 			             + materialDiffuse * diffuseLight * diffuseColor
 			             + materialSpecular * specularLight
-			             + uLightShaftExposure * lightShaftFactor(vsPos, 40, 25.0, vsLightPos) * uLightColor;
+			             + uLightShaftExposure * lightShafts * uLightColor;
 
 			fragmentColor = vec4(shading, 1.0);
 		}
