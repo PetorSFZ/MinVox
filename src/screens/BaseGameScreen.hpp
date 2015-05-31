@@ -103,6 +103,7 @@ private:
 	// Private methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+	void updateResolutions(int width, int height) noexcept;
 	void reloadFramebuffers(int width, int height) noexcept;
 
 	// Private members

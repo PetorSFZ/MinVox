@@ -91,6 +91,8 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mCurrentVoxel{VOXEL_AIR}
 	//mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
 {
+	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
+
 	mProfiler = InGameProfiler{{"GBuffer Gen",
 								"Directional Lights (+Shadow Maps)",
 	                            "Global Lighting (+Shadows Map and SSAO)",
@@ -128,11 +130,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 		case SDL_WINDOWEVENT:
 			switch (event.window.event) {
 			case SDL_WINDOWEVENT_RESIZED:
-				float w = static_cast<float>(event.window.data1);
-				float h = static_cast<float>(event.window.data2);
-				mCam.mAspectRatio = w/h;
-				reloadFramebuffers(event.window.data1, event.window.data2);
-				mSSAO.textureSize(event.window.data1, event.window.data2);
+				updateResolutions(event.window.data1, event.window.data2);
 				break;
 			}
 			break;
@@ -201,11 +199,15 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				mRenderMode = 8;
 				break;
 
-			case 'l':
+			case 'l':{
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
 				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
 				mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3f{distr(gen), distr(gen), distr(gen)});
+				std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
+				}break;
+			case 'o':
+				if (mLights.size() > 1) mLights.pop_back();
 				break;
 
 			/*case 'l':
@@ -618,6 +620,21 @@ void BaseGameScreen::changeScreen(IScreen* newScreen) noexcept
 
 // Private methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void BaseGameScreen::updateResolutions(int width, int height) noexcept
+{
+	float w = static_cast<float>(width);
+	float h = static_cast<float>(height);
+	mCam.mAspectRatio = w/h;
+	if (mCfg.mLockedResolution) {
+		int lockedW = static_cast<int>((w/h)*mCfg.mLockedResolutionY);
+		reloadFramebuffers(lockedW, mCfg.mLockedResolutionY);
+		mSSAO.textureSize(lockedW, mCfg.mLockedResolutionY);
+	} else {
+		reloadFramebuffers(width, height);
+		mSSAO.textureSize(width, height);
+	}
+}
 
 void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {

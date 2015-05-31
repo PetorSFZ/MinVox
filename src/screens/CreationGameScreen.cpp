@@ -115,9 +115,13 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Control Pad
 	if (ctrl.mButtonDPADUp == sdl::Button::DOWN) {
-		
+		mLightShaftExposure += 0.05f;
+		if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
+		std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
 	} else if (ctrl.mButtonDPADDown == sdl::Button::DOWN) {
-	
+		mLightShaftExposure -= 0.05f;
+		if (mLightShaftExposure < 0.0f) mLightShaftExposure = 0.0f;
+		std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
 	} else if (ctrl.mButtonDPADLeft == sdl::Button::DOWN) {
 		if (mCurrentVoxel.mType >= 1) {
 			mCurrentVoxel = Voxel(mCurrentVoxel.mType - uint8_t(1));
@@ -141,10 +145,14 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Face buttons
 	if (ctrl.mButtonY == sdl::Button::UP) {
-
+		std::random_device rd;
+		std::mt19937_64 gen{rd()};
+		std::uniform_real_distribution<float> distr{0.0f, 1.0f};
+		mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3f{distr(gen), distr(gen), distr(gen)});
+		std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
 	}
 	if (ctrl.mButtonX == sdl::Button::UP) {
-		
+		if (mLights.size() > 0) mLights.pop_back();
 	}
 	if (ctrl.mButtonB == sdl::Button::UP) {
 		mWorld.setVoxel(mCurrentVoxelPos, Voxel{VOXEL_AIR});
@@ -155,7 +163,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Menu buttons
 	if (ctrl.mButtonBack == sdl::Button::UP) {
-
+		quitApplication();
 	}
 	if (ctrl.mButtonStart == sdl::Button::UP) {
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));

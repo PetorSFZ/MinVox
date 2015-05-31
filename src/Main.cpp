@@ -137,7 +137,8 @@ int main()
 	Session sdlSession{{InitFlags::EVENTS, InitFlags::VIDEO, InitFlags::GAMECONTROLLER},
 	                   {ImgInitFlags::PNG}};
 	Window window{"MinVox", cfg.mWindowResolutionX, cfg.mWindowResolutionY, {WindowFlags::OPENGL,
-	 WindowFlags::RESIZABLE, cfg.mRetinaAware ? WindowFlags::ALLOW_HIGHDPI : WindowFlags::OPENGL}};
+	 WindowFlags::RESIZABLE, cfg.mRetinaAware ? WindowFlags::ALLOW_HIGHDPI : WindowFlags::OPENGL,
+	 cfg.mFullscreen ? WindowFlags::FULLSCREEN_DESKTOP : WindowFlags::OPENGL}};
 
 	// Enable SDL Events for controllers
 	SDL_GameControllerEventState(SDL_ENABLE);

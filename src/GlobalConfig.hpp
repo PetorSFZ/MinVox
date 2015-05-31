@@ -11,8 +11,10 @@ namespace vox {
 using std::size_t;
 
 struct GlobalConfig {
-	bool mVSync, mPrintFPS;
+	bool mVSync, mFullscreen, mPrintFPS;
 	int mWindowResolutionX, mWindowResolutionY;
+	bool mLockedResolution;
+	int mLockedResolutionY;
 	bool mRetinaAware;
 	
 	size_t mSSAONumSamples;
