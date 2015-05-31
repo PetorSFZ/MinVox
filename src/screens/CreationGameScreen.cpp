@@ -94,13 +94,11 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Triggers
 	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {
-		currentSpeed += (ctrl.mLeftTrigger * 12.0f);
+		
 	}
-	/*if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
-		lightCurrentSpeed = ctrl.mRightTrigger * lightMaxSpeed;
-	} else {
-		lightCurrentSpeed = lightNormalSpeed;
-	}*/
+	if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
+		currentSpeed += (ctrl.mRightTrigger * 12.0f);
+	}
 
 	// Analogue Sticks
 	if (ctrl.mRightStick.norm() > ctrl.mRightStickDeadzone) {
@@ -138,34 +136,30 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		mCam.mPos += (sfz::vec3f{0,1,0} * currentSpeed * delta);
 	}
 
+	auto vPos = mCam.mPos + mCam.mDir * 4.0f;
+	mCurrentVoxelPos = vec3f{std::floorf(vPos[0]), std::floorf(vPos[1]), std::floorf(vPos[2])};
+
 	// Face buttons
-	/*if (ctrl.mButtonY == sdl::Button::UP) {
-		currentLightAxis = -1;
+	if (ctrl.mButtonY == sdl::Button::UP) {
+
 	}
 	if (ctrl.mButtonX == sdl::Button::UP) {
-		currentLightAxis = 1;
+		
 	}
 	if (ctrl.mButtonB == sdl::Button::UP) {
-		currentLightAxis = 2;
-	}*/
+		mWorld.setVoxel(mCurrentVoxelPos, Voxel{VOXEL_AIR});
+	}
 	if (ctrl.mButtonA == sdl::Button::UP) {
-		vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
-		Voxel v = mWorld.getVoxel(pos);
-		if (v.mType != VOXEL_AIR) mWorld.setVoxel(pos, Voxel{VOXEL_AIR});
-		else mWorld.setVoxel(pos, mCurrentVoxel);
+		mWorld.setVoxel(mCurrentVoxelPos, mCurrentVoxel);
 	}
 
 	// Menu buttons
 	if (ctrl.mButtonBack == sdl::Button::UP) {
-		mOldWorldRenderer = !mOldWorldRenderer;
-		if (mOldWorldRenderer) std::cout << "Using old (linear) world renderer.\n";
-		else std::cout << "Using (recursive) world renderer.\n";
+
 	}
 	if (ctrl.mButtonStart == sdl::Button::UP) {
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
 	}
-
-	mCurrentVoxelPos = mCam.mPos + mCam.mDir * 1.5f;
 }
 
 } // namespace vox

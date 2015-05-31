@@ -55,7 +55,7 @@ void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 void drawPlacementCube(int modelMatrixLoc, const vec3f& pos, Voxel voxel) noexcept
 {
 	static CubeObject cubeObj;
-	gl::setUniform(modelMatrixLoc, sfz::translationMatrix<float>(pos));
+	gl::setUniform(modelMatrixLoc, sfz::translationMatrix<float>(pos - vec3f{0.025f, 0.025f, 0.025f})*sfz::scalingMatrix4<float>(1.05f));
 	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(voxel));
 	cubeObj.render();
 }
@@ -138,6 +138,9 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
+			case SDLK_F1:
+				mCfg.mPrintFPS = !mCfg.mPrintFPS;
+				break;
 			case 'r':
 				mSSAO.radius(mSSAO.radius() - 0.1f);
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
@@ -290,7 +293,7 @@ void BaseGameScreen::render(float delta)
 	
 	if (mCurrentVoxel.mType != VOXEL_AIR && mCurrentVoxel.mType != VOXEL_LIGHT) {
 		gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-		gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.0f, 0.0f, 0.0f});
+		gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.15f, 0.15f, 0.15f});
 		gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{1.0, 0.50, 0.25});
 		drawPlacementCube(modelMatrixLocGBufferGen, mCurrentVoxelPos, mCurrentVoxel);
 	}
@@ -429,7 +432,7 @@ void BaseGameScreen::render(float delta)
 	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
 	gl::setUniform(mGlobalLightingShader, "uDirectionalLightsTexture", 4);
 
-	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3f{0.25f, 0.25f, 0.25f});
+	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3f{0.5f, 0.5f, 0.5f});
 
 	mFullscreenQuad.render();
 	
