@@ -12,18 +12,19 @@ GlobalConfig::GlobalConfig() noexcept
 	mWindowResolutionX = 1000;
 	mWindowResolutionY = 800;
 	mLockedResolution = true;
-	mLockedResolutionY = 640;
+	//mLockedResolutionY = 640;
+	mLockedResolutionY = 720;
 	mRetinaAware = false;
 
-	mShadowResolution = 1024;
+	mShadowResolution = 800;
 	mShadowPCF = false;
 
 	mSSAONumSamples = 16;
 	mSSAORadius = 2.0f;
-	mSSAOExp = 1.3f;
+	mSSAOExp = 1.1f;
 
-	mLightShaftSamples = 40;
-	mLightShaftRange = 22.0f;
+	mLightShaftSamples = 38;
+	mLightShaftRange = 18.0f;
 
 	mHorizontalRange = 2;
 	mVerticalRange = 1;

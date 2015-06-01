@@ -168,6 +168,8 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	if (ctrl.mButtonStart == sdl::Button::UP) {
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
 	}
+
+	mCam.mUp = vec3f{0.0f, 1.0f, 0.0f};
 }
 
 } // namespace vox

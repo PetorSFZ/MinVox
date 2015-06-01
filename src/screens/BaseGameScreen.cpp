@@ -102,8 +102,26 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	//mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	//mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
-	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 60.0f, vec3f{0.2f, 0.25f, 0.8f});
-	mLights.emplace_back(vec3f{0.0f, 5.0f, 0.0f}, vec3f{0.0f, 0.0f, 1.0f}, 3.0f, 30.0f, vec3f{0.2f, 0.8f, 0.25f});
+
+	// First corridor
+	vec3f f1Color{0.0f, 0.0f, 1.0f};
+	mLights.emplace_back(vec3f{-21.430313, 5.780775, 5.168257}, vec3f{0.499439, -0.200375, 0.842858}, 0.5f, 20.0f, f1Color);
+	mLights.emplace_back(vec3f{-21.720879, 1.155828, 15.699636}, vec3f{-0.563084, 0.218246, -0.797059}, 0.5f, 20.0f, f1Color);
+
+	// Staircase
+	mLights.emplace_back(vec3f{-33.711731, 13.120087, 32.218548}, vec3f{0.038979, -0.521176, -0.852557}, 0.5f, 40.0f, vec3f{0.8f, 0.2f, 0.8f});
+
+	// Second corridor
+	vec3f f2Color{0.0f, 1.0f, 0.0f};
+	mLights.emplace_back(vec3f{-23.068808, 8.956177, 33.155720}, vec3f{-0.092388, -0.226080, -0.969712}, 0.5f, 20.0f, f2Color);
+	mLights.emplace_back(vec3f{-20.271776, 2.191609, 26.143528}, vec3f{-0.271371, 0.962427, 0.009065}, 0.5f, 20.0f, f2Color);
+
+	// Balcony
+	mLights.emplace_back(vec3f{-17.184530, 10.616333, 26.045494}, vec3f{0.932476, -0.361071, -0.010368}, 0.5f, 100.0f, vec3f{0.4f, 0.5f, 0.9f});
+
+	// Semi-global
+	mLights.emplace_back(vec3f{46.868477, 32.830544, 18.390802}, vec3f{-0.776988, -0.629503, 0.004005}, 35.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f});
+
 
 	mProfiler.startProfiling();
 }
@@ -436,7 +454,7 @@ void BaseGameScreen::render(float delta)
 	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
 	gl::setUniform(mGlobalLightingShader, "uDirectionalLightsTexture", 4);
 
-	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3f{0.5f, 0.5f, 0.5f});
+	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3f{0.2f, 0.2f, 0.2f});
 
 	mFullscreenQuad.render();
 	
