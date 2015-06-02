@@ -14,7 +14,7 @@ GlobalConfig::GlobalConfig() noexcept
 	mLockedResolution = true;
 	//mLockedResolutionY = 640;
 	mLockedResolutionY = 720;
-	mRetinaAware = false;
+	mRetinaAware = true;
 
 	mShadowResolution = 800;
 	mShadowPCF = false;

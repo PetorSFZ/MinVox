@@ -296,7 +296,7 @@ void BaseGameScreen::render(float delta)
 	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader, "uModelMatrix");
 
 	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.65f, 0.65f, 0.7f});
+	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.15f, 0.15f, 0.2f});
 	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
 	drawSkyCube(modelMatrixLocGBufferGen, mCam);
 
