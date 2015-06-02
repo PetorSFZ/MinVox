@@ -246,8 +246,8 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 		float calcLightScale(vec3 samplePos, vec3 vsLightPos)
 		{
 			float lightDist = length(vsLightPos - samplePos);
-			return max((-1.0/uLightRange)*lightDist + 1.0, 0); // Linear
-			return max((-1.0/(uLightRange*uLightRange))*(lightDist*lightDist-uLightRange*uLightRange), 0); // Quadratic*/
+			//return max((-1.0/uLightRange)*lightDist + 1.0, 0); // Linear
+			return max((-1.0/(uLightRange*uLightRange))*(lightDist*lightDist-uLightRange*uLightRange), 0); // Quadratic
 		}
 
 		float lightShaftFactor(vec3 vsPos, int numSamples, float maxSampleDist, vec3 vsLightPos)
