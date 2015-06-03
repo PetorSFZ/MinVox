@@ -211,9 +211,15 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 		// Input
 		in vec3 positionIn;
 
+		// Uniforms
+		uniform mat4 uModelMatrix;
+		uniform mat4 uViewMatrix;
+		uniform mat4 uProjectionMatrix;
+
 		void main()
 		{
-			gl_Position = vec4(positionIn, 1.0);
+			mat4 modelViewProj = uProjectionMatrix * uViewMatrix * uModelMatrix;
+			gl_Position = modelViewProj * vec4(positionIn, 1.0);
 		}
 	)");
 

@@ -122,6 +122,9 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	// Semi-global
 	mLights.emplace_back(vec3f{46.868477f, 32.830544f, 18.390802f}, vec3f{-0.776988f, -0.629503f, 0.004005f}, 35.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f});
 
+	for (auto& light : mLights) {
+		mLightMeshes.emplace_back(light.mCam.mVerticalFov, light.mCam.mNear, light.mRange);
+	}
 
 	mProfiler.startProfiling();
 }
@@ -336,6 +339,7 @@ void BaseGameScreen::render(float delta)
 
 	mat4f inverseViewMatrix = inverse(mCam.mViewMatrix);
 
+	size_t lightIndex = 0;
 	for (auto& light : mLights) {
 		// Shadow map
 		glUseProgram(mShadowMapShader);
@@ -397,6 +401,7 @@ void BaseGameScreen::render(float delta)
 
 		// Set view matrix uniform
 		gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
+		gl::setUniform(mDirLightingShader, "uProjectionMatrix", mCam.mProjMatrix);
 
 		// Calculate and set lightMatrix
 		gl::setUniform(mDirLightingShader, "uLightMatrix", light.lightMatrix(inverseViewMatrix));
@@ -412,9 +417,17 @@ void BaseGameScreen::render(float delta)
 
 		gl::setUniform(mDirLightingShader, "uViewport", vec2f{(float)mDirLightFramebuffer.mWidth, (float)mDirLightFramebuffer.mHeight});
 
-		mFullscreenQuad.render();
+		gl::setUniform(mDirLightingShader, "uModelMatrix", DirectionalLightMesh::generateTransform(light.mCam.mPos, light.mCam.mDir, light.mCam.mUp));
+		//gl::setUniform(mDirLightingShader, "uModelMatrix", sfz::identityMatrix4<float>());
+		
+		glDisable(GL_CULL_FACE);
+		mLightMeshes[lightIndex].render(),
+		glEnable(GL_CULL_FACE);
+
+		//mFullscreenQuad.render();
 	
 		glUseProgram(0);
+		lightIndex++;
 	}
 
 	mProfiler.endProfiling(1);

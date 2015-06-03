@@ -92,6 +92,7 @@ protected:
 	float lightMaxSpeed = sfz::PI();*/
 
 	vector<DirectionalLight> mLights;
+	vector<DirectionalLightMesh> mLightMeshes;
 
 	float mLightShaftExposure = 0.4f;
 

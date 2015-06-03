@@ -4,16 +4,37 @@
 
 #include <sfz/Math.hpp>
 #include "rendering/Camera.hpp"
+#include "sfz/GL.hpp"
 
 #include <sfz/MSVC12HackON.hpp>
 
 namespace vox {
 
 using sfz::vec3f;
+using sfz::vec4f;
 using sfz::mat4f;
 
 // DirectionalLight
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+class DirectionalLightMesh final {
+public:
+	DirectionalLightMesh(const DirectionalLightMesh&) = delete;
+	DirectionalLightMesh& operator= (const DirectionalLightMesh&) = delete;
+
+	DirectionalLightMesh() noexcept;
+	DirectionalLightMesh(float fov, float near, float far) noexcept;
+	DirectionalLightMesh(DirectionalLightMesh&& other) noexcept;
+	DirectionalLightMesh& operator= (DirectionalLightMesh&& other) noexcept;
+	~DirectionalLightMesh() noexcept;
+	void render() noexcept;
+
+	static mat4f generateTransform(const vec3f& pos, const vec3f& dir, const vec3f& up) noexcept;
+
+private:
+	GLuint mVAO;
+	GLuint mPosBuffer, mIndexBuffer;
+};
 
 struct DirectionalLight final {
 	// Public members

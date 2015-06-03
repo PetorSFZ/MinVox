@@ -12,6 +12,8 @@
 #ifdef _WIN32
 	#define NOMINMAX
 	#include <windows.h>
+	#undef near
+	#undef far
 #endif
 #ifdef __APPLE__
 	#include <OpenGL/gl.h>
