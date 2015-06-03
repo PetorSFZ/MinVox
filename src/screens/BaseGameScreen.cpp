@@ -105,22 +105,22 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	// First corridor
 	vec3f f1Color{0.0f, 0.0f, 1.0f};
-	mLights.emplace_back(vec3f{-21.430313, 5.780775, 5.168257}, vec3f{0.499439, -0.200375, 0.842858}, 0.5f, 20.0f, f1Color);
-	mLights.emplace_back(vec3f{-21.720879, 1.155828, 15.699636}, vec3f{-0.563084, 0.218246, -0.797059}, 0.5f, 20.0f, f1Color);
+	mLights.emplace_back(vec3f{-21.430313f, 5.780775f, 5.168257f}, vec3f{0.499439f, -0.200375f, 0.842858f}, 0.5f, 20.0f, f1Color);
+	mLights.emplace_back(vec3f{-21.720879f, 1.155828f, 15.699636f}, vec3f{-0.563084f, 0.218246f, -0.797059f}, 0.5f, 20.0f, f1Color);
 
 	// Staircase
-	mLights.emplace_back(vec3f{-33.711731, 13.120087, 32.218548}, vec3f{0.038979, -0.521176, -0.852557}, 0.5f, 40.0f, vec3f{0.8f, 0.2f, 0.8f});
+	mLights.emplace_back(vec3f{-33.711731f, 13.120087f, 32.218548f}, vec3f{0.038979f, -0.521176f, -0.852557f}, 0.5f, 40.0f, vec3f{0.8f, 0.2f, 0.8f});
 
 	// Second corridor
 	vec3f f2Color{0.0f, 1.0f, 0.0f};
-	mLights.emplace_back(vec3f{-23.068808, 8.956177, 33.155720}, vec3f{-0.092388, -0.226080, -0.969712}, 0.5f, 20.0f, f2Color);
-	mLights.emplace_back(vec3f{-20.271776, 2.191609, 26.143528}, vec3f{-0.271371, 0.962427, 0.009065}, 0.5f, 20.0f, f2Color);
+	mLights.emplace_back(vec3f{-23.068808f, 8.956177f, 33.155720f}, vec3f{-0.092388f, -0.226080f, -0.969712f}, 0.5f, 20.0f, f2Color);
+	mLights.emplace_back(vec3f{-20.271776f, 2.191609f, 26.143528f}, vec3f{-0.271371f, 0.962427f, 0.009065f}, 0.5f, 20.0f, f2Color);
 
 	// Balcony
-	mLights.emplace_back(vec3f{-17.184530, 10.616333, 26.045494}, vec3f{0.932476, -0.361071, -0.010368}, 0.5f, 100.0f, vec3f{0.4f, 0.5f, 0.9f});
+	mLights.emplace_back(vec3f{-17.184530f, 10.616333f, 26.045494f}, vec3f{0.932476f, -0.361071f, -0.010368f}, 0.5f, 100.0f, vec3f{0.4f, 0.5f, 0.9f});
 
 	// Semi-global
-	mLights.emplace_back(vec3f{46.868477, 32.830544, 18.390802}, vec3f{-0.776988, -0.629503, 0.004005}, 35.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f});
+	mLights.emplace_back(vec3f{46.868477f, 32.830544f, 18.390802f}, vec3f{-0.776988f, -0.629503f, 0.004005f}, 35.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f});
 
 
 	mProfiler.startProfiling();
@@ -409,6 +409,8 @@ void BaseGameScreen::render(float delta)
 		gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
 		gl::setUniform(mDirLightingShader, "uLightShaftRange", mCfg.mLightShaftRange);
 		gl::setUniform(mDirLightingShader, "uLightShaftSamples", mCfg.mLightShaftSamples);
+
+		gl::setUniform(mDirLightingShader, "uViewport", vec2f{(float)mDirLightFramebuffer.mWidth, (float)mDirLightFramebuffer.mHeight});
 
 		mFullscreenQuad.render();
 	
