@@ -220,17 +220,6 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				mRenderMode = 8;
 				break;
 
-			case 'l':{
-				std::random_device rd;
-				std::mt19937_64 gen{rd()};
-				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
-				mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3f{distr(gen), distr(gen), distr(gen)});
-				std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
-				}break;
-			case 'o':
-				if (mLights.size() > 1) mLights.pop_back();
-				break;
-
 			/*case 'l':
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};

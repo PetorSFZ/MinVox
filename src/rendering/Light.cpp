@@ -4,6 +4,23 @@
 
 namespace vox {
 
+// Anonymous namespace
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+namespace {
+
+vec3f generateUpVector(const vec3f& dir) noexcept
+{
+	static const vec3f UP{0.0f, 1.0f, 0.0};
+	vec3f axis;
+	if (dir != UP) axis = sfz::cross(dir, UP);
+	else axis = sfz::cross(dir, UP + vec3f{0.1f, 0.0f, 0.0f});
+	sfz::mat3f rotation = sfz::rotationMatrix3(axis, 90.0f*sfz::DEG_TO_RAD());
+	return rotation * dir;
+}
+
+} // anonymous namespace
+
 DirectionalLightMesh::DirectionalLightMesh() noexcept
 {
 	glGenBuffers(1, &mPosBuffer);
@@ -140,7 +157,7 @@ DirectionalLight::DirectionalLight(const vec3f& position, const vec3f& direction
 DirectionalLight::DirectionalLight(const vec3f& pos, const vec3f& dir, float near, float range,
                                    const vec3f& color) noexcept
 :
-	mCam{pos, dir, vec3f{0.0f, 1.0f, 0.0f}, 45.0f, 1.0f, near, range},
+	mCam{pos, dir, generateUpVector(dir), 45.0f, 1.0f, near, range},
 	mRange{range},
 	mColor{color}
 {

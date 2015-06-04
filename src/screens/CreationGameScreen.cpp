@@ -149,10 +149,14 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		std::mt19937_64 gen{rd()};
 		std::uniform_real_distribution<float> distr{0.0f, 1.0f};
 		mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3f{distr(gen), distr(gen), distr(gen)});
+		mLightMeshes.emplace_back(mLights.back().mCam.mVerticalFov, mLights.back().mCam.mNear, mLights.back().mCam.mFar);
 		std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
 	}
 	if (ctrl.mButtonX == sdl::Button::UP) {
-		if (mLights.size() > 0) mLights.pop_back();
+		if (mLights.size() > 0) {
+			mLights.pop_back();
+			mLightMeshes.pop_back();
+		}
 	}
 	if (ctrl.mButtonB == sdl::Button::UP) {
 		mWorld.setVoxel(mCurrentVoxelPos, Voxel{VOXEL_AIR});
