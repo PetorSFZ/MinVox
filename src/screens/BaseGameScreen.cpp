@@ -77,6 +77,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 
 	mShadowMapShader{compileShadowMapShaderProgram()},
 	mGBufferGenShader{compileGBufferGenShaderProgram()},
+	mDirLightingStencilShader{compileDirectionalLightingStencilShaderProgram()},
 	mDirLightingShader{compileDirectionalLightingShaderProgram()},
 	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
@@ -357,10 +358,29 @@ void BaseGameScreen::render(float delta)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		//glCullFace(GL_BACK);
 
-		// Render light
-		glUseProgram(mDirLightingShader);
+		
+		// Render stencil buffer for light region
+		glUseProgram(mDirLightingStencilShader);
 		glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.mFBO);
 		glViewport(0, 0, mDirLightFramebuffer.mWidth, mDirLightFramebuffer.mHeight);
+		glClearStencil(0);
+		glClear(GL_STENCIL_BUFFER_BIT); // Clears stencil buffer to 0.
+
+		gl::setUniform(mDirLightingStencilShader, "uModelMatrix", DirectionalLightMesh::generateTransform(light.mCam.mPos, light.mCam.mDir, light.mCam.mUp));
+		gl::setUniform(mDirLightingStencilShader, "uViewMatrix", mCam.mViewMatrix);
+		gl::setUniform(mDirLightingStencilShader, "uProjectionMatrix", mCam.mProjMatrix);
+
+		glDisable(GL_CULL_FACE);
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		glStencilOp(GL_INCR, GL_INCR, GL_INCR);
+
+		mLightMeshes[lightIndex].render();
+		glEnable(GL_CULL_FACE);
+
+
+		// Render Light
+		glUseProgram(mDirLightingShader);
 
 		// Texture uniforms
 		glActiveTexture(GL_TEXTURE0);
@@ -390,7 +410,6 @@ void BaseGameScreen::render(float delta)
 
 		// Set view matrix uniform
 		gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
-		gl::setUniform(mDirLightingShader, "uProjectionMatrix", mCam.mProjMatrix);
 
 		// Calculate and set lightMatrix
 		gl::setUniform(mDirLightingShader, "uLightMatrix", light.lightMatrix(inverseViewMatrix));
@@ -404,17 +423,12 @@ void BaseGameScreen::render(float delta)
 		gl::setUniform(mDirLightingShader, "uLightShaftRange", mCfg.mLightShaftRange);
 		gl::setUniform(mDirLightingShader, "uLightShaftSamples", mCfg.mLightShaftSamples);
 
-		gl::setUniform(mDirLightingShader, "uViewport", vec2f{(float)mDirLightFramebuffer.mWidth, (float)mDirLightFramebuffer.mHeight});
+		glStencilFunc(GL_NOTEQUAL, 0, 0xFF); // Pass stencil test if not 0.
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-		gl::setUniform(mDirLightingShader, "uModelMatrix", DirectionalLightMesh::generateTransform(light.mCam.mPos, light.mCam.mDir, light.mCam.mUp));
-		//gl::setUniform(mDirLightingShader, "uModelMatrix", sfz::identityMatrix4<float>());
-		
-		glDisable(GL_CULL_FACE);
-		mLightMeshes[lightIndex].render(),
-		glEnable(GL_CULL_FACE);
-
-		//mFullscreenQuad.render();
+		mFullscreenQuad.render();
 	
+		glDisable(GL_STENCIL_TEST);
 		glUseProgram(0);
 		lightIndex++;
 	}
@@ -663,7 +677,7 @@ void BaseGameScreen::updateResolutions(int width, int height) noexcept
 void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 {
 	mGBuffer = GBuffer{width, height};
-	mDirLightFramebuffer = PostProcessFramebuffer{width, height};
+	mDirLightFramebuffer = DirectionalLightingFramebuffer{width, height};
 	mGlobalLightingFramebuffer = PostProcessFramebuffer{width, height};
 	mOutputSelectFramebuffer = PostProcessFramebuffer{width, height};
 }

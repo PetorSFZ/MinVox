@@ -203,7 +203,7 @@ GLuint compileGBufferGenShaderProgram() noexcept
 	return shaderProgram;
 }
 
-GLuint compileDirectionalLightingShaderProgram() noexcept
+GLuint compileDirectionalLightingStencilShaderProgram() noexcept
 {
 	GLuint vertexShader = gl::compileVertexShader(R"(
 		#version 330
@@ -227,7 +227,39 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
+
+		void main()
+		{
+			// Do nothing, stencil buffer should be incremented at this point.
+		}
+	)");
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glBindAttribLocation(shaderProgram, 0, "positionIn");
+
+	gl::linkProgram(shaderProgram);
+
+	if (gl::checkAllGLErrors()) {
+		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
+	}
+	return shaderProgram;
+}
+
+GLuint compileDirectionalLightingShaderProgram() noexcept
+{
+	return compilePostProcessShaderProgram(R"(
+		#version 330
+
+		precision highp float; // required by GLSL spec Sect 4.5.3
 		
+		// Input
+		in vec2 texCoord;
+
 		// Output
 		out vec4 fragmentColor;
 
@@ -249,8 +281,6 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 		uniform float uLightShaftExposure = 0.4;
 		uniform float uLightShaftRange;
 		uniform int uLightShaftSamples;
-
-		uniform vec2 uViewport;
 
 		float sampleShadowMap(vec3 vsSamplePos)
 		{
@@ -290,15 +320,14 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			const float materialShininess = 6;
 
 			// Values from textures
-			vec2 uvCoord = gl_FragCoord.xy / uViewport;
-			vec3 diffuseColor = texture(uDiffuseTexture, uvCoord).rgb;
-			vec3 vsPos = texture(uPositionTexture, uvCoord).xyz;
-			vec3 vsNormal = normalize(texture(uNormalTexture, uvCoord).xyz);
-			vec3 material = texture(uMaterialTexture, uvCoord).xyz;
+			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
+			vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
+			vec3 vsNormal = normalize(texture(uNormalTexture, texCoord).xyz);
+			vec3 material = texture(uMaterialTexture, texCoord).xyz;
 			float materialDiffuse = material.y;
 			float materialSpecular = material.z;
 			float shadow = sampleShadowMap(vsPos);
-			vec3 dirLights = texture(uDirectionalLightingTexture, uvCoord).rgb;
+			vec3 dirLights = texture(uDirectionalLightingTexture, texCoord).rgb;
 
 			// Light calculation positions
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
@@ -334,22 +363,6 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 			fragmentColor = vec4(shading, 1.0);
 		}
 	)");
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "positionIn");
-	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-	return shaderProgram;
 }
 
 GLuint compileGlobalLightingShaderProgram() noexcept

@@ -68,11 +68,13 @@ protected:
 
 	sdl::Window& mWindow;
 
-	GLuint mShadowMapShader, mGBufferGenShader, mDirLightingShader, mGlobalLightingShader,
+	GLuint mShadowMapShader, mGBufferGenShader, mDirLightingStencilShader, mDirLightingShader, mGlobalLightingShader,
 	       mOutputSelectShader;
 	ShadowMap mShadowMap;
 	GBuffer mGBuffer;
-	PostProcessFramebuffer mDirLightFramebuffer, mGlobalLightingFramebuffer, mOutputSelectFramebuffer;
+	DirectionalLightingFramebuffer mDirLightFramebuffer;
+	PostProcessFramebuffer mGlobalLightingFramebuffer, mOutputSelectFramebuffer;
+	
 	SSAO mSSAO;
 	FullscreenQuadObject mFullscreenQuad;
 	WorldRenderer mWorldRenderer;

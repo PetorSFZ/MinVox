@@ -24,6 +24,20 @@ struct PostProcessFramebuffer final {
 	~PostProcessFramebuffer() noexcept;
 };
 
+struct DirectionalLightingFramebuffer final {
+	GLuint mFBO, mTexture, mStencilBuffer;
+	int mWidth, mHeight;
+
+	DirectionalLightingFramebuffer() = delete;
+	DirectionalLightingFramebuffer(const DirectionalLightingFramebuffer&) = delete;
+	DirectionalLightingFramebuffer& operator= (const DirectionalLightingFramebuffer&) = delete;
+
+	DirectionalLightingFramebuffer(int width, int height) noexcept;
+	DirectionalLightingFramebuffer(DirectionalLightingFramebuffer&& other) noexcept;
+	DirectionalLightingFramebuffer& operator= (DirectionalLightingFramebuffer&& other) noexcept;
+	~DirectionalLightingFramebuffer() noexcept;
+};
+
 } // namespace vox
 
 #include <sfz/MSVC12HackOFF.hpp>
