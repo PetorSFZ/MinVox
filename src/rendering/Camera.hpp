@@ -12,6 +12,7 @@ namespace vox {
 using sfz::vec3f;
 using sfz::mat4f;
 using sfz::AABB;
+using sfz::OBB;
 using sfz::Plane;
 
 struct Camera final {
@@ -35,6 +36,8 @@ struct Camera final {
 	void updateMatrices() noexcept;
 	void updatePlanes() noexcept;
 	bool isVisible(const AABB& aabb) const noexcept;
+	bool isVisible(const OBB& obb) const noexcept;
+	bool isVisible(const Camera& cam) const noexcept;
 };
 
 } // namespace vox

@@ -4,6 +4,24 @@
 
 namespace vox {
 
+// Anonymous namespace
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+namespace {
+
+OBB obbApproximation(const Camera& cam) noexcept
+{
+	using std::tanf;
+	const float yHalfRadAngle = (cam.mVerticalFov/2.0f) * sfz::DEG_TO_RAD();
+	const float xHalfRadAngle = cam.mAspectRatio * yHalfRadAngle;
+	const float nearMFar = cam.mFar - cam.mNear;
+	return OBB{cam.mPos + cam.mDir*(cam.mNear+(nearMFar/2.0f)),
+	           sfz::cross(cam.mUp, cam.mDir), cam.mUp, cam.mDir,
+	           cam.mFar*tanf(xHalfRadAngle)*2.0f, cam.mFar*tanf(yHalfRadAngle)*2.0f, nearMFar};
+}
+
+} // anonymous namespace
+
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -73,6 +91,21 @@ bool Camera::isVisible(const AABB& aabb) const noexcept
 	if (!(belowPlane(mNearPlane, aabb) && belowPlane(mFarPlane, aabb))) return false;
 	if (!(belowPlane(mUpPlane, aabb) && belowPlane(mDownPlane, aabb))) return false;
 	return true;
+}
+
+bool Camera::isVisible(const OBB& obb) const noexcept
+{
+	using sfz::belowPlane;
+	if (!(belowPlane(mLeftPlane, obb) && belowPlane(mRightPlane, obb))) return false;
+	if (!(belowPlane(mNearPlane, obb) && belowPlane(mFarPlane, obb))) return false;
+	if (!(belowPlane(mUpPlane, obb) && belowPlane(mDownPlane, obb))) return false;
+	return true;
+}
+
+bool Camera::isVisible(const Camera& cam) const noexcept
+{
+	OBB approx = obbApproximation(cam);
+	return this->isVisible(approx);
 }
 
 } // namespace vox
