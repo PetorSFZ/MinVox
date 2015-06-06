@@ -28,9 +28,9 @@ OBB obbApproximation(const Camera& cam) noexcept
 Camera::Camera(const vec3f& position, const vec3f& direction, const vec3f& upVector,
                float verticalFov, float aspectRatio, float near, float far) noexcept
 :
-	mPos{position},
-	mDir{direction},
-	mUp{upVector},
+	mPos(position),
+	mDir(direction),
+	mUp(upVector),
 	mVerticalFov{verticalFov},
 	mAspectRatio{aspectRatio},
 	mNear{near},

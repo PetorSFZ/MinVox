@@ -26,7 +26,7 @@ struct TextureRegion final {
 	inline TextureRegion(const TextureRegion&) noexcept = default;
 	inline TextureRegion& operator= (const TextureRegion&) noexcept = default;
 
-	inline TextureRegion(vec2f min, vec2f max) noexcept : mUVMin{min}, mUVMax{max} { };
+	inline TextureRegion(vec2f min, vec2f max) noexcept : mUVMin(min), mUVMax(max) { };
 
 	// Methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

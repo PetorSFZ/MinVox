@@ -110,7 +110,7 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 :
 	mWidth{suggestedWidth},
 	mHeight{suggestedHeight},
-	mFilenames{filenames}
+	mFilenames(filenames)
 {
 	size_t size = filenames.size();
 

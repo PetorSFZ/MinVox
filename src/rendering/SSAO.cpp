@@ -338,7 +338,7 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusi
 	mOcclusionFBO{mWidth, mHeight},
 	mBlurredFBO{mWidth, mHeight},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
-	mKernel{std::move(generateKernel(MAX_KERNEL_SIZE))},
+	mKernel(std::move(generateKernel(MAX_KERNEL_SIZE))),
 	mNoiseTexWidth{4},
 	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
 	mRadius{radius},

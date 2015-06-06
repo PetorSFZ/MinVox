@@ -159,7 +159,7 @@ DirectionalLight::DirectionalLight(const vec3f& pos, const vec3f& dir, float nea
 :
 	mCam{pos, dir, generateUpVector(dir), 45.0f, 1.0f, near, range},
 	mRange{range},
-	mColor{color}
+	mColor(color)
 {
 	sfz_assert_debug(range > 0);
 	update();
