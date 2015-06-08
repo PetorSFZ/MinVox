@@ -332,7 +332,7 @@ void BaseGameScreen::render(float delta)
 	size_t lightIndex = 0;
 	for (auto& light : mLights) {
 		// Check if light is visible
-		if (!mCam.isVisible(light.mCam)) continue;
+		//if (!mCam.isVisible(light.mCam)) continue;
 
 		// Shadow map
 		glUseProgram(mShadowMapShader);
