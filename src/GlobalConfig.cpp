@@ -19,6 +19,7 @@ GlobalConfig::GlobalConfig() noexcept
 	mShadowResolution = 800;
 	mShadowPCF = false;
 
+	mSSAOClean = true;
 	mSSAONumSamples = 16;
 	mSSAORadius = 2.0f;
 	mSSAOExp = 1.1f;

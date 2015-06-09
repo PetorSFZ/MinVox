@@ -446,7 +446,7 @@ void BaseGameScreen::render(float delta)
 	mProfiler.startProfiling();
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
-	                                      mCam.mProjMatrix);
+	                               mCam.mProjMatrix, mCfg.mSSAOClean);
 
 	glUseProgram(mGlobalLightingShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.mFBO);

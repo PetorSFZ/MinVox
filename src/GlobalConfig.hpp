@@ -22,6 +22,7 @@ struct GlobalConfig {
 	int mLightShaftSamples;
 	float mLightShaftRange;
 
+	bool mSSAOClean;
 	size_t mSSAONumSamples;
 	float mSSAORadius, mSSAOExp;
 

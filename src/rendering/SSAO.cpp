@@ -93,13 +93,16 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 			vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
 			float sampleDepth = vsPosToDepth(texture(uPositionTexture, sampleTexCoord).xyz);
 
+			float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
+			occlusion += (sampleDepth <= depth ? 0.0 : 1.0) * rangeCheck;
+
 			//float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
 			//occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
 			
 			//float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(depth - sampleDepth));
-			occlusion += (step(sampleDepth, samplePos.z)); // * rangeCheck);
+			//occlusion += (step(sampleDepth, samplePos.z)); // * rangeCheck);
 		}
-		occlusion /= uKernelSize;
+		occlusion = 1.0 - (occlusion / uKernelSize);
 		occlusion = pow(occlusion, uOcclusionExp);
 
 		occlusionOut = vec4(occlusion, 0.0, 0.0, 1.0);
@@ -355,7 +358,7 @@ SSAO::~SSAO() noexcept
 // SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept
+GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix, bool clean) noexcept
 {
 	// Render occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -397,25 +400,23 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix)
 	// Blur occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	glUseProgram(mBlurProgram);
-	glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.mFBO);
-	glViewport(0, 0, mBlurredFBO.mWidth, mBlurredFBO.mHeight);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (clean) {
+		glUseProgram(mBlurProgram);
+		glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.mFBO);
+		glViewport(0, 0, mBlurredFBO.mWidth, mBlurredFBO.mHeight);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.mTexture);
-	gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.mTexture);
+		gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
 
-	mFullscreenQuad.render();
+		mFullscreenQuad.render();
 
-	return mBlurredFBO.mTexture;
-}
-
-GLuint SSAO::calculateClean(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept
-{
-	// TODO: Implement
-	return calculate(posTex, normalTex, projMatrix);
+		return mBlurredFBO.mTexture;
+	} else {
+		return mOcclusionFBO.mTexture;
+	}
 }
 
 // SSAO: Getters / setters

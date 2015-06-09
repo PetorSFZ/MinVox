@@ -56,8 +56,7 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept;
-	GLuint calculateClean(GLuint posTex, GLuint normalTex, const mat4f& projMatrix) noexcept;
+	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix, bool clean = false) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
