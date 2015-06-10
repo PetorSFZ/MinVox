@@ -94,13 +94,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 {
 	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
 
-	mProfiler = InGameProfiler{{"GBuffer Gen",
-								"Directional Lights (+Shadow Maps)",
-	                            "Global Lighting (+Shadows Map and SSAO)",
-	                            "Text Rendering",
-	                            "Output Select + Blitting",
-	                            "Between Frames"}};
-
 	//mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	//mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
 
@@ -126,8 +119,6 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	for (auto& light : mLights) {
 		mLightMeshes.emplace_back(light.mCam.mVerticalFov, light.mCam.mNear, light.mRange);
 	}
-
-	mProfiler.startProfiling();
 }
 
 /*BaseGameScreen::BaseGameScreen(const BaseGameScreen& baseGameScreen)
@@ -249,8 +240,6 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 
 void BaseGameScreen::render(float delta)
 {
-	mProfiler.endProfiling(5);
-
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -266,8 +255,6 @@ void BaseGameScreen::render(float delta)
 
 	// Draw GBuffer
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	mProfiler.startProfiling();
 
 	glUseProgram(mGBufferGenShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mGBuffer.mFBO);
@@ -311,14 +298,10 @@ void BaseGameScreen::render(float delta)
 		drawPlacementCube(modelMatrixLocGBufferGen, mCurrentVoxelPos, mCurrentVoxel);
 	}
 
-	mProfiler.endProfiling(0);
-
 	checkGLErrorsMessage("^^^ Errors caused by: render() GBuffer.");
 
 	// Directional Lights (+Shadow Maps)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	mProfiler.startProfiling();
 
 	// Clear directional lighting texture
 	glUseProgram(mDirLightingShader);
@@ -436,14 +419,10 @@ void BaseGameScreen::render(float delta)
 		lightIndex++;
 	}
 
-	mProfiler.endProfiling(1);
-
 	checkGLErrorsMessage("^^^ Errors caused by: render() directional lights.");
 
 	// Global Lighting + SSAO + Shadow Map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	mProfiler.startProfiling();
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
 	                               mCam.mProjMatrix, mCfg.mSSAOClean);
@@ -481,14 +460,10 @@ void BaseGameScreen::render(float delta)
 	
 	glUseProgram(0);
 
-	mProfiler.endProfiling(2);
-
 	checkGLErrorsMessage("^^^ Errors caused by: render() Global Lighting + SSAO + Shadow Map");
 
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	mProfiler.startProfiling();
 
 	using gl::HorizontalAlign;
 	using gl::VerticalAlign;
@@ -510,33 +485,24 @@ void BaseGameScreen::render(float delta)
 	FontRenderer& font = Assets::INSTANCE().mFontRenderer;
 
 	if (mCfg.mPrintFPS) {
+		using std::string;
+		using std::to_string;
+		string deltaString = "Delta: " + to_string(delta*1000.0f) + "ms, Mean: " + to_string(1000.0f / mFPSMean) + "ms";;
+		string fpsString = "FPS: " + to_string(fps) + ", Mean: " + to_string(mFPSMean);
+
 		font.horizontalAlign(HorizontalAlign::LEFT);
 		font.verticalAlign(VerticalAlign::TOP);
 
 		// Drop shadow
-		float xPos = 1.15f;
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, "FPS: ");
-		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(fps));
-		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, ", Mean: ");
-		xPos = font.write(vec2f{xPos, 99.85f}, fontSize, std::to_string(mFPSMean));
-		for (size_t i = 0; i < mProfiler.size(); ++i) {
-			font.write(vec2f{1.0f, 99.85f - fontSize*(i+1)}, fontSize,
-			                    mProfiler.completeString(i));
-		}
+		font.write(vec2f{1.15, 99.85f}, fontSize, deltaString);
+		font.write(vec2f{1.15, 99.85f - fontSize}, fontSize, fpsString);
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
 
-		xPos = 1.0f;
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, "FPS: ");
-		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(fps));
-		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, ", Mean: ");
-		xPos = font.write(vec2f{xPos, 100.0f}, fontSize, std::to_string(mFPSMean));
-		for (size_t i = 0; i < mProfiler.size(); ++i) {
-			font.write(vec2f{1.0f, 100.0f - fontSize*(i+1)}, fontSize,
-			                    mProfiler.completeString(i));
-		}
+		font.write(vec2f{1.0, 100.0f}, fontSize, deltaString);
+		font.write(vec2f{1.0, 100.0f - fontSize}, fontSize, fpsString);
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
 	}
@@ -558,15 +524,10 @@ void BaseGameScreen::render(float delta)
 	font.write(vec2f{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
 	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4f{1.0f, 1.0f, 1.0f, 1.0f});
 
-
-	mProfiler.endProfiling(3);
-
 	checkGLErrorsMessage("^^^ Errors caused by: render() text rendering.");
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	mProfiler.startProfiling();
 
 	glUseProgram(mOutputSelectShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, mOutputSelectFramebuffer.mFBO);
@@ -628,11 +589,7 @@ void BaseGameScreen::render(float delta)
 	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight,
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-	mProfiler.endProfiling(4);
-
-	mProfiler.startProfiling();
-
+	
 	checkGLErrorsMessage("^^^ Errors caused by: render() blitting.");
 }
 

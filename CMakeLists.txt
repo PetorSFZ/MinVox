@@ -9,7 +9,7 @@ endif(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 # Compiler flags
 if(MSVC)
 	# MSVC flags
-	set(CMAKE_CXX_FLAGS "/Wall /EHsc /wd4350 /wd4514 /wd4668 /wd4710 /wd4711 /wd4820")
+	set(CMAKE_CXX_FLAGS "/Wall /EHsc /wd4514 /wd4668 /wd4710 /wd4711 /wd4820")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /DSFZ_NO_DEBUG")
 	set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DSFZ_NO_DEBUG")
 	set(CMAKE_CXX_FLAGS_DEBUG  "/Od")
@@ -99,8 +99,6 @@ set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/GBuffer.cpp
 	${SRC_DIR}/rendering/Light.hpp
 	${SRC_DIR}/rendering/Light.cpp
-	${SRC_DIR}/rendering/InGameProfiler.hpp
-	${SRC_DIR}/rendering/InGameProfiler.cpp
 	${SRC_DIR}/rendering/PostProcessFramebuffer.hpp
 	${SRC_DIR}/rendering/PostProcessFramebuffer.cpp
 	${SRC_DIR}/rendering/Shaders.hpp
