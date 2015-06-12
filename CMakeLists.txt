@@ -9,10 +9,10 @@ endif(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 # Compiler flags
 if(MSVC)
 	# MSVC flags
-	set(CMAKE_CXX_FLAGS "/Wall /EHsc /wd4514 /wd4668 /wd4710 /wd4711 /wd4820")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS "/Wall /Zi /EHsc /wd4514 /wd4668 /wd4710 /wd4711 /wd4820")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /DEBUG /DSFZ_NO_DEBUG")
 	set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DSFZ_NO_DEBUG")
-	set(CMAKE_CXX_FLAGS_DEBUG  "/Od")
+	set(CMAKE_CXX_FLAGS_DEBUG  "/Od /DEBUG")
 else()
 	# GCC / Clang flags
 	set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c++11-extensions -std=c++11 -pthread")
@@ -59,7 +59,6 @@ include_directories(
 set(SOURCE_BASE_FILES
 	${SRC_DIR}/GlobalConfig.hpp
 	${SRC_DIR}/GlobalConfig.cpp
-	${SRC_DIR}/Main.cpp
 	${SRC_DIR}/IO.hpp
 	${SRC_DIR}/Model.hpp
 	${SRC_DIR}/Rendering.hpp
@@ -168,7 +167,7 @@ set(SOURCE_ALL_FILES
 	${SOURCE_SFZ_GL_FILES})
 
 # Main executable
-add_executable(MinVox ${SOURCE_ALL_FILES})
+add_executable(MinVox ${SRC_DIR}/Main.cpp ${SOURCE_ALL_FILES})
 
 # Linking libraries to main executable
 target_link_libraries(
