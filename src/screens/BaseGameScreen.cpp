@@ -495,8 +495,8 @@ void BaseGameScreen::render(float delta)
 
 		// Drop shadow
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2f{1.15, 99.85f}, fontSize, deltaString);
-		font.write(vec2f{1.15, 99.85f - fontSize}, fontSize, fpsString);
+		font.write(vec2f{1.15f, 99.85f}, fontSize, deltaString);
+		font.write(vec2f{1.15f, 99.85f - fontSize}, fontSize, fpsString);
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
 
