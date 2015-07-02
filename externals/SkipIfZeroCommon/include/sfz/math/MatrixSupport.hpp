@@ -6,7 +6,6 @@
 
 #include "sfz/Assert.hpp"
 #include "sfz/math/Matrix.hpp"
-#include "sfz/MSVC12HackON.hpp"
 
 namespace sfz {
 
@@ -20,10 +19,10 @@ namespace sfz {
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 template<typename T>
-Matrix<T,3,3> mat3(const Matrix<T,4,4>& m) noexcept;
+Matrix<T,3,3> toMat3(const Matrix<T,4,4>& m) noexcept;
 
 template<typename T>
-Matrix<T,4,4> mat4(const Matrix<T,3,3>& m) noexcept;
+Matrix<T,4,4> toMat4(const Matrix<T,3,3>& m) noexcept;
 
 // Transforming 3D vector helpers
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -197,7 +196,5 @@ template<typename T>
 void left(Matrix<T,4,4>& transform, const Vector<T,3>& left) noexcept;
 
 } // namespace sfz
-
-#include "sfz/MSVC12HackOFF.hpp"
 #include "sfz/math/MatrixSupport.inl"
 #endif

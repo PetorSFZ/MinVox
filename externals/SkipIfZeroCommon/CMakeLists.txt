@@ -11,9 +11,9 @@ endif(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 # Compiler flags
 if(MSVC)
 	# MSVC flags
-	set(CMAKE_CXX_FLAGS "/Wall /Zi /EHsc /wd4350 /wd4514 /wd4571 /wd4668 /wd4710 /wd4711 /wd4820")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /DEBUG /DSFZ_NO_DEBUG")
-	set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS "/Wall /Zi /EHsc /wd4201 /wd4350 /wd4514 /wd4571 /wd4668 /wd4710 /wd4711 /wd4820")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /fp:fast /DEBUG /DSFZ_NO_DEBUG")
+	set(CMAKE_CXX_FLAGS_RELEASE "/O2 /fp:fast /DSFZ_NO_DEBUG")
 	set(CMAKE_CXX_FLAGS_DEBUG  "/Od /DEBUG")
 else()
 	# GCC / Clang flags
@@ -40,8 +40,6 @@ include_directories(${CATCH_INCLUDE_DIRS})
 set(SOURCE_GENERAL_FILES
 	${INCLUDE_DIR}/sfz/Assert.hpp
 	${INCLUDE_DIR}/sfz/Assert.inl
-	${INCLUDE_DIR}/sfz/MSVC12HackON.hpp
-	${INCLUDE_DIR}/sfz/MSVC12HackOFF.hpp
 	${INCLUDE_DIR}/sfz/Geometry.hpp
 	${INCLUDE_DIR}/sfz/Math.hpp
 	${INCLUDE_DIR}/sfz/Util.hpp)
@@ -69,9 +67,7 @@ set(SOURCE_MATH_FILES
 	${INCLUDE_DIR}/sfz/math/MatrixSupport.hpp
 	${INCLUDE_DIR}/sfz/math/MatrixSupport.inl
 	${INCLUDE_DIR}/sfz/math/Vector.hpp
-	${INCLUDE_DIR}/sfz/math/Vector.inl
-	${INCLUDE_DIR}/sfz/math/VectorSupport.hpp
-	${INCLUDE_DIR}/sfz/math/VectorSupport.inl)
+	${INCLUDE_DIR}/sfz/math/Vector.inl)
 source_group(sfz_math FILES ${SOURCE_MATH_FILES})
 
 set(SOURCE_UTIL_FILES

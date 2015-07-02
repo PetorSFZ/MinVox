@@ -1,12 +1,10 @@
-#include "sfz/MSVC12HackON.hpp"
-
 namespace sfz {
 
 // Resizing helpers
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 template<typename T>
-Matrix<T,3,3> mat3(const Matrix<T,4,4>& m) noexcept
+Matrix<T,3,3> toMat3(const Matrix<T,4,4>& m) noexcept
 {
 	return Matrix<T,3,3>{{m.at(0,0), m.at(0,1), m.at(0,2)},
 	                     {m.at(1,0), m.at(1,1), m.at(1,2)},
@@ -14,7 +12,7 @@ Matrix<T,3,3> mat3(const Matrix<T,4,4>& m) noexcept
 }
 
 template<typename T>
-Matrix<T,4,4> mat4(const Matrix<T,3,3>& m) noexcept
+Matrix<T,4,4> toMat4(const Matrix<T,3,3>& m) noexcept
 {
 	return Matrix<T,4,4>{{m.at(0,0), m.at(0,1), m.at(0,2), 0},
 	                     {m.at(1,0), m.at(1,1), m.at(1,2), 0},
@@ -84,7 +82,7 @@ template<typename T>
 Matrix<T,2,2> inverse(const Matrix<T,2,2>& m) noexcept
 {
 	const T det = determinant(m);
-	if (det == 0) return Matrix<T,2,2>::ZERO();
+	if (det == 0) return ZERO_MATRIX<T,2,2>();
 
 	Matrix<T,2,2> temp{{m.at(1, 1), -m.at(0, 1)},
 	                  {-m.at(1,0), m.at(0,0)}};
@@ -96,7 +94,7 @@ template<typename T>
 Matrix<T,3,3> inverse(const Matrix<T,3,3>& m) noexcept
 {
 	const T det = determinant(m);
-	if (det == 0) return Matrix<T,3,3>::ZERO();
+	if (det == 0) return ZERO_MATRIX<T,3,3>();
 
 	const T a = m.at(0,0);
 	const T b = m.at(0,1); 
@@ -127,7 +125,7 @@ template<typename T>
 Matrix<T,4,4> inverse(const Matrix<T,4,4>& m) noexcept
 {
 	const T det = determinant(m);
-	if (det == 0) return Matrix<T,4,4>::ZERO();
+	if (det == 0) return ZERO_MATRIX<T,4,4>();
 
 	const T m00 = m.at(0, 0), m01 = m.at(0, 1), m02 = m.at(0, 2), m03 = m.at(0, 3),
 	        m10 = m.at(1, 0), m11 = m.at(1, 1), m12 = m.at(1, 2), m13 = m.at(1, 3),
@@ -229,7 +227,7 @@ Matrix<T,3,3> rotationMatrix3(const sfz::Vector<T,3>& axis, T angleRads) noexcep
 {
 	using std::cos;
 	using std::sin;
-	sfz::Vector<T,3> r = axis.normalize();
+	sfz::Vector<T,3> r = normalize(axis);
 	T x = r[0];
 	T y = r[1];
 	T z = r[2];
@@ -247,7 +245,7 @@ Matrix<T,4,4> rotationMatrix4(const sfz::Vector<T,3>& axis, T angleRads) noexcep
 {
 	using std::cos;
 	using std::sin;
-	sfz::Vector<T,3> r = axis.normalize();
+	sfz::Vector<T,3> r = normalize(axis);
 	T x = r[0];
 	T y = r[1];
 	T z = r[2];
@@ -394,10 +392,10 @@ Matrix<T,4,4> lookAt(const Vector<T,3>& cameraPosition, const Vector<T,3> camera
                      const Vector<T,3> upVector) noexcept
 {
 	// Inspired by gluLookAt().
-	Vector<T,3> normalizedDir = (cameraTarget - cameraPosition).normalize();
-	Vector<T,3> normalizedUpVec = upVector.normalize();
-	Vector<T,3> s = cross(normalizedDir, normalizedUpVec).normalize();
-	Vector<T,3> u = cross(s.normalize(), normalizedDir).normalize();
+	Vector<T,3> normalizedDir = normalize(cameraTarget - cameraPosition);
+	Vector<T,3> normalizedUpVec = normalize(upVector);
+	Vector<T,3> s = normalize(cross(normalizedDir, normalizedUpVec));
+	Vector<T,3> u = normalize(cross(normalize(s), normalizedDir));
 	return Matrix<T,4,4>{{s[0], s[1], s[2], 0},
 	                     {u[0], u[1], u[2], 0},
 	                     {-normalizedDir[0], -normalizedDir[1], -normalizedDir[2], 0},
@@ -536,5 +534,3 @@ void left(Matrix<T,4,4>& transform, const Vector<T,3>& left) noexcept
 }
 
 } // namespace sfz
-
-#include "sfz/MSVC12HackOFF.hpp"
