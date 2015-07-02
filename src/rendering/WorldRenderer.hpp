@@ -14,8 +14,8 @@
 
 namespace vox {
 
-using sfz::vec3f;
-using sfz::mat4f;
+using sfz::vec3;
+using sfz::mat4;
 
 class WorldRenderer {
 public:

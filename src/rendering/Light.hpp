@@ -10,9 +10,9 @@
 
 namespace vox {
 
-using sfz::vec3f;
-using sfz::vec4f;
-using sfz::mat4f;
+using sfz::vec3;
+using sfz::vec4;
+using sfz::mat4;
 
 // DirectionalLight
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -29,7 +29,7 @@ public:
 	~DirectionalLightMesh() noexcept;
 	void render() noexcept;
 
-	static mat4f generateTransform(const vec3f& pos, const vec3f& dir, const vec3f& up) noexcept;
+	static mat4 generateTransform(const vec3& pos, const vec3& dir, const vec3& up) noexcept;
 
 private:
 	GLuint mVAO;
@@ -42,22 +42,22 @@ struct DirectionalLight final {
 
 	Camera mCam;
 	float mRange;
-	vec3f mColor;
+	vec3 mColor;
 
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	DirectionalLight(const vec3f& position, const vec3f& direction, const vec3f& upVector,
+	DirectionalLight(const vec3& position, const vec3& direction, const vec3& upVector,
 	                 float verticalFov, float near, float far) noexcept;
 
-	DirectionalLight(const vec3f& pos, const vec3f& dir, float near, float range,
-	                 const vec3f& color) noexcept;
+	DirectionalLight(const vec3& pos, const vec3& dir, float near, float range,
+	                 const vec3& color) noexcept;
 
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	void update() noexcept;
-	mat4f lightMatrix(const mat4f& inverseViewMatrix) const noexcept;
+	mat4 lightMatrix(const mat4& inverseViewMatrix) const noexcept;
 };
 
 } // namespace vox

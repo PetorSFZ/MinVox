@@ -21,7 +21,7 @@ namespace vox {
 
 using std::size_t;
 using std::unique_ptr;
-using sfz::vec3f;
+using sfz::vec3;
 using sfz::vec3i;
 
 class World final {
@@ -37,21 +37,21 @@ public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	World(const std::string& name, const vec3f& camPos,
+	World(const std::string& name, const vec3& camPos,
 	      size_t horizontalRange, size_t verticalRange) noexcept;
 
 	// Public member functions
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void update(const vec3f& camPos) noexcept;
+	void update(const vec3& camPos) noexcept;
 
-	vec3f positionFromChunkOffset(const vec3i& offset) const noexcept;
+	vec3 positionFromChunkOffset(const vec3i& offset) const noexcept;
 
 	vec3i chunkOffsetFromPosition(const vec3i& position) const noexcept;
-	vec3i chunkOffsetFromPosition(const vec3f& position) const noexcept;
+	vec3i chunkOffsetFromPosition(const vec3& position) const noexcept;
 
 	void setVoxel(const vec3i& position, Voxel voxel) noexcept;
-	void setVoxel(const vec3f& position, Voxel voxel) noexcept;
+	void setVoxel(const vec3& position, Voxel voxel) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -67,7 +67,7 @@ public:
 	bool chunkAvailable(size_t index) const noexcept;
 
 	Voxel getVoxel(const vec3i& offset) const noexcept;
-	Voxel getVoxel(const vec3f& position) const noexcept;
+	Voxel getVoxel(const vec3& position) const noexcept;
 
 private:
 	// Private methods

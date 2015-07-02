@@ -145,7 +145,7 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 	SDL_FillRect(surface, NULL, 0);
 
 	// Blitting individual surfaces to common surface and calculating TextureRegions
-	vec2f texDimInv{1.0f/(float)mWidth, 1.0f/(float)mHeight};
+	vec2 texDimInv{1.0f/(float)mWidth, 1.0f/(float)mHeight};
 	for (size_t i = 0; i < size; ++i) {
 		SDL_Rect dstRect;
 		dstRect.w = surfaces[i]->w - 2*padding;
@@ -156,11 +156,8 @@ TexturePacker::TexturePacker(const string& dirPath, const vector<string>& filena
 		SDL_BlitSurface(surfaces[i], NULL, surface, &dstRect);
 
 		// Calculate TextureRegion
-		vec2f min = vec2f{(float)(dstRect.x + padding), (float)(dstRect.y + padding)}
-		            .elemMult(texDimInv);
-		vec2f max = vec2f{(float)(dstRect.x + dstRect.w - 2*padding),
-		                  (float)(dstRect.y + dstRect.h - 2*padding)}
-		            .elemMult(texDimInv);
+		vec2 min = sfz::elemMult(vec2{(float)(dstRect.x + padding), (float)(dstRect.y + padding)}, texDimInv);
+		vec2 max = sfz::elemMult(vec2{(float)(dstRect.x + dstRect.w - 2*padding), (float)(dstRect.y + dstRect.h - 2*padding)}, texDimInv);
 		mTextureRegionMap[filenames[i]] = TextureRegion{min, max};
 	}
 

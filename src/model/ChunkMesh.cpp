@@ -13,121 +13,121 @@ namespace vox {
 
 namespace {
 
-const vec3f CUBE_VERTICES[] = {
+const vec3 CUBE_VERTICES[] = {
 	// x, y, z
 	// Left
-	vec3f{0.0f, 0.0f, 0.0f}, // 0, left-bottom-back
-	vec3f{0.0f, 0.0f, 1.0f}, // 1, left-bottom-front
-	vec3f{0.0f, 1.0f, 0.0f}, // 2, left-top-back
-	vec3f{0.0f, 1.0f, 1.0f}, // 3, left-top-front
+	vec3{0.0f, 0.0f, 0.0f}, // 0, left-bottom-back
+	vec3{0.0f, 0.0f, 1.0f}, // 1, left-bottom-front
+	vec3{0.0f, 1.0f, 0.0f}, // 2, left-top-back
+	vec3{0.0f, 1.0f, 1.0f}, // 3, left-top-front
 
 	// Right
-	vec3f{1.0f, 0.0f, 0.0f}, // 4, right-bottom-back
-	vec3f{1.0f, 0.0f, 1.0f}, // 5, right-bottom-front
-	vec3f{1.0f, 1.0f, 0.0f}, // 6, right-top-back
-	vec3f{1.0f, 1.0f, 1.0f}, // 7, right-top-front
+	vec3{1.0f, 0.0f, 0.0f}, // 4, right-bottom-back
+	vec3{1.0f, 0.0f, 1.0f}, // 5, right-bottom-front
+	vec3{1.0f, 1.0f, 0.0f}, // 6, right-top-back
+	vec3{1.0f, 1.0f, 1.0f}, // 7, right-top-front
 
 	// Bottom
-	vec3f{0.0f, 0.0f, 0.0f}, // 8, left-bottom-back
-	vec3f{0.0f, 0.0f, 1.0f}, // 9, left-bottom-front
-	vec3f{1.0f, 0.0f, 0.0f}, // 10, right-bottom-back
-	vec3f{1.0f, 0.0f, 1.0f}, // 11, right-bottom-front
+	vec3{0.0f, 0.0f, 0.0f}, // 8, left-bottom-back
+	vec3{0.0f, 0.0f, 1.0f}, // 9, left-bottom-front
+	vec3{1.0f, 0.0f, 0.0f}, // 10, right-bottom-back
+	vec3{1.0f, 0.0f, 1.0f}, // 11, right-bottom-front
 
 	// Top
-	vec3f{0.0f, 1.0f, 0.0f}, // 12, left-top-back
-	vec3f{0.0f, 1.0f, 1.0f}, // 13, left-top-front
-	vec3f{1.0f, 1.0f, 0.0f}, // 14, right-top-back
-	vec3f{1.0f, 1.0f, 1.0f}, // 15, right-top-front
+	vec3{0.0f, 1.0f, 0.0f}, // 12, left-top-back
+	vec3{0.0f, 1.0f, 1.0f}, // 13, left-top-front
+	vec3{1.0f, 1.0f, 0.0f}, // 14, right-top-back
+	vec3{1.0f, 1.0f, 1.0f}, // 15, right-top-front
 
 	// Back
-	vec3f{0.0f, 0.0f, 0.0f}, // 16, left-bottom-back
-	vec3f{0.0f, 1.0f, 0.0f}, // 17, left-top-back
-	vec3f{1.0f, 0.0f, 0.0f}, // 18, right-bottom-back
-	vec3f{1.0f, 1.0f, 0.0f}, // 19, right-top-back
+	vec3{0.0f, 0.0f, 0.0f}, // 16, left-bottom-back
+	vec3{0.0f, 1.0f, 0.0f}, // 17, left-top-back
+	vec3{1.0f, 0.0f, 0.0f}, // 18, right-bottom-back
+	vec3{1.0f, 1.0f, 0.0f}, // 19, right-top-back
 
 	// Front
-	vec3f{0.0f, 0.0f, 1.0f}, // 20, left-bottom-front
-	vec3f{0.0f, 1.0f, 1.0f}, // 21, left-top-front
-	vec3f{1.0f, 0.0f, 1.0f}, // 22, right-bottom-front
-	vec3f{1.0f, 1.0f, 1.0f}  // 23, right-top-front
+	vec3{0.0f, 0.0f, 1.0f}, // 20, left-bottom-front
+	vec3{0.0f, 1.0f, 1.0f}, // 21, left-top-front
+	vec3{1.0f, 0.0f, 1.0f}, // 22, right-bottom-front
+	vec3{1.0f, 1.0f, 1.0f}  // 23, right-top-front
 };
 
-const vec3f CUBE_NORMALS[] = {
+const vec3 CUBE_NORMALS[] = {
 	// x, y, z
 	// Left
-	vec3f{-1.0f, 0.0f, 0.0f}, // 0, left-bottom-back
-	vec3f{-1.0f, 0.0f, 0.0f}, // 1, left-bottom-front
-	vec3f{-1.0f, 0.0f, 0.0f}, // 2, left-top-back
-	vec3f{-1.0f, 0.0f, 0.0f}, // 3, left-top-front
+	vec3{-1.0f, 0.0f, 0.0f}, // 0, left-bottom-back
+	vec3{-1.0f, 0.0f, 0.0f}, // 1, left-bottom-front
+	vec3{-1.0f, 0.0f, 0.0f}, // 2, left-top-back
+	vec3{-1.0f, 0.0f, 0.0f}, // 3, left-top-front
 
 	// Right
-	vec3f{1.0f, 0.0f, 0.0f}, // 4, right-bottom-back
-	vec3f{1.0f, 0.0f, 0.0f}, // 5, right-bottom-front
-	vec3f{1.0f, 0.0f, 0.0f}, // 6, right-top-back
-	vec3f{1.0f, 0.0f, 0.0f}, // 7, right-top-front
+	vec3{1.0f, 0.0f, 0.0f}, // 4, right-bottom-back
+	vec3{1.0f, 0.0f, 0.0f}, // 5, right-bottom-front
+	vec3{1.0f, 0.0f, 0.0f}, // 6, right-top-back
+	vec3{1.0f, 0.0f, 0.0f}, // 7, right-top-front
 
 	// Bottom
-	vec3f{0.0f, -1.0f, 0.0f}, // 8, left-bottom-back
-	vec3f{0.0f, -1.0f, 0.0f}, // 9, left-bottom-front
-	vec3f{0.0f, -1.0f, 0.0f}, // 10, right-bottom-back
-	vec3f{0.0f, -1.0f, 0.0f}, // 11, right-bottom-front
+	vec3{0.0f, -1.0f, 0.0f}, // 8, left-bottom-back
+	vec3{0.0f, -1.0f, 0.0f}, // 9, left-bottom-front
+	vec3{0.0f, -1.0f, 0.0f}, // 10, right-bottom-back
+	vec3{0.0f, -1.0f, 0.0f}, // 11, right-bottom-front
 
 	// Top
-	vec3f{0.0f, 1.0f, 0.0f}, // 12, left-top-back
-	vec3f{0.0f, 1.0f, 0.0f}, // 13, left-top-front
-	vec3f{0.0f, 1.0f, 0.0f}, // 14, right-top-back
-	vec3f{0.0f, 1.0f, 0.0f}, // 15, right-top-front
+	vec3{0.0f, 1.0f, 0.0f}, // 12, left-top-back
+	vec3{0.0f, 1.0f, 0.0f}, // 13, left-top-front
+	vec3{0.0f, 1.0f, 0.0f}, // 14, right-top-back
+	vec3{0.0f, 1.0f, 0.0f}, // 15, right-top-front
 
 	// Back
-	vec3f{0.0f, 0.0f, -1.0f}, // 16, left-bottom-back
-	vec3f{0.0f, 0.0f, -1.0f}, // 17, left-top-back
-	vec3f{0.0f, 0.0f, -1.0f}, // 18, right-bottom-back
-	vec3f{0.0f, 0.0f, -1.0f}, // 19, right-top-back
+	vec3{0.0f, 0.0f, -1.0f}, // 16, left-bottom-back
+	vec3{0.0f, 0.0f, -1.0f}, // 17, left-top-back
+	vec3{0.0f, 0.0f, -1.0f}, // 18, right-bottom-back
+	vec3{0.0f, 0.0f, -1.0f}, // 19, right-top-back
 
 	// Front
-	vec3f{0.0f, 0.0f, 1.0f}, // 20, left-bottom-front
-	vec3f{0.0f, 0.0f, 1.0f}, // 21, left-top-front
-	vec3f{0.0f, 0.0f, 1.0f}, // 22, right-bottom-front
-	vec3f{0.0f, 0.0f, 1.0f}  // 23, right-top-front
+	vec3{0.0f, 0.0f, 1.0f}, // 20, left-bottom-front
+	vec3{0.0f, 0.0f, 1.0f}, // 21, left-top-front
+	vec3{0.0f, 0.0f, 1.0f}, // 22, right-bottom-front
+	vec3{0.0f, 0.0f, 1.0f}  // 23, right-top-front
 };
 
-const vec2f CUBE_UV_COORDS[] = {
+const vec2 CUBE_UV_COORDS[] = {
 	// u, v
 	// Left
-	vec2f{0.0f, 0.0f}, // 0, left-bottom-back
-	vec2f{1.0f, 0.0f}, // 1, left-bottom-front
-	vec2f{0.0f, 1.0f}, // 2, left-top-back
-	vec2f{1.0f, 1.0f}, // 3, left-top-front
+	vec2{0.0f, 0.0f}, // 0, left-bottom-back
+	vec2{1.0f, 0.0f}, // 1, left-bottom-front
+	vec2{0.0f, 1.0f}, // 2, left-top-back
+	vec2{1.0f, 1.0f}, // 3, left-top-front
 
 	// Right
-	vec2f{1.0f, 0.0f}, // 4, right-bottom-back
-	vec2f{0.0f, 0.0f}, // 5, right-bottom-front
-	vec2f{1.0f, 1.0f}, // 6, right-top-back
-	vec2f{0.0f, 1.0f}, // 7, right-top-front
+	vec2{1.0f, 0.0f}, // 4, right-bottom-back
+	vec2{0.0f, 0.0f}, // 5, right-bottom-front
+	vec2{1.0f, 1.0f}, // 6, right-top-back
+	vec2{0.0f, 1.0f}, // 7, right-top-front
 
 	// Bottom
-	vec2f{0.0f, 0.0f}, // 8, left-bottom-back
-	vec2f{0.0f, 1.0f}, // 9, left-bottom-front
-	vec2f{1.0f, 0.0f}, // 10, right-bottom-back
-	vec2f{1.0f, 1.0f}, // 11, right-bottom-front
+	vec2{0.0f, 0.0f}, // 8, left-bottom-back
+	vec2{0.0f, 1.0f}, // 9, left-bottom-front
+	vec2{1.0f, 0.0f}, // 10, right-bottom-back
+	vec2{1.0f, 1.0f}, // 11, right-bottom-front
 
 	// Top
-	vec2f{0.0f, 1.0f}, // 12, left-top-back
-	vec2f{0.0f, 0.0f}, // 13, left-top-front
-	vec2f{1.0f, 1.0f}, // 14, right-top-back
-	vec2f{1.0f, 0.0f}, // 15, right-top-front
+	vec2{0.0f, 1.0f}, // 12, left-top-back
+	vec2{0.0f, 0.0f}, // 13, left-top-front
+	vec2{1.0f, 1.0f}, // 14, right-top-back
+	vec2{1.0f, 0.0f}, // 15, right-top-front
 
 	// Back
-	vec2f{1.0f, 0.0f}, // 16, left-bottom-back
-	vec2f{1.0f, 1.0f}, // 17, left-top-back
-	vec2f{0.0f, 0.0f}, // 18, right-bottom-back
-	vec2f{0.0f, 1.0f}, // 19, right-top-back
+	vec2{1.0f, 0.0f}, // 16, left-bottom-back
+	vec2{1.0f, 1.0f}, // 17, left-top-back
+	vec2{0.0f, 0.0f}, // 18, right-bottom-back
+	vec2{0.0f, 1.0f}, // 19, right-top-back
 
 	// Front
-	vec2f{0.0f, 0.0f}, // 20, left-bottom-front
-	vec2f{0.0f, 1.0f}, // 21, left-top-front
-	vec2f{1.0f, 0.0f}, // 22, right-bottom-front
-	vec2f{1.0f, 1.0f}  // 23, right-top-front
+	vec2{0.0f, 0.0f}, // 20, left-bottom-front
+	vec2{0.0f, 1.0f}, // 21, left-top-front
+	vec2{1.0f, 0.0f}, // 22, right-bottom-front
+	vec2{1.0f, 1.0f}  // 23, right-top-front
 };
 
 const unsigned int CUBE_INDICES[] = {
@@ -156,10 +156,10 @@ const unsigned int CUBE_INDICES[] = {
 	23, 21, 22
 };
 
-const size_t NUM_ELEMENTS = sizeof(CUBE_VERTICES)/sizeof(vec3f);
+const size_t NUM_ELEMENTS = sizeof(CUBE_VERTICES)/sizeof(vec3);
 const size_t NUM_INDICES = sizeof(CUBE_INDICES)/sizeof(unsigned int);
 
-void fillNormalArray(const unique_ptr<vec3f[]>& array, size_t numVoxelsPerChunk) noexcept
+void fillNormalArray(const unique_ptr<vec3[]>& array, size_t numVoxelsPerChunk) noexcept
 {
 	for (size_t iVox = 0; iVox < numVoxelsPerChunk; ++iVox) {
 		size_t arrayPos = iVox * NUM_ELEMENTS;
@@ -180,8 +180,8 @@ void fillIndexArray(const unique_ptr<unsigned int[]>& array, size_t numVoxelsPer
 	}
 }
 
-void addVoxelVertex(const unique_ptr<vec3f[]>& array, size_t voxelNum,
-					const vec3f& position) noexcept
+void addVoxelVertex(const unique_ptr<vec3[]>& array, size_t voxelNum,
+					const vec3& position) noexcept
 {
 	size_t arrayPos = voxelNum * NUM_ELEMENTS;
 	for (size_t i = 0; i < NUM_ELEMENTS; ++i) {
@@ -189,13 +189,13 @@ void addVoxelVertex(const unique_ptr<vec3f[]>& array, size_t voxelNum,
 	}
 }
 
-void addVoxelUV(const unique_ptr<vec2f[]>& array, size_t voxelNum,
+void addVoxelUV(const unique_ptr<vec2[]>& array, size_t voxelNum,
                 const sfz::TextureRegion& texRegion) noexcept
 {
 	size_t arrayPos = voxelNum * NUM_ELEMENTS;
-	vec2f dim = texRegion.dimensions();
+	vec2 dim = texRegion.dimensions();
 	for (size_t i = 0; i < NUM_ELEMENTS; ++i) {
-		array[arrayPos + i] = texRegion.mUVMin + CUBE_UV_COORDS[i].elemMult(dim);
+		array[arrayPos + i] = texRegion.mUVMin + sfz::elemMult(CUBE_UV_COORDS[i], dim);
 	}
 }
 
@@ -209,13 +209,13 @@ ChunkMesh::ChunkMesh() noexcept
 	mNumVoxelsPerChunk{CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE},
 	mDataArraySize{NUM_ELEMENTS * mNumVoxelsPerChunk},
 	mIndicesArraySize{NUM_INDICES * mNumVoxelsPerChunk},
-	mVertexArray{new (std::nothrow) vec3f[mDataArraySize]},
-	mNormalArray{new (std::nothrow) vec3f[mDataArraySize]},
-	mUVArray{new (std::nothrow) vec2f[mDataArraySize]},
+	mVertexArray{new (std::nothrow) vec3[mDataArraySize]},
+	mNormalArray{new (std::nothrow) vec3[mDataArraySize]},
+	mUVArray{new (std::nothrow) vec2[mDataArraySize]},
 	mIndexArray{new (std::nothrow) unsigned int[mIndicesArraySize]}
 {
-	static_assert(sizeof(vec2f) == sizeof(float)*2, "vec2f is padded");
-	static_assert(sizeof(vec3f) == sizeof(float)*3, "vec3f is padded");
+	static_assert(sizeof(vec2) == sizeof(float)*2, "vec2 is padded");
+	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
 	static_assert(NUM_ELEMENTS == 24, "NUM_ELEMENTS is wrong size");
 	static_assert(NUM_INDICES == 36, "NUM_INDICES is wrong size");
 
@@ -230,7 +230,7 @@ ChunkMesh::ChunkMesh() noexcept
 	// Normal buffer
 	glGenBuffers(1, &mNormalBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mNormalBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_NORMALS)*mNumVoxelsPerChunk, mNormalArray[0].glPtr(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_NORMALS)*mNumVoxelsPerChunk, mNormalArray[0].elements, GL_STATIC_DRAW);
 
 	// UV buffer
 	glGenBuffers(1, &mUVBuffer);
@@ -297,11 +297,11 @@ void ChunkMesh::set(const Chunk& chunk) noexcept
 	// Transfer data to GPU.
 	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_VERTICES)*mNumVoxelsPerChunk, NULL, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CUBE_VERTICES)*mCurrentNumVoxels, mVertexArray[0].glPtr());
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CUBE_VERTICES)*mCurrentNumVoxels, mVertexArray[0].elements);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_UV_COORDS)*mNumVoxelsPerChunk, NULL, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CUBE_UV_COORDS)*mCurrentNumVoxels, mUVArray[0].glPtr());
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CUBE_UV_COORDS)*mCurrentNumVoxels, mUVArray[0].elements);
 
 	// Rebind VAO parameters just in case
 	glBindVertexArray(mVAO);

@@ -25,7 +25,7 @@ OBB obbApproximation(const Camera& cam) noexcept
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Camera::Camera(const vec3f& position, const vec3f& direction, const vec3f& upVector,
+Camera::Camera(const vec3& position, const vec3& direction, const vec3& upVector,
                float verticalFov, float aspectRatio, float near, float far) noexcept
 :
 	mPos(position),
@@ -54,33 +54,33 @@ void Camera::updateMatrices() noexcept
 
 void Camera::updatePlanes() noexcept
 {
-	const vec3f normDir = mDir.normalize();
-	const vec3f normUpDir = (mUp - mUp.dot(normDir)*normDir).normalize();
-	const vec3f normRightDir = sfz::cross(normDir, normUpDir).normalize();
+	const vec3 normDir = sfz::normalize(mDir);
+	const vec3 normUpDir = sfz::normalize(mUp - sfz::dot(mUp, normDir)*normDir);
+	const vec3 normRightDir = sfz::normalize(sfz::cross(normDir, normUpDir));
 	const float yHalfRadAngle = (mVerticalFov/2.0f) * sfz::DEG_TO_RAD();
 	const float xHalfRadAngle = mAspectRatio * yHalfRadAngle;
 	
-	sfz_assert_debug(sfz::approxEqual(normDir.dot(normUpDir), 0.0f, 0.0001f));
-	sfz_assert_debug(sfz::approxEqual(normDir.dot(normRightDir), 0.0f, 0.0001f));
-	sfz_assert_debug(sfz::approxEqual(normUpDir.dot(normRightDir), 0.0f, 0.0001f));
+	sfz_assert_debug(sfz::approxEqual(sfz::dot(normDir, normUpDir), 0.0f, 0.0001f));
+	sfz_assert_debug(sfz::approxEqual(sfz::dot(normDir, normRightDir), 0.0f, 0.0001f));
+	sfz_assert_debug(sfz::approxEqual(sfz::dot(normUpDir, normRightDir), 0.0f, 0.0001f));
 
 	mNearPlane = Plane{-normDir, mPos + normDir*mNear};
 	mFarPlane = Plane{normDir, mPos + normDir*mFar};
 	
-	vec3f upPlaneDir = sfz::rotationMatrix3(normRightDir, yHalfRadAngle) * normDir;
-	vec3f upPlaneNormal = sfz::cross(upPlaneDir, -normRightDir).normalize();
+	vec3 upPlaneDir = sfz::rotationMatrix3(normRightDir, yHalfRadAngle) * normDir;
+	vec3 upPlaneNormal = sfz::normalize(sfz::cross(upPlaneDir, -normRightDir));
 	mUpPlane = Plane{upPlaneNormal, mPos};
 
-	vec3f downPlaneDir = sfz::rotationMatrix3(-normRightDir, yHalfRadAngle) * normDir;
-	vec3f downPlaneNormal = sfz::cross(downPlaneDir, normRightDir).normalize();
+	vec3 downPlaneDir = sfz::rotationMatrix3(-normRightDir, yHalfRadAngle) * normDir;
+	vec3 downPlaneNormal = sfz::normalize(sfz::cross(downPlaneDir, normRightDir));
 	mDownPlane = Plane{downPlaneNormal, mPos};
 
-	vec3f rightPlaneDir = sfz::rotationMatrix3(-normUpDir, xHalfRadAngle) * normDir;
-	vec3f rightPlaneNormal = sfz::cross(rightPlaneDir, normUpDir).normalize();
+	vec3 rightPlaneDir = sfz::rotationMatrix3(-normUpDir, xHalfRadAngle) * normDir;
+	vec3 rightPlaneNormal = sfz::normalize(sfz::cross(rightPlaneDir, normUpDir));
 	mRightPlane = Plane{rightPlaneNormal, mPos};
 
-	vec3f leftPlaneDir = sfz::rotationMatrix3(normUpDir, xHalfRadAngle) * normDir;
-	vec3f leftPlaneNormal = sfz::cross(leftPlaneDir, -normUpDir).normalize();
+	vec3 leftPlaneDir = sfz::rotationMatrix3(normUpDir, xHalfRadAngle) * normDir;
+	vec3 leftPlaneNormal = sfz::normalize(sfz::cross(leftPlaneDir, -normUpDir));
 	mLeftPlane = Plane{leftPlaneNormal, mPos};
 }
 

@@ -11,7 +11,7 @@
 
 namespace vox {
 
-using sfz::vec2f;
+using sfz::vec2;
 
 // Anonymous functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -93,8 +93,8 @@ Assets::Assets() noexcept
 	VANILLA{cubeFacePath() + "vanilla_b.png"},
 	YELLOW{cubeFacePath() + "yellow_b.png"}
 {
-	mCubeFaceRegions[VOXEL_AIR] = TextureRegion{vec2f{0.0f, 0.0f}, vec2f{0.0f, 0.0f}}; // 0
-	mCubeFaceRegions[VOXEL_LIGHT] = TextureRegion{vec2f{0.0f, 0.0f}, vec2f{0.0f, 0.0f}}; // 1
+	mCubeFaceRegions[VOXEL_AIR] = TextureRegion{vec2{0.0f, 0.0f}, vec2{0.0f, 0.0f}}; // 0
+	mCubeFaceRegions[VOXEL_LIGHT] = TextureRegion{vec2{0.0f, 0.0f}, vec2{0.0f, 0.0f}}; // 1
 	mCubeFaceRegions[VOXEL_BLUE] = *CUBE_FACE_ATLAS.textureRegion("blue_b.png");
 	mCubeFaceRegions[VOXEL_GREEN] = *CUBE_FACE_ATLAS.textureRegion("green_b.png");
 	mCubeFaceRegions[VOXEL_ORANGE] = *CUBE_FACE_ATLAS.textureRegion("orange_b.png");

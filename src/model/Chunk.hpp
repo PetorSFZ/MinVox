@@ -18,7 +18,7 @@ namespace vox {
 using std::uint8_t;
 using std::uint16_t;
 using std::size_t;
-using sfz::vec3f;
+using sfz::vec3;
 using sfz::vec3i;
 using sfz::AABB;
 
@@ -54,10 +54,10 @@ struct ChunkIndex final {
 	inline uint16_t voxelY() const noexcept { return valueOfBit(mIndex, 1); }
 	inline uint16_t voxelZ() const noexcept { return valueOfBit(mIndex, 0); }
 
-	inline vec3f part8Offset() const noexcept;
-	inline vec3f part4Offset() const noexcept;
-	inline vec3f part2Offset() const noexcept;
-	inline vec3f voxelOffset() const noexcept;
+	inline vec3 part8Offset() const noexcept;
+	inline vec3 part4Offset() const noexcept;
+	inline vec3 part2Offset() const noexcept;
+	inline vec3 voxelOffset() const noexcept;
 
 	inline void plusPart8() noexcept { mIndex += (uint16_t(1 << 9)); }
 	inline void plusPart4() noexcept { mIndex += (uint16_t(1 << 6)); }
@@ -128,11 +128,11 @@ struct Chunk {
 // Chunk AABB calculators
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-inline void calculateChunkAABB(AABB& aabb, const vec3f& chunkPos) noexcept;
-inline void calculateChunkPart8AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
-inline void calculateChunkPart4AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
-inline void calculateChunkPart2AABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
-inline void calculateVoxelAABB(AABB& aabb, const vec3f& chunkPos, ChunkIndex index) noexcept;
+inline void calculateChunkAABB(AABB& aabb, const vec3& chunkPos) noexcept;
+inline void calculateChunkPart8AABB(AABB& aabb, const vec3& chunkPos, ChunkIndex index) noexcept;
+inline void calculateChunkPart4AABB(AABB& aabb, const vec3& chunkPos, ChunkIndex index) noexcept;
+inline void calculateChunkPart2AABB(AABB& aabb, const vec3& chunkPos, ChunkIndex index) noexcept;
+inline void calculateVoxelAABB(AABB& aabb, const vec3& chunkPos, ChunkIndex index) noexcept;
 
 inline void calculateChunkAABB(AABB& aabb, const vec3i& chunkOffset) noexcept;
 inline void calculateChunkPart8AABB(AABB& aabb, const vec3i& chunkOffset,

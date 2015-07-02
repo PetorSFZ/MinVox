@@ -27,21 +27,21 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 				break;
 			case 'a':
 			case 'A':
-				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
 				mCam.mPos += (-right * 25.0f * delta);}
 				break;
 			case 'd':
 			case 'D':
-				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
 				mCam.mPos += (right * 25.0f * delta);}
 				break;
 			case 'q':
 			case 'Q':
-				mCam.mPos += (sfz::vec3f{0.0f,-1.0f,0.0} * 25.0f * delta);
+				mCam.mPos += (sfz::vec3{0.0f,-1.0f,0.0} * 25.0f * delta);
 				break;
 			case 'e':
 			case 'E':
-				mCam.mPos += (sfz::vec3f{0.0f,1.0f,0.0} * 25.0f * delta);
+				mCam.mPos += (sfz::vec3{0.0f,1.0f,0.0} * 25.0f * delta);
 				break;
 			case 'p':
 			case 'P':
@@ -50,35 +50,35 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 				else std::cout << "Using (meshed) world renderer.\n";
 				break;
 			case SDLK_UP:
-				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::PI()*delta);
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_DOWN:
-				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::PI()*delta);
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_LEFT:
-				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, -1.0f*sfz::PI()*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, -1.0f*sfz::PI()*delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_RIGHT:
-				{sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-				sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, 1.0f*sfz::PI()*delta);
-				sfz::mat3f yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 1.0f*sfz::PI()*delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_SPACE:
-				vec3f pos = mCam.mPos + mCam.mDir * 1.5f;
+				vec3 pos = mCam.mPos + mCam.mDir * 1.5f;
 				Voxel v = mWorld.getVoxel(pos);
 				if (v.mType != VOXEL_AIR) mWorld.setVoxel(pos, Voxel{VOXEL_AIR});
 				else mWorld.setVoxel(pos, Voxel{VOXEL_ORANGE});
@@ -101,15 +101,15 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	}
 
 	// Analogue Sticks
-	if (ctrl.mRightStick.norm() > ctrl.mRightStickDeadzone) {
-		sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
-		sfz::mat3f xTurn = sfz::rotationMatrix3(sfz::vec3f{0.0f,-1.0f,0.0f}, ctrl.mRightStick[0]*turningSpeed*delta);
-		sfz::mat3f yTurn = sfz::rotationMatrix3(right, ctrl.mRightStick[1]*turningSpeed*delta);
+	if (sfz::length(ctrl.mRightStick) > ctrl.mRightStickDeadzone) {
+		sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+		sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, ctrl.mRightStick[0]*turningSpeed*delta);
+		sfz::mat3 yTurn = sfz::rotationMatrix3(right, ctrl.mRightStick[1]*turningSpeed*delta);
 		mCam.mDir = (yTurn * xTurn * mCam.mDir);
 		mCam.mUp = (yTurn * xTurn * mCam.mUp);
 	}
-	if (ctrl.mLeftStick.norm() > ctrl.mLeftStickDeadzone) {
-		sfz::vec3f right = sfz::cross(mCam.mDir, mCam.mUp).normalize();
+	if (sfz::length(ctrl.mLeftStick) > ctrl.mLeftStickDeadzone) {
+		sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
 		mCam.mPos += ((mCam.mDir * ctrl.mLeftStick[1] + right * ctrl.mLeftStick[0]) * currentSpeed * delta);
 	}
 
@@ -134,21 +134,21 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Shoulder buttons
 	if (ctrl.mButtonLeftShoulder == sdl::Button::DOWN || ctrl.mButtonLeftShoulder == sdl::Button::HELD) {
-		mCam.mPos -= (sfz::vec3f{0,1,0} * currentSpeed * delta);
+		mCam.mPos -= (sfz::vec3{0,1,0} * currentSpeed * delta);
 	}
 	else if (ctrl.mButtonRightShoulder == sdl::Button::DOWN || ctrl.mButtonRightShoulder == sdl::Button::HELD) {
-		mCam.mPos += (sfz::vec3f{0,1,0} * currentSpeed * delta);
+		mCam.mPos += (sfz::vec3{0,1,0} * currentSpeed * delta);
 	}
 
 	auto vPos = mCam.mPos + mCam.mDir * 4.0f;
-	mCurrentVoxelPos = vec3f{std::floorf(vPos[0]), std::floorf(vPos[1]), std::floorf(vPos[2])};
+	mCurrentVoxelPos = vec3{std::floorf(vPos[0]), std::floorf(vPos[1]), std::floorf(vPos[2])};
 
 	// Face buttons
 	if (ctrl.mButtonY == sdl::Button::UP) {
 		std::random_device rd;
 		std::mt19937_64 gen{rd()};
 		std::uniform_real_distribution<float> distr{0.0f, 1.0f};
-		mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3f{distr(gen), distr(gen), distr(gen)});
+		mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3{distr(gen), distr(gen), distr(gen)});
 		mLightMeshes.emplace_back(mLights.back().mCam.mVerticalFov, mLights.back().mCam.mNear, mLights.back().mCam.mFar);
 		std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
 	}
@@ -173,7 +173,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
 	}
 
-	mCam.mUp = vec3f{0.0f, 1.0f, 0.0f};
+	mCam.mUp = vec3{0.0f, 1.0f, 0.0f};
 }
 
 } // namespace vox

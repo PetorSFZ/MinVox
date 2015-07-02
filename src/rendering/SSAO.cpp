@@ -1,7 +1,5 @@
 #include "rendering/SSAO.hpp"
 
-#include "sfz/MSVC12HackON.hpp"
-
 namespace vox {
 
 // Anonymous namespace
@@ -206,17 +204,17 @@ GLuint compileBlurShaderProgram() noexcept
 	return shaderProgram;
 }
 
-vector<vec3f> generateKernel(size_t kernelSize) noexcept
+vector<vec3> generateKernel(size_t kernelSize) noexcept
 {
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr1{-1.0f, 1.0f};
 	std::uniform_real_distribution<float> distr2{0.0f, 1.0f};
 
-	vector<vec3f> kernel{kernelSize};
+	vector<vec3> kernel{kernelSize};
 	for (size_t i = 0; i < kernelSize; i++) {
 		// Random vector in z+ hemisphere.
-		kernel[i] = vec3f{distr1(gen), distr1(gen), distr2(gen)}.normalize();
+		kernel[i] = sfz::normalize(vec3{distr1(gen), distr1(gen), distr2(gen)});
 		// Scale it so it has length between 0 and 1.
 		//kernel[i] *= distr2(gen); // Naive solution
 		// More points closer to base, see: http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
@@ -236,16 +234,16 @@ vector<vec3f> generateKernel(size_t kernelSize) noexcept
 
 GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 {
-	static_assert(sizeof(vec3f) == sizeof(float)*3, "vec3f is padded");
+	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
 
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr{-1.0f, 1.0f};
 
 	size_t numNoiseValues = noiseTexWidth*noiseTexWidth;
-	vector<vec3f> noise{numNoiseValues};
+	vector<vec3> noise{numNoiseValues};
 	for (size_t i = 0; i < numNoiseValues; i++) {
-		noise[i] = vec3f{distr(gen), distr(gen), 0.0f};
+		noise[i] = vec3{distr(gen), distr(gen), 0.0f};
 	}
 
 	/*std::cout << "Generated SSAO noise texture (width = " << noiseTexWidth << ") with values: \n";
@@ -358,7 +356,7 @@ SSAO::~SSAO() noexcept
 // SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix, bool clean) noexcept
+GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, bool clean) noexcept
 {
 	// Render occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -388,10 +386,10 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix,
 	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projMatrix);
 
 	gl::setUniform(mSSAOProgram, "uKernelSize", static_cast<int>(mKernelSize));
-	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3f*>(mKernel.data()), mKernelSize);
+	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3*>(mKernel.data()), mKernelSize);
 
 	gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale",
-	     vec2f{(float)mWidth, (float)mHeight} / (float)mNoiseTexWidth);
+	     vec2{(float)mWidth, (float)mHeight} / (float)mNoiseTexWidth);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
 	gl::setUniform(mSSAOProgram, "uOcclusionExp", mOcclusionExp);
 
@@ -449,5 +447,3 @@ void SSAO::occlusionExp(float occlusionExp) noexcept
 }
 
 } // namespace vox
-
-#include "sfz/MSVC12HackOFF.hpp"

@@ -133,11 +133,11 @@ void updateProcessEvent(GameController& controller, const SDL_Event& event) noex
 void updateFinish(GameController& controller) noexcept
 {
 	// Deadzone checks
-	if (controller.mLeftStick.norm() < controller.mLeftStickDeadzone) {
+	if (sfz::length(controller.mLeftStick) < controller.mLeftStickDeadzone) {
 		controller.mLeftStick[0] = 0.0f;
 		controller.mLeftStick[1] = 0.0f;
 	}
-	if (controller.mRightStick.norm() < controller.mRightStickDeadzone) {
+	if (sfz::length(controller.mRightStick) < controller.mRightStickDeadzone) {
 		controller.mRightStick[0] = 0.0f;
 		controller.mRightStick[1] = 0.0f;
 	}
@@ -149,11 +149,11 @@ void updateFinish(GameController& controller) noexcept
 	}
 
 	// Normalize if norm is > 1
-	if (controller.mLeftStick.norm() > 1.0f) {
-		controller.mLeftStick = controller.mLeftStick.normalize();
+	if (sfz::length(controller.mLeftStick) > 1.0f) {
+		controller.mLeftStick = sfz::normalize(controller.mLeftStick);
 	}
-	if (controller.mRightStick.norm() > 1.0f) {
-		controller.mRightStick = controller.mRightStick.normalize();
+	if (sfz::length(controller.mRightStick) > 1.0f) {
+		controller.mRightStick = sfz::normalize(controller.mRightStick);
 	}
 	if (controller.mLeftTrigger > 1.0f) {
 		controller.mLeftTrigger = 1.0f;

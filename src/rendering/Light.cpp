@@ -9,13 +9,13 @@ namespace vox {
 
 namespace {
 
-vec3f generateUpVector(const vec3f& dir) noexcept
+vec3 generateUpVector(const vec3& dir) noexcept
 {
-	static const vec3f UP{0.0f, 1.0f, 0.0};
-	vec3f axis;
+	static const vec3 UP{0.0f, 1.0f, 0.0};
+	vec3 axis;
 	if (dir != UP) axis = sfz::cross(dir, UP);
-	else axis = sfz::cross(dir, UP + vec3f{0.1f, 0.0f, 0.0f});
-	sfz::mat3f rotation = sfz::rotationMatrix3(axis, 90.0f*sfz::DEG_TO_RAD());
+	else axis = sfz::cross(dir, UP + vec3{0.1f, 0.0f, 0.0f});
+	sfz::mat3 rotation = sfz::rotationMatrix3(axis, 90.0f*sfz::DEG_TO_RAD());
 	return rotation * dir;
 }
 
@@ -125,25 +125,25 @@ void DirectionalLightMesh::render() noexcept
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, NULL);
 }
 
-mat4f DirectionalLightMesh::generateTransform(const vec3f& pos, const vec3f& dir, const vec3f& up) noexcept
+mat4 DirectionalLightMesh::generateTransform(const vec3& pos, const vec3& dir, const vec3& up) noexcept
 {
-	vec4f transfForward = vec4f{dir[0], dir[1], dir[2], 0.0f}.normalize();
-	vec4f transfUp = vec4f{up[0], up[1], up[2], 0.0f}.normalize();
-	vec3f right = sfz::cross(up, dir).normalize();
-	vec4f transfRight{right[0], right[1], right[2], 0.0f};
+	vec4 transfForward = sfz::normalize(vec4{dir[0], dir[1], dir[2], 0.0f});
+	vec4 transfUp = sfz::normalize(vec4{up[0], up[1], up[2], 0.0f});
+	vec3 right = sfz::normalize(sfz::cross(up, dir));
+	vec4 transfRight{right[0], right[1], right[2], 0.0f};
 
-	mat4f temp;
+	mat4 temp;
 	temp.setColumn(0, transfRight);
 	temp.setColumn(1, transfUp);
 	temp.setColumn(2, transfForward);
-	temp.setColumn(3, vec4f{pos[0], pos[1], pos[2], 1.0f});
+	temp.setColumn(3, vec4{pos[0], pos[1], pos[2], 1.0f});
 	return temp;
 }
 
 // DirectionalLight: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-DirectionalLight::DirectionalLight(const vec3f& position, const vec3f& direction, const vec3f& upVector,
+DirectionalLight::DirectionalLight(const vec3& position, const vec3& direction, const vec3& upVector,
                                    float verticalFov, float near, float far) noexcept
 :
 	mCam{position, direction, upVector, verticalFov, 1.0f, near, far}
@@ -154,8 +154,8 @@ DirectionalLight::DirectionalLight(const vec3f& position, const vec3f& direction
 }
 
 	
-DirectionalLight::DirectionalLight(const vec3f& pos, const vec3f& dir, float near, float range,
-                                   const vec3f& color) noexcept
+DirectionalLight::DirectionalLight(const vec3& pos, const vec3& dir, float near, float range,
+                                   const vec3& color) noexcept
 :
 	mCam{pos, dir, generateUpVector(dir), 45.0f, 1.0f, near, range},
 	mRange{range},
@@ -175,9 +175,9 @@ void DirectionalLight::update() noexcept
 	mCam.updatePlanes();
 }
 
-mat4f DirectionalLight::lightMatrix(const mat4f& inverseViewMatrix) const noexcept
+mat4 DirectionalLight::lightMatrix(const mat4& inverseViewMatrix) const noexcept
 {
-	static const mat4f translScale = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
+	static const mat4 translScale = sfz::translationMatrix(0.5f, 0.5f, 0.5f)
 	                               * sfz::scalingMatrix4(0.5f);
 	return translScale * mCam.mProjMatrix * mCam.mViewMatrix * inverseViewMatrix;
 }

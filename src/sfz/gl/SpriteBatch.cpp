@@ -101,11 +101,11 @@ SpriteBatch::SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcep
 	mCapacity{capacity},
 	mCurrentDrawCount{0},
 	mShader{compileSpriteBatchShaderProgram(VERTEX_SHADER_SRC, fragmentShaderSrc)},
-	mTransformArray{new (std::nothrow) mat3f[mCapacity]},
-	mUVArray{new (std::nothrow) vec4f[mCapacity]}
+	mTransformArray{new (std::nothrow) mat3[mCapacity]},
+	mUVArray{new (std::nothrow) vec4[mCapacity]}
 {
-	static_assert(sizeof(vec2f) == sizeof(float)*2, "vec2f is padded");
-	static_assert(sizeof(mat3f) == sizeof(float)*9, "mat3f is padded");
+	static_assert(sizeof(vec2) == sizeof(float)*2, "vec2 is padded");
+	static_assert(sizeof(mat3) == sizeof(float)*9, "mat3 is padded");
 
 	// Vertex buffer
 	const float vertices[] = {
@@ -121,12 +121,12 @@ SpriteBatch::SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcep
 	// Transform buffer (null now, to be updated when rendering batch)
 	glGenBuffers(1, &mTransformBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mTransformBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(mat3f)*mCapacity, NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(mat3)*mCapacity, NULL, GL_STREAM_DRAW);
 
 	// UV buffer (null now, to be updated when rendering batch)
 	glGenBuffers(1, &mUVBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*mCapacity, NULL, GL_STREAM_DRAW);
 
 	// Index buffer
 	const unsigned int indices[] = {
@@ -146,9 +146,9 @@ SpriteBatch::SpriteBatch(size_t capacity, const char* fragmentShaderSrc) noexcep
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mTransformBuffer);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*0));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*1));
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*2));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mat3), (void*)(sizeof(float)*3*0));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mat3), (void*)(sizeof(float)*3*1));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mat3), (void*)(sizeof(float)*3*2));
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
@@ -201,21 +201,21 @@ SpriteBatch::~SpriteBatch() noexcept
 // SpriteBatch: Public interface
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void SpriteBatch::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
+void SpriteBatch::begin(vec2 cameraPosition, vec2 cameraDimensions) noexcept
 {
 	mCamProj = sfz::glOrthogonalProjectionMatrix2D(cameraPosition, cameraDimensions);
 	mCurrentDrawCount = 0;
 }
 
-void SpriteBatch::draw(vec2f position, vec2f dimensions, const TextureRegion& texRegion) noexcept
+void SpriteBatch::draw(vec2 position, vec2 dimensions, const TextureRegion& texRegion) noexcept
 {
-	mat3f transform{{dimensions[0], 0.0f, position[0]},
+	mat3 transform{{dimensions[0], 0.0f, position[0]},
 					{0.0f, dimensions[1], position[1]},
 	                {0.0f, 0.0f, 1.0f}};
 
 	// Setting transform & uv arrays
 	mTransformArray[mCurrentDrawCount] = mCamProj * transform;
-	mUVArray[mCurrentDrawCount] = vec4f{texRegion.mUVMin[0], texRegion.mUVMin[1],
+	mUVArray[mCurrentDrawCount] = vec4{texRegion.mUVMin[0], texRegion.mUVMin[1],
 	                                    texRegion.mUVMax[0], texRegion.mUVMax[1]};
 
 	// Incrementing current draw count
@@ -223,19 +223,19 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, const TextureRegion& te
 	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
 }
 
-void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
+void SpriteBatch::draw(vec2 position, vec2 dimensions, float angleRads,
 					   const TextureRegion& texRegion) noexcept
 {
 	float cos = std::cos(angleRads);
 	float sin = std::sin(angleRads);
-	mat3f rotMat{{cos, -sin, 0.0f}, {sin, cos, 0.0f}, {0.0f, 0.0f, 1.0f}};
-	mat3f scaling{{dimensions[0], 0.0f, 0.0f}, {0.0f, dimensions[1], 0.0f}, {0.0f, 0.0f, 1.0f}};
-	mat3f transform = rotMat * scaling;
-	transform.setColumn(2, vec3f{position[0], position[1], 1.0f});
+	mat3 rotMat{{cos, -sin, 0.0f}, {sin, cos, 0.0f}, {0.0f, 0.0f, 1.0f}};
+	mat3 scaling{{dimensions[0], 0.0f, 0.0f}, {0.0f, dimensions[1], 0.0f}, {0.0f, 0.0f, 1.0f}};
+	mat3 transform = rotMat * scaling;
+	transform.setColumn(2, vec3{position[0], position[1], 1.0f});
 
 	// Setting transform & uv arrays
 	mTransformArray[mCurrentDrawCount] = mCamProj * transform;
-	mUVArray[mCurrentDrawCount] = vec4f{texRegion.mUVMin[0], texRegion.mUVMin[1],
+	mUVArray[mCurrentDrawCount] = vec4{texRegion.mUVMin[0], texRegion.mUVMin[1],
 	                                    texRegion.mUVMax[0], texRegion.mUVMax[1]};
 
 	// Incrementing current draw count
@@ -243,7 +243,7 @@ void SpriteBatch::draw(vec2f position, vec2f dimensions, float angleRads,
 	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
 }
 
-void SpriteBatch::end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noexcept
+void SpriteBatch::end(GLuint fbo, vec2 viewportDimensions, GLuint texture) noexcept
 {
 	sfz_assert_debug(mCurrentDrawCount <= mCapacity);
 
@@ -257,11 +257,11 @@ void SpriteBatch::end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noex
 	glVertexAttribDivisor(0, 0); // Same quad for each draw instance
 
 	glBindBuffer(GL_ARRAY_BUFFER, mTransformBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(mat3f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(mat3f)*mCurrentDrawCount, mTransformArray[0].glPtr());
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*0));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*1));
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mat3f), (void*)(sizeof(float)*3*2));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(mat3)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(mat3)*mCurrentDrawCount, mTransformArray[0].data());
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mat3), (void*)(sizeof(float)*3*0));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mat3), (void*)(sizeof(float)*3*1));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mat3), (void*)(sizeof(float)*3*2));
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
@@ -270,8 +270,8 @@ void SpriteBatch::end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noex
 	glVertexAttribDivisor(3, 1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, mUVBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4f)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec4f)*mCurrentDrawCount, mUVArray[0].glPtr());
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*mCapacity, NULL, GL_STREAM_DRAW); // Orphaning.
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec4)*mCurrentDrawCount, mUVArray[0].elements);
 	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(4);
 	glVertexAttribDivisor(4, 1); // One UV coordinate per vertex

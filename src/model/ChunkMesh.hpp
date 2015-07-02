@@ -10,8 +10,8 @@
 
 namespace vox {
 
-using sfz::vec2f;
-using sfz::vec3f;
+using sfz::vec2;
+using sfz::vec3;
 using std::unique_ptr;
 
 // ChunkMesh
@@ -44,9 +44,9 @@ private:
 
 	size_t mCurrentNumVoxels = 0;
 	const size_t mNumVoxelsPerChunk, mDataArraySize, mIndicesArraySize;
-	const unique_ptr<vec3f[]> mVertexArray;
-	const unique_ptr<vec3f[]> mNormalArray;
-	const unique_ptr<vec2f[]> mUVArray;
+	const unique_ptr<vec3[]> mVertexArray;
+	const unique_ptr<vec3[]> mNormalArray;
+	const unique_ptr<vec2[]> mUVArray;
 	const unique_ptr<unsigned int[]> mIndexArray;
 };
 

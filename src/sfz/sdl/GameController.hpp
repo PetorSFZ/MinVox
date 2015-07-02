@@ -46,10 +46,10 @@ struct GameController final {
 	Button mButtonGuide = Button::NOT_PRESSED;
 
 	/** Range (norm of vector): (middle) [0.0f, 1.0f] (fully-pressed) */
-	sfz::vec2f mLeftStick;
+	sfz::vec2 mLeftStick;
 
 	/** Range (norm of vector): (middle) [0.0f, 1.0f] (fully-pressed) */
-	sfz::vec2f mRightStick;
+	sfz::vec2 mRightStick;
 
 	float mLeftStickDeadzone = 0.15f;
 	float mRightStickDeadzone = 0.15f;

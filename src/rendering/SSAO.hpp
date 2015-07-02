@@ -15,9 +15,9 @@
 
 namespace vox {
 
-using sfz::vec2f;
-using sfz::vec3f;
-using sfz::mat4f;
+using sfz::vec2;
+using sfz::vec3;
+using sfz::mat4;
 using std::vector;
 using std::size_t;
 
@@ -56,7 +56,7 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4f& projMatrix, bool clean = false) noexcept;
+	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, bool clean = false) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -85,7 +85,7 @@ private:
 
 	static const size_t MAX_KERNEL_SIZE = 256;
 	size_t mKernelSize;
-	vector<vec3f> mKernel;
+	vector<vec3> mKernel;
 
 	static const size_t MAX_NOISE_TEX_WIDTH = 64;
 	size_t mNoiseTexWidth;

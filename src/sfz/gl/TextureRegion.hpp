@@ -17,7 +17,7 @@ struct TextureRegion final {
 	// Members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	vec2f mUVMin, mUVMax;
+	vec2 mUVMin, mUVMax;
 
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -26,12 +26,12 @@ struct TextureRegion final {
 	inline TextureRegion(const TextureRegion&) noexcept = default;
 	inline TextureRegion& operator= (const TextureRegion&) noexcept = default;
 
-	inline TextureRegion(vec2f min, vec2f max) noexcept : mUVMin(min), mUVMax(max) { };
+	inline TextureRegion(vec2 min, vec2 max) noexcept : mUVMin(min), mUVMax(max) { };
 
 	// Methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	inline vec2f dimensions() const noexcept { return mUVMax - mUVMin; }
+	inline vec2 dimensions() const noexcept { return mUVMax - mUVMin; }
 };
 
 } // namespace sfz

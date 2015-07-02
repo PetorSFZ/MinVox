@@ -26,7 +26,7 @@ WorldRenderer::WorldRenderer(const World& world) noexcept
 
 void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 {
-	mat4f transform = sfz::identityMatrix4<float>();
+	mat4 transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceDiffuseTexture());
 
@@ -34,7 +34,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 		if (!mWorld.chunkAvailable(i)) continue;
 
 		vec3i offset = mWorld.chunkOffset(i);
-		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
+		vec3 offsetVec = mWorld.positionFromChunkOffset(offset);
 
 		calculateChunkAABB(aabb, offsetVec);
 		if (!cam.isVisible(aabb)) continue;
@@ -47,7 +47,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 
 void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 {
-	mat4f transform = sfz::identityMatrix4<float>();
+	mat4 transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 	const Assets& assets = Assets::INSTANCE();
 
@@ -56,7 +56,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
 
 		vec3i offset = mWorld.chunkOffset(i);
-		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
+		vec3 offsetVec = mWorld.positionFromChunkOffset(offset);
 
 		calculateChunkAABB(aabb, offsetVec);
 		if (!cam.isVisible(aabb)) continue;
@@ -96,7 +96,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 	}
 
 	/*// Old naive loop
-	mat4f transform = sfz::identityMatrix4<float>();
+	mat4 transform = sfz::identityMatrix4<float>();
 	AABB aabb;
 
 	for (size_t i = 0; i < mWorld.mNumChunks; i++) {
@@ -104,7 +104,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 		const Chunk* chunkPtr = mWorld.chunkPtr(i);
 
 		vec3i offset = mWorld.chunkOffset(i);
-		vec3f offsetVec = mWorld.positionFromChunkOffset(offset);
+		vec3 offsetVec = mWorld.positionFromChunkOffset(offset);
 
 		calculateChunkAABB(aabb, offset);
 		if (!cam.isVisible(aabb)) continue;
@@ -116,7 +116,7 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 					Voxel v = chunkPtr->getVoxel(x, y, z);
 					if (v.type() == vox::VoxelType::AIR) continue;
 
-					sfz::translation(transform, offsetVec + sfz::vec3f{static_cast<float>(x),
+					sfz::translation(transform, offsetVec + sfz::vec3{static_cast<float>(x),
 					                                                   static_cast<float>(y),
 					                                                   static_cast<float>(z)});
 					gl::setUniform(modelMatrixLoc, transform);

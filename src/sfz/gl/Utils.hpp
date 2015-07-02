@@ -12,11 +12,11 @@
 
 namespace gl {
 
-using sfz::vec2f;
-using sfz::vec3f;
-using sfz::vec4f;
-using sfz::mat3f;
-using sfz::mat4f;
+using sfz::vec2;
+using sfz::vec3;
+using sfz::vec4;
+using sfz::mat3;
+using sfz::mat4;
 using std::string;
 
 /**
@@ -72,30 +72,30 @@ void setUniform(GLuint shaderProgram, const string& name, float f) noexcept;
 void setUniform(int location, const float* floatArray, size_t count) noexcept;
 void setUniform(GLuint shaderProgram, const string& name, const float* floatArray, size_t count) noexcept;
 
-void setUniform(int location, vec2f vector) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, vec2f vector) noexcept;
-void setUniform(int location, const vec2f* vectorArray, size_t count) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const vec2f* vectorArray, size_t count) noexcept;
+void setUniform(int location, vec2 vector) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, vec2 vector) noexcept;
+void setUniform(int location, const vec2* vectorArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec2* vectorArray, size_t count) noexcept;
 
-void setUniform(int location, const vec3f& vector) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const vec3f& vector) noexcept;
-void setUniform(int location, const vec3f* vectorArray, size_t count) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const vec3f* vectorArray, size_t count) noexcept;
+void setUniform(int location, const vec3& vector) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec3& vector) noexcept;
+void setUniform(int location, const vec3* vectorArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec3* vectorArray, size_t count) noexcept;
 
-void setUniform(int location, const vec4f& vector) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const vec4f& vector) noexcept;
-void setUniform(int location, const vec4f* vectorArray, size_t count) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const vec4f* vectorArray, size_t count) noexcept;
+void setUniform(int location, const vec4& vector) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec4& vector) noexcept;
+void setUniform(int location, const vec4* vectorArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const vec4* vectorArray, size_t count) noexcept;
 
-void setUniform(int location, const mat3f& matrix) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const mat3f& matrix) noexcept;
-void setUniform(int location, const mat3f* matrixArray, size_t count) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const mat3f* matrixArray, size_t count) noexcept;
+void setUniform(int location, const mat3& matrix) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const mat3& matrix) noexcept;
+void setUniform(int location, const mat3* matrixArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const mat3* matrixArray, size_t count) noexcept;
 
-void setUniform(int location, const mat4f& matrix) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const mat4f& matrix) noexcept;
-void setUniform(int location, const mat4f* matrixArray, size_t count) noexcept;
-void setUniform(GLuint shaderProgram, const string& name, const mat4f* matrixArray, size_t count) noexcept;
+void setUniform(int location, const mat4& matrix) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const mat4& matrix) noexcept;
+void setUniform(int location, const mat4* matrixArray, size_t count) noexcept;
+void setUniform(GLuint shaderProgram, const string& name, const mat4* matrixArray, size_t count) noexcept;
 
 } // namespace gl
 

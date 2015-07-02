@@ -14,23 +14,23 @@ void checkGLErrorsMessage(const std::string& msg)
 	if (gl::checkAllGLErrors()) std::cerr << msg << std::endl;
 }
 
-vec3f sphericalToCartesian(float r, float theta, float phi) noexcept
+vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
 {
 	using std::sinf;
 	using std::cosf;
-	return vec3f{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
+	return vec3{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
 }
 
-vec3f sphericalToCartesian(const vec3f& spherical) noexcept
+vec3 sphericalToCartesian(const vec3& spherical) noexcept
 {
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
-void drawLight(int modelMatrixLoc, const vec3f& lightPos) noexcept
+void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
 {
 	static CubeObject cubeObj;
-	static vec3f halfLightSize{2.0f, 2.0f, 2.0f};
-	mat4f transform = sfz::scalingMatrix4<float>(4.0f);
+	static vec3 halfLightSize{2.0f, 2.0f, 2.0f};
+	mat4 transform = sfz::scalingMatrix4<float>(4.0f);
 
 	// Render sun
 	sfz::translation(transform, lightPos - halfLightSize);
@@ -42,8 +42,8 @@ void drawLight(int modelMatrixLoc, const vec3f& lightPos) noexcept
 void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 {
 	static SkyCubeObject skyCubeObj;
-	static const vec3f halfSkyCubeSize{400.0f, 400.0f, 400.0f};
-	mat4f transform = sfz::scalingMatrix4(800.0f, 800.0f, 800.0f);
+	static const vec3 halfSkyCubeSize{400.0f, 400.0f, 400.0f};
+	mat4 transform = sfz::scalingMatrix4(800.0f, 800.0f, 800.0f);
 
 	// Render skycube
 	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
@@ -52,10 +52,10 @@ void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
 	skyCubeObj.render();
 }
 
-void drawPlacementCube(int modelMatrixLoc, const vec3f& pos, Voxel voxel) noexcept
+void drawPlacementCube(int modelMatrixLoc, const vec3& pos, Voxel voxel) noexcept
 {
 	static CubeObject cubeObj;
-	gl::setUniform(modelMatrixLoc, sfz::translationMatrix<float>(pos - vec3f{0.025f, 0.025f, 0.025f})*sfz::scalingMatrix4<float>(1.05f));
+	gl::setUniform(modelMatrixLoc, sfz::translationMatrix<float>(pos - vec3{0.025f, 0.025f, 0.025f})*sfz::scalingMatrix4<float>(1.05f));
 	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(voxel));
 	cubeObj.render();
 }
@@ -69,8 +69,8 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 :
 	mCfg{getGlobalConfig()},
 
-	mWorld{worldName, vec3f{-3.0f, 1.2f, 0.2f}, mCfg.mHorizontalRange, mCfg.mVerticalRange},
-	mCam{vec3f{-3.0f, 2.5f, 0.2f}, vec3f{1.0f, 0.0f, 0.0f}, vec3f{0.0f, 1.0f, 0.0f}, 75.0f,
+	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.mHorizontalRange, mCfg.mVerticalRange},
+	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
 
 	mWindow{window},
@@ -81,7 +81,7 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mDirLightingShader{compileDirectionalLightingShaderProgram()},
 	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
-	mShadowMap{mCfg.mShadowResolution, ShadowMapRes::BITS_16, mCfg.mShadowPCF, vec4f{0.f, 0.f, 0.f, 1.f}},
+	mShadowMap{mCfg.mShadowResolution, ShadowMapRes::BITS_16, mCfg.mShadowPCF, vec4{0.f, 0.f, 0.f, 1.f}},
 	mGBuffer{window.drawableWidth(), window.drawableHeight()},
 	mDirLightFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mGlobalLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
@@ -90,31 +90,31 @@ BaseGameScreen::BaseGameScreen(sdl::Window& window, const std::string& worldName
 	mWorldRenderer{mWorld},
 
 	mCurrentVoxel{VOXEL_AIR}
-	//mSun{vec3f{0.0f, 0.0f, 0.0f}, vec3f{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3f{0.2f, 0.25f, 0.8f}}
+	//mSun{vec3{0.0f, 0.0f, 0.0f}, vec3{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3{0.2f, 0.25f, 0.8f}}
 {
 	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
 
-	//mLightPosSpherical = vec3f{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
-	//mLightTarget = vec3f{16.0f, 0.0f, 16.0f};
+	//mLightPosSpherical = vec3{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
+	//mLightTarget = vec3{16.0f, 0.0f, 16.0f};
 
 	// First corridor
-	vec3f f1Color{0.0f, 0.0f, 1.0f};
-	mLights.emplace_back(vec3f{-21.430313f, 5.780775f, 5.168257f}, vec3f{0.499439f, -0.200375f, 0.842858f}, 0.5f, 20.0f, f1Color);
-	mLights.emplace_back(vec3f{-21.720879f, 1.155828f, 15.699636f}, vec3f{-0.563084f, 0.218246f, -0.797059f}, 0.5f, 20.0f, f1Color);
+	vec3 f1Color{0.0f, 0.0f, 1.0f};
+	mLights.emplace_back(vec3{-21.430313f, 5.780775f, 5.168257f}, vec3{0.499439f, -0.200375f, 0.842858f}, 0.5f, 20.0f, f1Color);
+	mLights.emplace_back(vec3{-21.720879f, 1.155828f, 15.699636f}, vec3{-0.563084f, 0.218246f, -0.797059f}, 0.5f, 20.0f, f1Color);
 
 	// Staircase
-	mLights.emplace_back(vec3f{-33.711731f, 13.120087f, 32.218548f}, vec3f{0.038979f, -0.521176f, -0.852557f}, 0.5f, 40.0f, vec3f{0.8f, 0.2f, 0.8f});
+	mLights.emplace_back(vec3{-33.711731f, 13.120087f, 32.218548f}, vec3{0.038979f, -0.521176f, -0.852557f}, 0.5f, 40.0f, vec3{0.8f, 0.2f, 0.8f});
 
 	// Second corridor
-	vec3f f2Color{0.0f, 1.0f, 0.0f};
-	mLights.emplace_back(vec3f{-23.068808f, 8.956177f, 33.155720f}, vec3f{-0.092388f, -0.226080f, -0.969712f}, 0.5f, 20.0f, f2Color);
-	mLights.emplace_back(vec3f{-20.271776f, 2.191609f, 26.143528f}, vec3f{-0.271371f, 0.962427f, 0.009065f}, 0.5f, 20.0f, f2Color);
+	vec3 f2Color{0.0f, 1.0f, 0.0f};
+	mLights.emplace_back(vec3{-23.068808f, 8.956177f, 33.155720f}, vec3{-0.092388f, -0.226080f, -0.969712f}, 0.5f, 20.0f, f2Color);
+	mLights.emplace_back(vec3{-20.271776f, 2.191609f, 26.143528f}, vec3{-0.271371f, 0.962427f, 0.009065f}, 0.5f, 20.0f, f2Color);
 
 	// Balcony
-	mLights.emplace_back(vec3f{-17.184530f, 10.616333f, 26.045494f}, vec3f{0.932476f, -0.361071f, -0.010368f}, 0.5f, 100.0f, vec3f{0.4f, 0.5f, 0.9f});
+	mLights.emplace_back(vec3{-17.184530f, 10.616333f, 26.045494f}, vec3{0.932476f, -0.361071f, -0.010368f}, 0.5f, 100.0f, vec3{0.4f, 0.5f, 0.9f});
 
 	// Semi-global
-	mLights.emplace_back(vec3f{46.868477f, 32.830544f, 18.390802f}, vec3f{-0.776988f, -0.629503f, 0.004005f}, 35.0f, 120.0f, vec3f{0.2f, 0.25f, 0.8f});
+	mLights.emplace_back(vec3{46.868477f, 32.830544f, 18.390802f}, vec3{-0.776988f, -0.629503f, 0.004005f}, 35.0f, 120.0f, vec3{0.2f, 0.25f, 0.8f});
 
 	for (auto& light : mLights) {
 		mLightMeshes.emplace_back(light.mCam.mVerticalFov, light.mCam.mNear, light.mRange);
@@ -216,7 +216,7 @@ void BaseGameScreen::update(const std::vector<SDL_Event>& events,
 				std::random_device rd;
 				std::mt19937_64 gen{rd()};
 				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
-				mSun.mColor = vec3f{distr(gen), distr(gen), distr(gen)};
+				mSun.mColor = vec3{distr(gen), distr(gen), distr(gen)};
 				std::cout << "New random light color: " << mSun.mColor << std::endl;
 				break;*/
 			}
@@ -276,25 +276,25 @@ void BaseGameScreen::render(float delta)
 	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader, "uModelMatrix");
 
 	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.15f, 0.15f, 0.2f});
-	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
+	gl::setUniform(mGBufferGenShader, "uEmissive", vec3{0.15f, 0.15f, 0.2f});
+	gl::setUniform(mGBufferGenShader, "uMaterial", vec3{0.0f, 0.0f, 0.0f});
 	drawSkyCube(modelMatrixLocGBufferGen, mCam);
 
 	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.0f, 0.0f, 0.0f});
-	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{1.0, 0.50, 0.25});
+	gl::setUniform(mGBufferGenShader, "uEmissive", vec3{0.0f, 0.0f, 0.0f});
+	gl::setUniform(mGBufferGenShader, "uMaterial", vec3{1.0, 0.50, 0.25});
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, modelMatrixLocGBufferGen);
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
 
 	/*gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
 	gl::setUniform(mGBufferGenShader, "uEmissive", mSun.mColor*0.5f);
-	gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{0.0f, 0.0f, 0.0f});
+	gl::setUniform(mGBufferGenShader, "uMaterial", vec3{0.0f, 0.0f, 0.0f});
 	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);*/
 	
 	if (mCurrentVoxel.mType != VOXEL_AIR && mCurrentVoxel.mType != VOXEL_LIGHT) {
 		gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-		gl::setUniform(mGBufferGenShader, "uEmissive", vec3f{0.15f, 0.15f, 0.15f});
-		gl::setUniform(mGBufferGenShader, "uMaterial", vec3f{1.0, 0.50, 0.25});
+		gl::setUniform(mGBufferGenShader, "uEmissive", vec3{0.15f, 0.15f, 0.15f});
+		gl::setUniform(mGBufferGenShader, "uMaterial", vec3{1.0, 0.50, 0.25});
 		drawPlacementCube(modelMatrixLocGBufferGen, mCurrentVoxelPos, mCurrentVoxel);
 	}
 
@@ -310,7 +310,7 @@ void BaseGameScreen::render(float delta)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	mat4f inverseViewMatrix = inverse(mCam.mViewMatrix);
+	mat4 inverseViewMatrix = inverse(mCam.mViewMatrix);
 
 	size_t lightIndex = 0;
 	for (auto& light : mLights) {
@@ -454,7 +454,7 @@ void BaseGameScreen::render(float delta)
 	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
 	gl::setUniform(mGlobalLightingShader, "uDirectionalLightsTexture", 4);
 
-	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3f{0.2f, 0.2f, 0.2f});
+	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3{0.2f, 0.2f, 0.2f});
 
 	mFullscreenQuad.render();
 	
@@ -469,8 +469,8 @@ void BaseGameScreen::render(float delta)
 	using gl::VerticalAlign;
 
 	float aspect = (float)mGlobalLightingFramebuffer.mWidth / (float)mGlobalLightingFramebuffer.mHeight;
-	vec2f fontWindowDimensions{100.0f * aspect, 100.0f};
-	vec2f lightingViewport{(float)mGlobalLightingFramebuffer.mWidth, (float)mGlobalLightingFramebuffer.mHeight};
+	vec2 fontWindowDimensions{100.0f * aspect, 100.0f};
+	vec2 lightingViewport{(float)mGlobalLightingFramebuffer.mWidth, (float)mGlobalLightingFramebuffer.mHeight};
 
 	float fps = 1.0f/delta;
 	if (fps > 10000.0f) fps = 10000.0f; // Small hack
@@ -495,16 +495,16 @@ void BaseGameScreen::render(float delta)
 
 		// Drop shadow
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2f{1.15f, 99.85f}, fontSize, deltaString);
-		font.write(vec2f{1.15f, 99.85f - fontSize}, fontSize, fpsString);
+		font.write(vec2{1.15f, 99.85f}, fontSize, deltaString);
+		font.write(vec2{1.15f, 99.85f - fontSize}, fontSize, fpsString);
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
-						  vec4f{0.0f, 0.0f, 0.0f, 1.0f});
+						  vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2f{1.0, 100.0f}, fontSize, deltaString);
-		font.write(vec2f{1.0, 100.0f - fontSize}, fontSize, fpsString);
+		font.write(vec2{1.0, 100.0f}, fontSize, deltaString);
+		font.write(vec2{1.0, 100.0f - fontSize}, fontSize, fpsString);
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
-						  vec4f{1.0f, 0.0f, 1.0f, 1.0f});
+						  vec4{1.0f, 0.0f, 1.0f, 1.0f});
 	}
 
 	// Draw GUI
@@ -514,15 +514,15 @@ void BaseGameScreen::render(float delta)
 	// Drop shadow
 	float xPos = 1.15f;
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-	xPos = font.write(vec2f{xPos, 0.2f}, 4.0f, "Voxel: ");
-	font.write(vec2f{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
-	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4f{0.0f, 0.0f, 0.0f, 1.0f});
+	xPos = font.write(vec2{xPos, 0.2f}, 4.0f, "Voxel: ");
+	font.write(vec2{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
+	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 	xPos = 1.15f;
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-	xPos = font.write(vec2f{xPos, 0.5f}, 4.0f, "Voxel: ");
-	font.write(vec2f{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
-	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4f{1.0f, 1.0f, 1.0f, 1.0f});
+	xPos = font.write(vec2{xPos, 0.5f}, 4.0f, "Voxel: ");
+	font.write(vec2{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
+	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4{1.0f, 1.0f, 1.0f, 1.0f});
 
 	checkGLErrorsMessage("^^^ Errors caused by: render() text rendering.");
 

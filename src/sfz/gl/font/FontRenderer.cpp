@@ -104,19 +104,19 @@ uint8_t* loadTTFBuffer(const std::string& path) noexcept
 }
 
 struct CharInfo {
-	vec2f pos;
-	vec2f dim;
+	vec2 pos;
+	vec2 dim;
 	TextureRegion texRegion;
 };
 
-void calculateCharInfo(CharInfo& info, void* chardata, vec2f pixelToUV, uint32_t codeIndex,
-                       vec2f& pos, float scale) noexcept
+void calculateCharInfo(CharInfo& info, void* chardata, vec2 pixelToUV, uint32_t codeIndex,
+                       vec2& pos, float scale) noexcept
 {
 	stbtt_packedchar& c = reinterpret_cast<stbtt_packedchar*>(chardata)[codeIndex];
 
-	info.dim = vec2f{c.xoff2 - c.xoff, c.yoff2 - c.yoff} * scale;
-	info.texRegion.mUVMin = vec2f{(float)c.x0, (float)c.y1} * pixelToUV[0];
-	info.texRegion.mUVMax = vec2f{(float)c.x1, (float)c.y0} * pixelToUV[1];
+	info.dim = vec2{c.xoff2 - c.xoff, c.yoff2 - c.yoff} * scale;
+	info.texRegion.mUVMin = vec2{(float)c.x0, (float)c.y1} * pixelToUV[0];
+	info.texRegion.mUVMax = vec2{(float)c.x1, (float)c.y0} * pixelToUV[1];
 
 	info.pos[0] = pos[0] + info.dim[0]/2.0f;
 	info.pos[1] = pos[1] - ((c.yoff + c.yoff2) / 2.0f) * scale;
@@ -137,7 +137,7 @@ FontRenderer::FontRenderer(const std::string& fontPath, uint32_t texWidth, uint3
 	mSpriteBatch{numCharsPerBatch, FONT_RENDERER_FRAGMENT_SHADER_SRC}
 {
 	// This should be const, but MSVC12 doesn't support ini lists in constructor's ini list
-	mPixelToUV = vec2f{1.0f/static_cast<float>(texWidth), 1.0f/static_cast<float>(texHeight)};
+	mPixelToUV = vec2{1.0f/static_cast<float>(texWidth), 1.0f/static_cast<float>(texHeight)};
 
 	uint8_t* tempBitmap = new uint8_t[texWidth*texHeight];
 
@@ -182,16 +182,16 @@ FontRenderer::~FontRenderer() noexcept
 // FontRenderer: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void FontRenderer::begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept
+void FontRenderer::begin(vec2 cameraPosition, vec2 cameraDimensions) noexcept
 {
 	mSpriteBatch.begin(cameraPosition, cameraDimensions);
 }
 
-float FontRenderer::write(vec2f position, float size, const std::string& text) noexcept
+float FontRenderer::write(vec2 position, float size, const std::string& text) noexcept
 {
 	const float scale = size / mFontSize;
 
-	vec2f currPos = position;
+	vec2 currPos = position;
 	const float vertOffsetScale = distance(VerticalAlign::BOTTOM, mVertAlign) / 2.0f;
 	currPos[1] -= size * vertOffsetScale;
 	if (mHorizAlign != HorizontalAlign::LEFT) {
@@ -215,12 +215,12 @@ float FontRenderer::write(vec2f position, float size, const std::string& text) n
 	return currPos[0];
 }
 
-void FontRenderer::writeBitmapFont(vec2f position, vec2f dimensions) noexcept
+void FontRenderer::writeBitmapFont(vec2 position, vec2 dimensions) noexcept
 {
-	mSpriteBatch.draw(position, dimensions, TextureRegion{vec2f{0.0f, 0.0f}, vec2f{1.0f, 1.0f}});
+	mSpriteBatch.draw(position, dimensions, TextureRegion{vec2{0.0f, 0.0f}, vec2{1.0f, 1.0f}});
 }
 
-void FontRenderer::end(GLuint fbo, vec2f viewportDimensions, vec4f textColor) noexcept
+void FontRenderer::end(GLuint fbo, vec2 viewportDimensions, vec4 textColor) noexcept
 {
 	glUseProgram(mSpriteBatch.shaderProgram());
 	gl::setUniform(mSpriteBatch.shaderProgram(), "uTextColor", textColor);
@@ -231,7 +231,7 @@ float FontRenderer::measureStringWidth(float size, const std::string& text) cons
 {
 	const float scale = size / mFontSize;
 	CharInfo info;
-	vec2f currPos = vec2f::ZERO();
+	vec2 currPos = vec2{0.0f};
 	uint32_t codepoint;
 	uint32_t state = 0;
 	for (uint8_t c : text) {

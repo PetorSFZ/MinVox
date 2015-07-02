@@ -18,8 +18,8 @@ namespace gl {
 using std::size_t;
 using std::uint8_t;
 using std::uint32_t;
-using sfz::vec2f;
-using sfz::vec4f;
+using sfz::vec2;
+using sfz::vec4;
 
 // FontRenderer
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -42,14 +42,14 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept;
+	void begin(vec2 cameraPosition, vec2 cameraDimensions) noexcept;
 
 	/** @return The position to write the next char at. */
-	float write(vec2f position, float size, const std::string& text) noexcept;
+	float write(vec2 position, float size, const std::string& text) noexcept;
 
-	void writeBitmapFont(vec2f position, vec2f dimensions) noexcept;
+	void writeBitmapFont(vec2 position, vec2 dimensions) noexcept;
 
-	void end(GLuint fbo, vec2f viewportDimensions, vec4f textColor) noexcept;
+	void end(GLuint fbo, vec2 viewportDimensions, vec4 textColor) noexcept;
 
 	float measureStringWidth(float size, const std::string& text) const noexcept;
 
@@ -72,7 +72,7 @@ private:
 	static const uint32_t UNKNOWN_CHAR = '?';
 
 	const float mFontSize;
-	vec2f mPixelToUV;
+	vec2 mPixelToUV;
 	GLuint mFontTexture;
 	void* const mPackedChars; // Type is implementation defined
 	SpriteBatch mSpriteBatch;

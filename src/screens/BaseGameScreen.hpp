@@ -19,9 +19,9 @@
 
 namespace vox {
 
-using sfz::vec3f;
-using sfz::vec4f;
-using sfz::mat4f;
+using sfz::vec3;
+using sfz::vec4;
+using sfz::mat4;
 
 using std::vector;
 
@@ -82,11 +82,11 @@ protected:
 	bool mOldWorldRenderer = false;
 	int mRenderMode = 1;
 
-	vec3f mCurrentVoxelPos; // TODO: Move this to CreationGameScreen
+	vec3 mCurrentVoxelPos; // TODO: Move this to CreationGameScreen
 	Voxel mCurrentVoxel; // TODO: Move this to CreationGameScreen
 
 	/*DirectionalLight mSun;
-	vec3f mLightPosSpherical, mLightTarget;
+	vec3 mLightPosSpherical, mLightTarget;
 
 	int currentLightAxis = 1;
 	float lightCurrentSpeed = 1.0f;

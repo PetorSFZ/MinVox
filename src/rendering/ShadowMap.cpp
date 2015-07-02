@@ -2,7 +2,7 @@
 
 namespace vox {
 
-ShadowMap::ShadowMap(int resolution, ShadowMapRes depthRes, bool pcf, const sfz::vec4f& borderColor)
+ShadowMap::ShadowMap(int resolution, ShadowMapRes depthRes, bool pcf, const sfz::vec4& borderColor)
 :
 	mResolution{resolution},
 	mHasPCF{pcf}
@@ -24,7 +24,7 @@ ShadowMap::ShadowMap(int resolution, ShadowMapRes depthRes, bool pcf, const sfz:
 	// Set texture wrap mode to CLAMP_TO_BORDER and set border color.
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.glPtr());
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor.elements);
 
 	// Magic lines that enable hardware shadowmaps somehow (becomes sampler2Dshadow?)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);

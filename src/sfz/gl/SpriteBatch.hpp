@@ -13,9 +13,9 @@
 
 namespace gl {
 
-using sfz::vec2f;
-using sfz::vec4f;
-using sfz::mat3f;
+using sfz::vec2;
+using sfz::vec4;
+using sfz::mat3;
 using sfz::TextureRegion;
 using std::size_t;
 
@@ -50,14 +50,14 @@ public:
 	// Public interface
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void begin(vec2f cameraPosition, vec2f cameraDimensions) noexcept;
+	void begin(vec2 cameraPosition, vec2 cameraDimensions) noexcept;
 
-	void draw(vec2f position, vec2f dimensions, const TextureRegion& texRegion) noexcept;
+	void draw(vec2 position, vec2 dimensions, const TextureRegion& texRegion) noexcept;
 
-	void draw(vec2f position, vec2f dimensions, float angleRads,
+	void draw(vec2 position, vec2 dimensions, float angleRads,
 	          const TextureRegion& texRegion) noexcept;
 
-	void end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noexcept;
+	void end(GLuint fbo, vec2 viewportDimensions, GLuint texture) noexcept;
 
 	inline GLuint shaderProgram() const noexcept { return mShader; }
 
@@ -67,13 +67,13 @@ private:
 
 	size_t mCapacity;
 	size_t mCurrentDrawCount;
-	mat3f mCamProj;
+	mat3 mCamProj;
 
 	GLuint mShader;
 	GLuint mVAO;
 	GLuint mVertexBuffer, mIndexBuffer, mTransformBuffer, mUVBuffer;
-	std::unique_ptr<mat3f[]> mTransformArray;
-	std::unique_ptr<vec4f[]> mUVArray;
+	std::unique_ptr<mat3[]> mTransformArray;
+	std::unique_ptr<vec4[]> mUVArray;
 };
 
 } // namespace sfz

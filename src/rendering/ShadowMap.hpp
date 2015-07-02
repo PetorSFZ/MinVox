@@ -24,7 +24,7 @@ struct ShadowMap {
 	ShadowMap(const ShadowMap&) = delete;
 	ShadowMap& operator= (const ShadowMap&) = delete;
 
-	ShadowMap(int resolution, ShadowMapRes depthRes, bool pcf, const sfz::vec4f& borderColor);
+	ShadowMap(int resolution, ShadowMapRes depthRes, bool pcf, const sfz::vec4& borderColor);
 	~ShadowMap();
 };
 

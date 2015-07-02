@@ -9,8 +9,8 @@
 
 namespace vox {
 
-using sfz::vec3f;
-using sfz::mat4f;
+using sfz::vec3;
+using sfz::mat4;
 using sfz::AABB;
 using sfz::OBB;
 using sfz::Plane;
@@ -19,15 +19,15 @@ struct Camera final {
 	// Public members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	vec3f mPos, mDir, mUp;
+	vec3 mPos, mDir, mUp;
 	float mVerticalFov, mAspectRatio, mNear, mFar;
-	mat4f mViewMatrix, mProjMatrix;
+	mat4 mViewMatrix, mProjMatrix;
 	Plane mNearPlane, mFarPlane, mUpPlane, mDownPlane, mLeftPlane, mRightPlane;
 
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	Camera(const vec3f& position, const vec3f& direction, const vec3f& upVector,
+	Camera(const vec3& position, const vec3& direction, const vec3& upVector,
 	       float verticalFov, float aspectRatio, float near, float far) noexcept;
 
 	// Public methods

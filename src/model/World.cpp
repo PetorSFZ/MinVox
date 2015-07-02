@@ -63,7 +63,7 @@ inline vec3i offsetIterateEnd(const vec3i& min, const vec3i& max) noexcept
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-World::World(const std::string& name, const vec3f& camPos,
+World::World(const std::string& name, const vec3& camPos,
              size_t horizontalRange, size_t verticalRange) noexcept
 :
 	mHorizontalRange{static_cast<int>(horizontalRange)},
@@ -90,7 +90,7 @@ World::World(const std::string& name, const vec3f& camPos,
 // Public member functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void World::update(const vec3f& camPos) noexcept
+void World::update(const vec3& camPos) noexcept
 {
 	vec3i oldChunkOffset = mCurrentChunkOffset;
 	mCurrentChunkOffset = chunkOffsetFromPosition(camPos);
@@ -101,10 +101,10 @@ void World::update(const vec3f& camPos) noexcept
 	}
 }
 
-vec3f World::positionFromChunkOffset(const vec3i& offset) const noexcept
+vec3 World::positionFromChunkOffset(const vec3i& offset) const noexcept
 {
 	vec3i voxelOffset = offset * static_cast<int>(CHUNK_SIZE);
-	return vec3f{(float)voxelOffset[0], (float)voxelOffset[1], (float)voxelOffset[2]};
+	return vec3{(float)voxelOffset[0], (float)voxelOffset[1], (float)voxelOffset[2]};
 }
 
 vec3i World::chunkOffsetFromPosition(const vec3i& position) const noexcept
@@ -117,7 +117,7 @@ vec3i World::chunkOffsetFromPosition(const vec3i& position) const noexcept
 	return offset;
 }
 
-vec3i World::chunkOffsetFromPosition(const vec3f& position) const noexcept
+vec3i World::chunkOffsetFromPosition(const vec3& position) const noexcept
 {
 	return chunkOffsetFromPosition(vec3i{(int)position[0], (int)position[1], (int)position[2]});
 }
@@ -141,7 +141,7 @@ void World::setVoxel(const vec3i& position, Voxel voxel) noexcept
 	}
 }
 
-void World::setVoxel(const vec3f& position, Voxel voxel) noexcept
+void World::setVoxel(const vec3& position, Voxel voxel) noexcept
 {
 	setVoxel(vec3i{(int)position[0], (int)position[1], (int)position[2]}, voxel);
 }
@@ -198,7 +198,7 @@ Voxel World::getVoxel(const vec3i& offset) const noexcept
 	return chunkPtr->getVoxel(voxelOffset);
 }
 
-Voxel World::getVoxel(const vec3f& position) const noexcept
+Voxel World::getVoxel(const vec3& position) const noexcept
 {
 	return getVoxel(vec3i{(int)position[0], (int)position[1], (int)position[2]});
 }
