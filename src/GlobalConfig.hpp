@@ -4,8 +4,6 @@
 
 #include <cstddef> // size_t
 
-#include <sfz/MSVC12HackON.hpp>
-
 namespace vox {
 
 using std::size_t;
@@ -36,5 +34,4 @@ GlobalConfig& getGlobalConfig() noexcept;
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>
 #endif

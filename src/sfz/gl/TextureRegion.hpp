@@ -4,7 +4,7 @@
 
 #include <sfz/math/Vector.hpp>
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace sfz {
 
@@ -36,5 +36,5 @@ struct TextureRegion final {
 
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif

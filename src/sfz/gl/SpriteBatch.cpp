@@ -7,7 +7,7 @@
 #include <algorithm> // std::swap
 #include <cmath>
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -309,4 +309,3 @@ void SpriteBatch::end(GLuint fbo, vec2f viewportDimensions, GLuint texture) noex
 
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>

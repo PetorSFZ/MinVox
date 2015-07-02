@@ -1,6 +1,6 @@
 #include "sfz/gl/Utils.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -273,4 +273,3 @@ void setUniform(GLuint shaderProgram, const string& name, const mat4f* matrixArr
 
 } // namespace gl
 
-#include <sfz/MSVC12HackOFF.hpp>

@@ -4,7 +4,7 @@
 
 #include "sfz/GL.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -26,5 +26,5 @@ private:
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif

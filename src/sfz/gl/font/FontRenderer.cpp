@@ -14,7 +14,7 @@
 #include <iostream> // std::cerr
 #include <exception> // std::terminate
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -245,4 +245,3 @@ float FontRenderer::measureStringWidth(float size, const std::string& text) cons
 
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>

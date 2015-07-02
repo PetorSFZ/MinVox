@@ -11,7 +11,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -61,5 +61,5 @@ private:
 
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif

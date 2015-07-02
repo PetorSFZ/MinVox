@@ -1,6 +1,6 @@
 #include "rendering/WorldRenderer.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -131,4 +131,3 @@ void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

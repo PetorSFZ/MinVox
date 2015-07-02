@@ -4,7 +4,7 @@
 
 #include <cstdint> // uint8_t
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -30,6 +30,6 @@ struct Voxel final {
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #include "model/Voxel.inl"
 #endif

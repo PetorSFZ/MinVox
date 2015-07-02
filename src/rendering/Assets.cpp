@@ -7,7 +7,7 @@
 #include <exception>
 #include <new> // std::nothrow
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -112,4 +112,3 @@ Assets::Assets() noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

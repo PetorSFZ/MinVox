@@ -1,6 +1,6 @@
 #include "rendering/Camera.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -110,4 +110,3 @@ bool Camera::isVisible(const Camera& cam) const noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

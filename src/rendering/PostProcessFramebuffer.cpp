@@ -1,6 +1,6 @@
 #include "rendering/PostProcessFramebuffer.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -118,4 +118,3 @@ DirectionalLightingFramebuffer::~DirectionalLightingFramebuffer() noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

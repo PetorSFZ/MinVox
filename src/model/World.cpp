@@ -2,7 +2,7 @@
 
 #include <new> // std::nothrow
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -258,4 +258,3 @@ void World::loadChunks() noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

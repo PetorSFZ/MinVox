@@ -4,7 +4,7 @@
 #include "sfz/GL.hpp"
 #include "rendering/Assets.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -328,4 +328,3 @@ void ChunkMesh::render() const noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

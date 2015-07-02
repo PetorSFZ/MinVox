@@ -5,7 +5,7 @@
 #include <cstdint> // int8_t
 #include <iostream> // std::ostream
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -113,5 +113,5 @@ T calculateNewPosition(T oldPosition, T size, Align oldAlignment, Align newAlign
  
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif

@@ -11,7 +11,7 @@
 #include <exception> // std::terminate
 #include <algorithm> // std::swap
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -201,4 +201,3 @@ const TextureRegion* TexturePacker::textureRegion(const string& filename) const 
 
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>

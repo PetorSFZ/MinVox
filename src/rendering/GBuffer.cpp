@@ -1,6 +1,6 @@
 #include "rendering/GBuffer.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -137,4 +137,3 @@ GBuffer::~GBuffer() noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

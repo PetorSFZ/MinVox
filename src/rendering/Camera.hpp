@@ -5,7 +5,7 @@
 #include <sfz/Math.hpp>
 #include <sfz/Geometry.hpp>
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -42,5 +42,5 @@ struct Camera final {
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif

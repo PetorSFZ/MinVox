@@ -1,6 +1,6 @@
 #include "rendering/SkyCubeObject.hpp"
 
-#include <sfz/MSVC12HackOn.hpp>
+
 
 namespace vox {
 
@@ -289,4 +289,3 @@ void SkyCubeObject::render() noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

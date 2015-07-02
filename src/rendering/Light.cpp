@@ -1,6 +1,6 @@
 #include "rendering/Light.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -184,4 +184,3 @@ mat4f DirectionalLight::lightMatrix(const mat4f& inverseViewMatrix) const noexce
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

@@ -1,7 +1,5 @@
 #include "sfz/sdl/GameController.hpp"
 
-#include "sfz/MSVC12HackON.hpp"
-
 namespace sdl {
 
 // Anonymous functions
@@ -166,5 +164,3 @@ void updateFinish(GameController& controller) noexcept
 }
 
 } // namespace sdl
-
-#include "sfz/MSVC12HackOFF.hpp"

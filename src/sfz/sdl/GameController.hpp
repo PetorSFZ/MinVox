@@ -8,8 +8,6 @@
 #include <sfz/Assert.hpp>
 #include <sfz/math/Vector.hpp>
 
-#include "sfz/MSVC12HackON.hpp"
-
 namespace sdl {
 
 using std::uint8_t;
@@ -79,5 +77,4 @@ void updateFinish(GameController& controller) noexcept;
 
 } // namespace sdl
 
-#include "sfz/MSVC12HackOFF.hpp"
 #endif

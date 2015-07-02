@@ -1,6 +1,6 @@
 #include "rendering/Shaders.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -454,4 +454,3 @@ GLuint compileOutputSelectShaderProgram() noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

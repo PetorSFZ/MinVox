@@ -1,6 +1,6 @@
 #include "screens/BaseGameScreen.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -644,4 +644,3 @@ void BaseGameScreen::reloadFramebuffers(int width, int height) noexcept
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>

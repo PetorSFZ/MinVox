@@ -7,7 +7,7 @@
 #include "model/Chunk.hpp"
 #include "model/Voxel.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -19,6 +19,6 @@ inline Voxel generateVoxel(const vec3i& worldOffset) noexcept;
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #include "model/TerrainGeneration.inl"
 #endif

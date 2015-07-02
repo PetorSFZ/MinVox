@@ -9,7 +9,7 @@
 #include <cstddef> // size_t
 #include <memory>
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 
@@ -78,5 +78,5 @@ private:
 
 } // namespace sfz
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif

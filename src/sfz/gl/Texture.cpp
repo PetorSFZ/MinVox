@@ -6,7 +6,7 @@
 #include <exception> // std::terminate
 #include <algorithm> // std::swap
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace gl {
 	
@@ -124,4 +124,3 @@ Texture::~Texture() noexcept
 	
 } // namespace gl
 
-#include <sfz/MSVC12HackOFF.hpp>

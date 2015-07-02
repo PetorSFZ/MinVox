@@ -6,7 +6,7 @@
 #include "rendering/Camera.hpp"
 #include "sfz/GL.hpp"
 
-#include <sfz/MSVC12HackON.hpp>
+
 
 namespace vox {
 
@@ -62,5 +62,5 @@ struct DirectionalLight final {
 
 } // namespace vox
 
-#include <sfz/MSVC12HackOFF.hpp>
+
 #endif
