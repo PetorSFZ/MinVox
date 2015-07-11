@@ -31,28 +31,12 @@ set(CMAKE_MODULES ${CMAKE_CURRENT_LIST_DIR}/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_MODULES})
 
 # SkipIfZero Common
-add_subdirectory(${EXTERNALS_DIR}/SkipIfZeroCommon)
-
-# Finds SDL2 and SDL2_image, will make use of $SDL2 environment variable on Windows.
-find_package(SDL2 REQUIRED) # ${SDL2_INCLUDE_DIR}, ${SDL2_LIBRARY}
-find_package(SDL2_image REQUIRED) # ${SDL2_IMAGE_INCLUDE_DIR}, ${SDL2_IMAGE_LIBRARY}
-
-# GLEW
-# find_package(GLEW REQUIRED) # ${GLEW_INCLUDE_DIRS}, ${GLEW_LIBRARIES}
-add_definitions(-DGLEW_STATIC)
-add_subdirectory(${EXTERNALS_DIR}/glew)
-
-# Links OpenGL
-find_package(OpenGL REQUIRED) # ${OPENGL_INCLUDE_DIR}, ${OPENGL_LIBRARIES}
+add_subdirectory(${EXTERNALS_DIR}/SkipIfZeroGraphics)
 
 # Include directories
 include_directories(
 	${INCLUDE_DIR}
-	${SFZ_COMMON_INCLUDE_DIRS}
-	${SDL2_INCLUDE_DIR}
-	${SDL2_IMAGE_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIRS}
-	${OPENGL_INCLUDE_DIR}
+	${SFZ_GRAPHICS_INCLUDE_DIRS}
 )
 
 # Source files
@@ -173,11 +157,7 @@ add_executable(MinVox ${SRC_DIR}/Main.cpp ${SOURCE_ALL_FILES})
 target_link_libraries(
 	MinVox
 
-	${SFZ_COMMON_LIBRARIES}
-	${SDL2_LIBRARY}
-	${SDL2_IMAGE_LIBRARY}
-	${GLEW_LIBRARIES}
-	${OPENGL_LIBRARIES}
+	${SFZ_GRAPHICS_LIBRARIES}
 )
 
 # Xcode specific file copying
