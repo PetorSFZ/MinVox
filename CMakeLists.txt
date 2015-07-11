@@ -106,49 +106,12 @@ set(SOURCE_SCREENS_FILES
 	${SRC_DIR}/screens/CreationGameScreen.cpp)
 source_group(vox_screens FILES ${SOURCE_SCREENS_FILES})
 
-set(SOURCE_SFZ_FILES
-	${SRC_DIR}/sfz/SDL.hpp
-	${SRC_DIR}/sfz/GL.hpp)
-source_group(sfz FILES ${SOURCE_SFZ_FILES})
-
-set(SOURCE_SFZ_SDL_FILES
-	${SRC_DIR}/sfz/sdl/GameController.hpp
-	${SRC_DIR}/sfz/sdl/GameController.cpp
-	${SRC_DIR}/sfz/sdl/Session.hpp
-	${SRC_DIR}/sfz/sdl/Session.cpp
-	${SRC_DIR}/sfz/sdl/Window.hpp
-	${SRC_DIR}/sfz/sdl/Window.cpp)
-source_group(sfz_sdl FILES ${SOURCE_SFZ_SDL_FILES})
-
-set(SOURCE_SFZ_GL_FILES
-	${SRC_DIR}/sfz/gl/Alignment.hpp
-	${SRC_DIR}/sfz/gl/Context.hpp
-	${SRC_DIR}/sfz/gl/Context.cpp
-	${SRC_DIR}/sfz/gl/OpenGL.hpp
-	${SRC_DIR}/sfz/gl/SpriteBatch.hpp
-	${SRC_DIR}/sfz/gl/SpriteBatch.cpp
-	${SRC_DIR}/sfz/gl/Texture.hpp
-	${SRC_DIR}/sfz/gl/Texture.cpp
-	${SRC_DIR}/sfz/gl/TexturePacker.hpp
-	${SRC_DIR}/sfz/gl/TexturePacker.cpp
-	${SRC_DIR}/sfz/gl/TextureRegion.hpp
-	${SRC_DIR}/sfz/gl/Utils.hpp
-	${SRC_DIR}/sfz/gl/Utils.cpp
-	${SRC_DIR}/sfz/gl/font/FontRenderer.hpp
-	${SRC_DIR}/sfz/gl/font/FontRenderer.cpp
-	${SRC_DIR}/sfz/gl/font/stb_rect_pack.h
-	${SRC_DIR}/sfz/gl/font/stb_truetype.h)
-source_group(sfz_gl FILES ${SOURCE_SFZ_GL_FILES})
-
 set(SOURCE_ALL_FILES
 	${SOURCE_BASE_FILES}
 	${SOURCE_IO_FILES}
 	${SOURCE_MODEL_FILES}
 	${SOURCE_RENDERING_FILES}
-	${SOURCE_SCREENS_FILES}
-	${SOURCE_SFZ_FILES}
-	${SOURCE_SFZ_SDL_FILES}
-	${SOURCE_SFZ_GL_FILES})
+	${SOURCE_SCREENS_FILES})
 
 # Main executable
 add_executable(MinVox ${SRC_DIR}/Main.cpp ${SOURCE_ALL_FILES})
