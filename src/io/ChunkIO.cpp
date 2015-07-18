@@ -1,5 +1,7 @@
 #include "io/ChunkIO.hpp"
 
+#include <sfz/util/IO.hpp>
+
 namespace vox {
 
 namespace {
@@ -23,7 +25,7 @@ bool readChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::s
 {
 	static const size_t VOXELS_PER_CHUNK = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE;
 	std::string filePath = filename(xOffset, yOffset, zOffset, worldName);
-	if (!exists(filePath)) return false;
+	if (!sfz::directoryExists(filePath.c_str())) return false;
 
 	std::FILE* chunkFile = fopen(filePath.c_str(), "rb");
 
@@ -46,8 +48,8 @@ bool writeChunk(Chunk& chunk, int xOffset, int yOffset, int zOffset, const std::
 	std::string filePath = filename(xOffset, yOffset, zOffset, worldName);
 
 	// Make sure directory exists
-	if (!exists(dirPath)) {
-		if(!createDirectory(dirPath)) {
+	if (!sfz::directoryExists(dirPath.c_str())) {
+		if(!sfz::createDirectory(dirPath.c_str())) {
 			std::cerr << "Couldn't create directory: \"" << dirPath << "\", can't write chunk: \""
 			          << filePath << "\"" << std::endl;
 			return false;
