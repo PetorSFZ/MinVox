@@ -94,10 +94,10 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 
 	// Triggers
 	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {
-		
+		currentSpeed += (ctrl.mLeftTrigger * 12.0f);
 	}
 	if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
-		currentSpeed += (ctrl.mRightTrigger * 12.0f);
+		
 	}
 
 	// Analogue Sticks
@@ -172,8 +172,6 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	if (ctrl.mButtonStart == sdl::Button::UP) {
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
 	}
-
-	mCam.mUp = vec3{0.0f, 1.0f, 0.0f};
 }
 
 } // namespace vox

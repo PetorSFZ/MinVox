@@ -55,13 +55,6 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	uniform float uRadius;
 	uniform float uOcclusionExp;
 
-	float vsPosToDepth(vec3 vsPos)
-	{
-		float depth = vsPos.z;
-		//if (depth >= 0) depth = -1000000.0;
-		return depth;
-	}
-
 	vec2 texCoordFromVSPos(vec3 vsPos)
 	{
 		vec4 offset = uProjectionMatrix * vec4(vsPos, 1.0);
@@ -76,9 +69,9 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 
 		vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
+		float depth = vsPos.z;
 		vec3 normal = normalize(texture(uNormalTexture, texCoord).xyz);	
-		float depth = vsPosToDepth(vsPos);
-		vec3 noiseVec = texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
+		vec3 noiseVec = /*vec3(0, 1, 0)*/ texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
 
 		// Calculates matrix to rotate kernel into normal hemisphere using Gram Schmidt process
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
@@ -89,10 +82,10 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 		for (int i = 0; i < uKernelSize; i++) {
 			vec3 samplePos = vsPos + uRadius * (kernelRot * uKernel[i]);
 			vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
-			float sampleDepth = vsPosToDepth(texture(uPositionTexture, sampleTexCoord).xyz);
+			float sampleDepth = texture(uPositionTexture, sampleTexCoord).z;
 
-			float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
-			occlusion += (sampleDepth <= depth ? 0.0 : 1.0) * rangeCheck;
+			//float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
+			occlusion += (sampleDepth <= depth ? 0.0 : 1.0);// * rangeCheck;
 
 			//float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
 			//occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
