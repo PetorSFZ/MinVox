@@ -12,7 +12,7 @@ ActionGameScreen::ActionGameScreen(sdl::Window& window, const std::string& world
 void ActionGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
                                       const sdl::GameController& ctrl, float delta)
 {
-	if (ctrl.mButtonY == sdl::Button::UP) {
+	if (ctrl.y == sdl::Button::UP) {
 		changeScreen(new CreationGameScreen(mWindow, mWorld.mName));
 	}
 }

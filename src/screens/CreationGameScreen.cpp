@@ -93,50 +93,50 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	float turningSpeed = sfz::PI();
 
 	// Triggers
-	if (ctrl.mLeftTrigger > ctrl.mLeftTriggerDeadzone) {
+	if (ctrl.leftTrigger > ctrl.triggerDeadzone) {
 		
 	}
-	if (ctrl.mRightTrigger > ctrl.mRightTriggerDeadzone) {
-		currentSpeed += (ctrl.mRightTrigger * 12.0f);
+	if (ctrl.rightTrigger > ctrl.triggerDeadzone) {
+		currentSpeed += (ctrl.rightTrigger * 12.0f);
 	}
 
 	// Analogue Sticks
-	if (sfz::length(ctrl.mRightStick) > ctrl.mRightStickDeadzone) {
+	if (sfz::length(ctrl.rightStick) > ctrl.stickDeadzone) {
 		sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-		sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, ctrl.mRightStick[0]*turningSpeed*delta);
-		sfz::mat3 yTurn = sfz::rotationMatrix3(right, ctrl.mRightStick[1]*turningSpeed*delta);
+		sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, ctrl.rightStick[0]*turningSpeed*delta);
+		sfz::mat3 yTurn = sfz::rotationMatrix3(right, ctrl.rightStick[1]*turningSpeed*delta);
 		mCam.mDir = (yTurn * xTurn * mCam.mDir);
 		mCam.mUp = (yTurn * xTurn * mCam.mUp);
 	}
-	if (sfz::length(ctrl.mLeftStick) > ctrl.mLeftStickDeadzone) {
+	if (sfz::length(ctrl.leftStick) > ctrl.stickDeadzone) {
 		sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-		mCam.mPos += ((mCam.mDir * ctrl.mLeftStick[1] + right * ctrl.mLeftStick[0]) * currentSpeed * delta);
+		mCam.mPos += ((mCam.mDir * ctrl.leftStick[1] + right * ctrl.leftStick[0]) * currentSpeed * delta);
 	}
 
 	// Control Pad
-	if (ctrl.mButtonDPADUp == sdl::Button::DOWN) {
+	if (ctrl.padUp == sdl::Button::DOWN) {
 		mLightShaftExposure += 0.05f;
 		if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
 		std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
-	} else if (ctrl.mButtonDPADDown == sdl::Button::DOWN) {
+	} else if (ctrl.padDown == sdl::Button::DOWN) {
 		mLightShaftExposure -= 0.05f;
 		if (mLightShaftExposure < 0.0f) mLightShaftExposure = 0.0f;
 		std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
-	} else if (ctrl.mButtonDPADLeft == sdl::Button::DOWN) {
+	} else if (ctrl.padLeft == sdl::Button::DOWN) {
 		if (mCurrentVoxel.mType >= 1) {
 			mCurrentVoxel = Voxel(mCurrentVoxel.mType - uint8_t(1));
 		}
-	} else if (ctrl.mButtonDPADRight == sdl::Button::DOWN) {
+	} else if (ctrl.padRight == sdl::Button::DOWN) {
 		if (mCurrentVoxel.mType < Assets::INSTANCE().numVoxelTypes() - 1) {
 			mCurrentVoxel = Voxel(mCurrentVoxel.mType + uint8_t(1));
 		}
 	}
 
 	// Shoulder buttons
-	if (ctrl.mButtonLeftShoulder == sdl::Button::DOWN || ctrl.mButtonLeftShoulder == sdl::Button::HELD) {
+	if (ctrl.leftShoulder == sdl::Button::DOWN || ctrl.leftShoulder == sdl::Button::HELD) {
 		mCam.mPos -= (sfz::vec3{0,1,0} * currentSpeed * delta);
 	}
-	else if (ctrl.mButtonRightShoulder == sdl::Button::DOWN || ctrl.mButtonRightShoulder == sdl::Button::HELD) {
+	else if (ctrl.rightShoulder == sdl::Button::DOWN || ctrl.rightShoulder == sdl::Button::HELD) {
 		mCam.mPos += (sfz::vec3{0,1,0} * currentSpeed * delta);
 	}
 
@@ -144,7 +144,7 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 	mCurrentVoxelPos = vec3{std::floorf(vPos[0]), std::floorf(vPos[1]), std::floorf(vPos[2])};
 
 	// Face buttons
-	if (ctrl.mButtonY == sdl::Button::UP) {
+	if (ctrl.y == sdl::Button::UP) {
 		std::random_device rd;
 		std::mt19937_64 gen{rd()};
 		std::uniform_real_distribution<float> distr{0.0f, 1.0f};
@@ -152,24 +152,24 @@ void CreationGameScreen::updateSpecific(const std::vector<SDL_Event>& events,
 		mLightMeshes.emplace_back(mLights.back().mCam.mVerticalFov, mLights.back().mCam.mNear, mLights.back().mCam.mFar);
 		std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
 	}
-	if (ctrl.mButtonX == sdl::Button::UP) {
+	if (ctrl.x == sdl::Button::UP) {
 		if (mLights.size() > 0) {
 			mLights.pop_back();
 			mLightMeshes.pop_back();
 		}
 	}
-	if (ctrl.mButtonB == sdl::Button::UP) {
+	if (ctrl.b == sdl::Button::UP) {
 		mWorld.setVoxel(mCurrentVoxelPos, Voxel{VOXEL_AIR});
 	}
-	if (ctrl.mButtonA == sdl::Button::UP) {
+	if (ctrl.a == sdl::Button::UP) {
 		mWorld.setVoxel(mCurrentVoxelPos, mCurrentVoxel);
 	}
 
 	// Menu buttons
-	if (ctrl.mButtonBack == sdl::Button::UP) {
+	if (ctrl.back == sdl::Button::UP) {
 		quitApplication();
 	}
-	if (ctrl.mButtonStart == sdl::Button::UP) {
+	if (ctrl.start == sdl::Button::UP) {
 		changeScreen(new ActionGameScreen(mWindow, mWorld.mName));
 	}
 
