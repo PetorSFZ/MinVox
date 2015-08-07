@@ -18,9 +18,6 @@ int main()
 	 WindowFlags::RESIZABLE, cfg.mRetinaAware ? WindowFlags::ALLOW_HIGHDPI : WindowFlags::OPENGL,
 	 cfg.mFullscreen ? WindowFlags::FULLSCREEN_DESKTOP : WindowFlags::OPENGL}};
 
-	// Enable SDL Events for controllers
-	SDL_GameControllerEventState(SDL_ENABLE);
-
 	gl::Context glContext{window.mPtr, 3, 3, gl::GLContextProfile::CORE};
 
 	// Initializes GLEW, must happen after GL context is created.
