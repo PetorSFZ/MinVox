@@ -1,139 +1,18 @@
-#include <chrono>
 #include <iostream>
 #include <memory>
-#include <vector>
 
-#include "sfz/GL.hpp"
+#include <sfz/GL.hpp>
+#include <sfz/SDL.hpp>
 #undef main
-#include <sfz/Assert.hpp>
-#include <sfz/Math.hpp>
 
 #include "Screens.hpp"
 #include "GlobalConfig.hpp"
-
-// Variables
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-vox::GlobalConfig& cfg = vox::getGlobalConfig();
-
-// Controllers
-SDL_GameController* controllerPtrs[4];
-sdl::GameController controllers[4];
-int currentController = 0;
-
-// Helper functions
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-float calculateDelta()
-{
-	static std::chrono::high_resolution_clock::time_point previousTime, currentTime;
-
-	previousTime = currentTime;
-	currentTime = std::chrono::high_resolution_clock::now();
-
-	using FloatSecondDuration = std::chrono::duration<float>;
-	return std::chrono::duration_cast<FloatSecondDuration>(currentTime - previousTime).count();
-}
-
-void checkGLErrorsMessage(const std::string& msg)
-{
-	if (gl::checkAllGLErrors()) std::cerr << msg << std::endl;
-}
-
-void addControllers()
-{
-	for (SDL_GameController*& c : controllerPtrs) {
-		if (c != NULL) {
-			SDL_GameControllerClose(c);
-		}
-		c = NULL;
-	}
-
-	int numJoysticks = SDL_NumJoysticks();
-	if (numJoysticks <= 0) {
-		std::cerr << "No joystics connected." << std::endl;
-		return;
-	}
-	if (numJoysticks > 4) numJoysticks = 4;
-	
-	for (int i = 0; i < 4 && i < numJoysticks; i++) {
-		if (!SDL_IsGameController(i)) {
-			std::cerr << "Joystick id " << i << " is not a Game Controller." << std::endl;
-			continue;
-		}
-
-		controllerPtrs[i] = SDL_GameControllerOpen(i);
-		if (controllerPtrs[i] == NULL) {
-			std::cerr << "Couldn't open Game Controller at id " << i << std::endl;
-			continue;
-		}
-
-		std::cout << "Added Game Controller (id " << i << "): "
-		          << SDL_GameControllerName(controllerPtrs[i]) << std::endl;
-	}
-
-	currentController = 0;
-	for (int i = 0; i < 4; i++) {
-		if (controllerPtrs[i] == NULL) break;
-		if (strcmp("X360 Controller", SDL_GameControllerName(controllerPtrs[i])) == 0) {
-			currentController = i;
-			break;
-		}
-	}
-
-	std::cout << "Current active controller: " << currentController << ", type: "
-	          << SDL_GameControllerName(controllerPtrs[currentController]) << std::endl;
-}
-
-void pollEventsUpdateControllers(std::vector<SDL_Event>& events)
-{
-	events.clear();
-
-	// Starts updating controller structs
-	for (size_t i = 0; i < 4; i++) {
-		if (controllerPtrs[i] == NULL) break;
-		sdl::updateStart(controllers[i]);
-	}
-
-	SDL_Event event;
-	while (SDL_PollEvent(&event) != 0) {
-		switch (event.type) {
-		case SDL_CONTROLLERDEVICEADDED:
-		case SDL_CONTROLLERDEVICEREMOVED:
-		case SDL_CONTROLLERDEVICEREMAPPED:
-			addControllers();
-			break;
-		case SDL_CONTROLLERBUTTONDOWN:
-		case SDL_CONTROLLERBUTTONUP:
-			if (event.cbutton.which >= 4) break;
-			sdl::updateProcessEvent(controllers[event.cbutton.which], event);
-			break;
-		case SDL_CONTROLLERAXISMOTION:
-			if (event.caxis.which >= 4) break;
-			sdl::updateProcessEvent(controllers[event.caxis.which], event);
-			break;
-		default:
-			events.push_back(event); // Add to event list if it's not a controller event.
-		}
-	}
-
-	// Finish updating controller structs
-	for (size_t i = 0; i < 4; i++) {
-		if (controllerPtrs[i] == NULL) break;
-		sdl::updateFinish(controllers[i]);
-	}
-}
-
-// Main
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 int main()
 {
 	using namespace sdl;
 
-	// Initialization
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
+	vox::GlobalConfig& cfg = vox::getGlobalConfig();
 	Session sdlSession{{InitFlags::EVENTS, InitFlags::VIDEO, InitFlags::GAMECONTROLLER}};
 	Window window{"MinVox", cfg.mWindowResolutionX, cfg.mWindowResolutionY, {WindowFlags::OPENGL,
 	 WindowFlags::RESIZABLE, cfg.mRetinaAware ? WindowFlags::ALLOW_HIGHDPI : WindowFlags::OPENGL,
@@ -141,7 +20,6 @@ int main()
 
 	// Enable SDL Events for controllers
 	SDL_GameControllerEventState(SDL_ENABLE);
-	addControllers();
 
 	gl::Context glContext{window.mPtr, 3, 3, gl::GLContextProfile::CORE};
 
@@ -152,43 +30,11 @@ int main()
 		std::cerr << "GLEW initialization failure:\n" << glewGetErrorString(glewError) << std::endl;
 		std::terminate();
 	}
-	checkGLErrorsMessage("^^^ Above errors caused by glewInit().");
 
 	// Enable/disable vsync
 	if (!cfg.mVSync) SDL_GL_SetSwapInterval(0);
 
-	// Game loop
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	addControllers();
-
-	std::vector<SDL_Event> events{32};
-	std::unique_ptr<vox::IScreen> currentScreen;
-	currentScreen = std::unique_ptr<vox::IScreen>{new vox::CreationGameScreen{window, "test"}};
-
-	bool running = true;
-	float delta = calculateDelta();
-
-	while (running) {
-		delta = calculateDelta();
-		pollEventsUpdateControllers(events);
-
-		currentScreen->update(events, controllers[currentController], delta);
-		auto newScreen = currentScreen->changeScreen();
-		if (newScreen != nullptr) {
-			currentScreen = std::move(newScreen);
-			continue;
-		}
-		if (currentScreen->quit()) running = false;
-		currentScreen->render(delta);
-
-		SDL_GL_SwapWindow(window.mPtr);
-
-		// Hack that silences OpenGL warnings from SDL_GL_SwapWindow() on MSVC12 for some reason.
-		int val; SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &val); 
-
-		checkGLErrorsMessage("^^^ Above errors likely caused by game loop.");
-	}
+	sfz::runGameLoop(window, std::shared_ptr<sfz::BaseScreen>{new vox::GameScreen{window, "test"}});
 
 	return 0;
 }

@@ -7,15 +7,13 @@
 #include <random>
 #include <vector>
 
-#include "sfz/GL.hpp"
+#include <sfz/GL.hpp>
+#include <sfz/Screens.hpp>
 
 #include "IO.hpp"
 #include "Model.hpp"
 #include "Rendering.hpp"
-#include "screens/IScreen.hpp"
 #include "GlobalConfig.hpp"
-
-
 
 namespace vox {
 
@@ -23,42 +21,41 @@ using sfz::vec3;
 using sfz::vec4;
 using sfz::mat4;
 
+using sfz::ScreenUpdateOp;
+using std::unordered_map;
 using std::vector;
 
-class BaseGameScreen : public IScreen {
+class GameScreen final : public sfz::BaseScreen {
 public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	BaseGameScreen() = delete;
-	//BaseGameScreen(const BaseGameScreen&) = delete;
-	BaseGameScreen& operator= (const BaseGameScreen&) = delete;
+	GameScreen() = delete;
+	//GameScreen(const GameScreen&) = delete;
+	GameScreen& operator= (const GameScreen&) = delete;
 
-	BaseGameScreen(sdl::Window& window, const std::string& worldName);
-	//BaseGameScreen(const BaseGameScreen& baseGameScreen);
-	virtual ~BaseGameScreen();
+	GameScreen(sdl::Window& window, const std::string& worldName);
+	//GameScreen(const GameScreen& baseGameScreen);
+	//virtual ~GameScreen();
 
-	// Overriden methods from IScreen
+	// Overriden methods from sfz::BaseScreen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void update(const std::vector<SDL_Event>& events,
-	            const sdl::GameController& ctrl, float delta) override final;
-	std::unique_ptr<IScreen> changeScreen() override final;
-	bool quit() override final;
-	void render(float delta) override final;
+	virtual ScreenUpdateOp update(const vector<SDL_Event>& events,
+	                              const unordered_map<int32_t, sdl::GameController>& controllers,
+	                              float delta) override final;
+	virtual void render(float delta) override final;
+	virtual void onQuit() override final;
+	virtual void onResize(vec2 dimensions) override final;
 
-protected:
-	// Protected methods
+private:
+	// Private methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	virtual void updateSpecific(const std::vector<SDL_Event>& events,
-	                            const sdl::GameController& ctrl, float delta) = 0;
+	void updateResolutions(int width, int height) noexcept;
+	void reloadFramebuffers(int width, int height) noexcept;
 
-	void quitApplication() noexcept;
-
-	void changeScreen(IScreen* newScreen) noexcept;
-
-	// Protected members
+	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	GlobalConfig& mCfg;
@@ -100,21 +97,8 @@ protected:
 
 	float mFPSMean = 0.0f;
 	long mFPSSamples = 0;
-private:
-	// Private methods
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	void updateResolutions(int width, int height) noexcept;
-	void reloadFramebuffers(int width, int height) noexcept;
-
-	// Private members
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	IScreen* mNewScreenPtr = nullptr;
-	bool mQuit = false;
 };
 
 } // namespace vox
-
 
 #endif
