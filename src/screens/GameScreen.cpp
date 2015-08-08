@@ -142,7 +142,7 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 		switch (event.type) {
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
-			case SDLK_ESCAPE: return sfz::ScreenUpdateOp{sfz::ScreenUpdateOpType::QUIT_APPLICATION};
+			case SDLK_ESCAPE: return sfz::SCREEN_QUIT;
 			case SDLK_F1:
 				mCfg.mPrintFPS = !mCfg.mPrintFPS;
 				break;
@@ -367,7 +367,7 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 
 		// Menu buttons
 		if (ctrl.back == sdl::Button::UP) {
-			return sfz::ScreenUpdateOp{sfz::ScreenUpdateOpType::QUIT_APPLICATION};
+			return sfz::SCREEN_QUIT;
 		}
 
 		mCam.mUp = vec3{0.0f, 1.0f, 0.0f};
@@ -382,6 +382,8 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 	mCam.updateMatrices();
 	mCam.updatePlanes();
 	mWorld.update(mCam.mPos);
+
+	return sfz::SCREEN_NO_OP;
 }
 
 void GameScreen::render(float delta)
