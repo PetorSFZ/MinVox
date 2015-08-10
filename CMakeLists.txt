@@ -25,12 +25,8 @@ endif()
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${SRC_DIR}) # Same as source dir since not a library
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals)
-set(CMAKE_MODULES ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-# Adds our cmake modules to module path.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_MODULES})
-
-# SkipIfZero Common
+# SkipIfZero Graphics
 add_subdirectory(${EXTERNALS_DIR}/SkipIfZeroGraphics)
 
 # Include directories
