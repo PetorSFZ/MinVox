@@ -55,11 +55,11 @@ GLuint Assets::cubeFaceIndividualTexture(Voxel voxel) const noexcept
 	case VOXEL_AIR:
 		std::cerr << "AIR shouldn't be rendered." << std::endl;
 		std::terminate();
-	case VOXEL_BLUE: return BLUE.mHandle;
-	case VOXEL_GREEN: return GREEN.mHandle;
-	case VOXEL_ORANGE: return ORANGE.mHandle;
-	case VOXEL_VANILLA: return VANILLA.mHandle;
-	case VOXEL_YELLOW: return YELLOW.mHandle;
+	case VOXEL_BLUE: return BLUE.handle;
+	case VOXEL_GREEN: return GREEN.handle;
+	case VOXEL_ORANGE: return ORANGE.handle;
+	case VOXEL_VANILLA: return VANILLA.handle;
+	case VOXEL_YELLOW: return YELLOW.handle;
 	default:
 		std::cerr << "Texture not created." << std::endl;
 		std::terminate();

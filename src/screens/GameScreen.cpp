@@ -134,11 +134,9 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 // Overriden methods from BaseScreen
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
-								  const unordered_map<int32_t, sdl::GameController>& controllers,
-								  float delta)
+UpdateOp GameScreen::update(const UpdateState& state)
 {
-	for (auto& event : events) {
+	for (auto& event : state.events) {
 		switch (event.type) {
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
@@ -216,29 +214,29 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 
 			case 'w':
 			case 'W':
-				mCam.mPos += (mCam.mDir * 25.0f * delta);
+				mCam.mPos += (mCam.mDir * 25.0f * state.delta);
 				break;
 			case 's':
 			case 'S':
-				mCam.mPos -= (mCam.mDir * 25.0f * delta);
+				mCam.mPos -= (mCam.mDir * 25.0f * state.delta);
 				break;
 			case 'a':
 			case 'A':
 				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				mCam.mPos += (-right * 25.0f * delta);}
+				mCam.mPos += (-right * 25.0f * state.delta);}
 				break;
 			case 'd':
 			case 'D':
 				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				mCam.mPos += (right * 25.0f * delta);}
+				mCam.mPos += (right * 25.0f * state.delta);}
 				break;
 			case 'q':
 			case 'Q':
-				mCam.mPos += (sfz::vec3{0.0f,-1.0f,0.0} * 25.0f * delta);
+				mCam.mPos += (sfz::vec3{0.0f,-1.0f,0.0} * 25.0f * state.delta);
 				break;
 			case 'e':
 			case 'E':
-				mCam.mPos += (sfz::vec3{0.0f,1.0f,0.0} * 25.0f * delta);
+				mCam.mPos += (sfz::vec3{0.0f,1.0f,0.0} * 25.0f * state.delta);
 				break;
 			case 'p':
 			case 'P':
@@ -248,29 +246,29 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 				break;
 			case SDLK_UP:
 				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
-				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::PI()*delta);
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*state.delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::PI()*state.delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_DOWN:
 				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*delta);
-				sfz::mat3 yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::PI()*delta);
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*state.delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::PI()*state.delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_LEFT:
 				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, -1.0f*sfz::PI()*delta);
-				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, -1.0f*sfz::PI()*state.delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*state.delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
 			case SDLK_RIGHT:
 				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 1.0f*sfz::PI()*delta);
-				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*delta);
+				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 1.0f*sfz::PI()*state.delta);
+				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*state.delta);
 				mCam.mDir = (yTurn * xTurn * mCam.mDir);
 				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
 				break;
@@ -286,8 +284,8 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 		
 	}
 
-	if (controllers.find(0) != controllers.end()) {
-		const sdl::GameController& ctrl = controllers.at(0);
+	if (state.controllers.find(0) != state.controllers.end()) {
+		const sdl::GameController& ctrl = state.controllers.at(0);
 
 		float currentSpeed = 3.0f;
 		float turningSpeed = sfz::PI();
@@ -303,48 +301,48 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 		// Analogue Sticks
 		if (sfz::length(ctrl.rightStick) > ctrl.stickDeadzone) {
 			sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-			sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, ctrl.rightStick[0]*turningSpeed*delta);
-			sfz::mat3 yTurn = sfz::rotationMatrix3(right, ctrl.rightStick[1]*turningSpeed*delta);
+			sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, ctrl.rightStick[0]*turningSpeed*state.delta);
+			sfz::mat3 yTurn = sfz::rotationMatrix3(right, ctrl.rightStick[1]*turningSpeed*state.delta);
 			mCam.mDir = (yTurn * xTurn * mCam.mDir);
 			mCam.mUp = (yTurn * xTurn * mCam.mUp);
 		}
 		if (sfz::length(ctrl.leftStick) > ctrl.stickDeadzone) {
 			sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-			mCam.mPos += ((mCam.mDir * ctrl.leftStick[1] + right * ctrl.leftStick[0]) * currentSpeed * delta);
+			mCam.mPos += ((mCam.mDir * ctrl.leftStick[1] + right * ctrl.leftStick[0]) * currentSpeed * state.delta);
 		}
 
 		// Control Pad
-		if (ctrl.padUp == sdl::Button::DOWN) {
+		if (ctrl.padUp == sdl::ButtonState::DOWN) {
 			mLightShaftExposure += 0.05f;
 			if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
 			std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
-		} else if (ctrl.padDown == sdl::Button::DOWN) {
+		} else if (ctrl.padDown == sdl::ButtonState::DOWN) {
 			mLightShaftExposure -= 0.05f;
 			if (mLightShaftExposure < 0.0f) mLightShaftExposure = 0.0f;
 			std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
-		} else if (ctrl.padLeft == sdl::Button::DOWN) {
+		} else if (ctrl.padLeft == sdl::ButtonState::DOWN) {
 			if (mCurrentVoxel.mType >= 1) {
 				mCurrentVoxel = Voxel(mCurrentVoxel.mType - uint8_t(1));
 			}
-		} else if (ctrl.padRight == sdl::Button::DOWN) {
+		} else if (ctrl.padRight == sdl::ButtonState::DOWN) {
 			if (mCurrentVoxel.mType < Assets::INSTANCE().numVoxelTypes() - 1) {
 				mCurrentVoxel = Voxel(mCurrentVoxel.mType + uint8_t(1));
 			}
 		}
 
 		// Shoulder buttons
-		if (ctrl.leftShoulder == sdl::Button::DOWN || ctrl.leftShoulder == sdl::Button::HELD) {
-			mCam.mPos -= (sfz::vec3{0,1,0} * currentSpeed * delta);
+		if (ctrl.leftShoulder == sdl::ButtonState::DOWN || ctrl.leftShoulder == sdl::ButtonState::HELD) {
+			mCam.mPos -= (sfz::vec3{0,1,0} * currentSpeed * state.delta);
 		}
-		else if (ctrl.rightShoulder == sdl::Button::DOWN || ctrl.rightShoulder == sdl::Button::HELD) {
-			mCam.mPos += (sfz::vec3{0,1,0} * currentSpeed * delta);
+		else if (ctrl.rightShoulder == sdl::ButtonState::DOWN || ctrl.rightShoulder == sdl::ButtonState::HELD) {
+			mCam.mPos += (sfz::vec3{0,1,0} * currentSpeed * state.delta);
 		}
 
 		auto vPos = mCam.mPos + mCam.mDir * 4.0f;
 		mCurrentVoxelPos = vec3{std::floorf(vPos[0]), std::floorf(vPos[1]), std::floorf(vPos[2])};
 
 		// Face buttons
-		if (ctrl.y == sdl::Button::UP) {
+		if (ctrl.y == sdl::ButtonState::UP) {
 			std::random_device rd;
 			std::mt19937_64 gen{rd()};
 			std::uniform_real_distribution<float> distr{0.0f, 1.0f};
@@ -352,21 +350,21 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 			mLightMeshes.emplace_back(mLights.back().mCam.mVerticalFov, mLights.back().mCam.mNear, mLights.back().mCam.mFar);
 			std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
 		}
-		if (ctrl.x == sdl::Button::UP) {
+		if (ctrl.x == sdl::ButtonState::UP) {
 			if (mLights.size() > 0) {
 				mLights.pop_back();
 				mLightMeshes.pop_back();
 			}
 		}
-		if (ctrl.b == sdl::Button::UP) {
+		if (ctrl.b == sdl::ButtonState::UP) {
 			mWorld.setVoxel(mCurrentVoxelPos, Voxel{VOXEL_AIR});
 		}
-		if (ctrl.a == sdl::Button::UP) {
+		if (ctrl.a == sdl::ButtonState::UP) {
 			mWorld.setVoxel(mCurrentVoxelPos, mCurrentVoxel);
 		}
 
 		// Menu buttons
-		if (ctrl.back == sdl::Button::UP) {
+		if (ctrl.back == sdl::ButtonState::UP) {
 			return sfz::SCREEN_QUIT;
 		}
 
@@ -386,7 +384,7 @@ ScreenUpdateOp GameScreen::update(const vector<SDL_Event>& events,
 	return sfz::SCREEN_NO_OP;
 }
 
-void GameScreen::render(float delta)
+void GameScreen::render(const UpdateState& state)
 {
 	// Enable blending
 	glEnable(GL_BLEND);
@@ -620,7 +618,7 @@ void GameScreen::render(float delta)
 	vec2 fontWindowDimensions{100.0f * aspect, 100.0f};
 	vec2 lightingViewport{(float)mGlobalLightingFramebuffer.mWidth, (float)mGlobalLightingFramebuffer.mHeight};
 
-	float fps = 1.0f/delta;
+	float fps = 1.0f/state.delta;
 	if (fps > 10000.0f) fps = 10000.0f; // Small hack
 	if (1.0f < fps && fps < 500.0f) {
 		float fpsTotal = (mFPSMean * (float)mFPSSamples) + fps;
@@ -635,7 +633,7 @@ void GameScreen::render(float delta)
 	if (mCfg.mPrintFPS) {
 		using std::string;
 		using std::to_string;
-		string deltaString = "Delta: " + to_string(delta*1000.0f) + "ms, Mean: " + to_string(1000.0f / mFPSMean) + "ms";;
+		string deltaString = "Delta: " + to_string(state.delta*1000.0f) + "ms, Mean: " + to_string(1000.0f / mFPSMean) + "ms";;
 		string fpsString = "FPS: " + to_string(fps) + ", Mean: " + to_string(mFPSMean);
 
 		font.horizontalAlign(HorizontalAlign::LEFT);
@@ -746,7 +744,7 @@ void GameScreen::onQuit()
 
 }
 
-void GameScreen::onResize(vec2 dimensions)
+void GameScreen::onResize(vec2 dimensions, vec2 drawableDimensions)
 {
 	updateResolutions((int)dimensions.x, (int)dimensions.y);
 }

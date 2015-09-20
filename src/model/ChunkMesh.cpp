@@ -195,7 +195,7 @@ void addVoxelUV(const unique_ptr<vec2[]>& array, size_t voxelNum,
 	size_t arrayPos = voxelNum * NUM_ELEMENTS;
 	vec2 dim = texRegion.dimensions();
 	for (size_t i = 0; i < NUM_ELEMENTS; ++i) {
-		array[arrayPos + i] = texRegion.mUVMin + sfz::elemMult(CUBE_UV_COORDS[i], dim);
+		array[arrayPos + i] = texRegion.mUVMin + (CUBE_UV_COORDS[i] * dim);
 	}
 }
 
