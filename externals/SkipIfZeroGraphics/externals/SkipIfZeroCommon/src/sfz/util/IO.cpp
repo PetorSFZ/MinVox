@@ -1,6 +1,7 @@
 #include "sfz/util/IO.hpp"
 #include "sfz/Assert.hpp"
 
+#include <cstdlib>
 #include <cstdio> // fopen, fwrite, BUFSIZ
 #include <cstdint>
 
@@ -32,7 +33,7 @@ const std::string& myDocumentsPath() noexcept
 		if (result != S_OK) sfz_error("Could not retrieve MyDocuments path.");
 		return std::string{tempPath};
 #else
-		return std::string{"~"};
+		return std::getenv("HOME");
 #endif
 	}();
 	return path;
@@ -42,6 +43,14 @@ const std::string& gameBaseFolderPath() noexcept
 {
 	static const std::string path = myDocumentsPath() + "/My Games";
 	return path;
+}
+
+bool fileExists(const char* path) noexcept
+{
+	std::FILE* file = std::fopen(path, "r");
+	if (file == NULL) return false;
+	std::fclose(file);
+	return true;
 }
 
 bool directoryExists(const char* path) noexcept
@@ -62,6 +71,14 @@ bool directoryExists(const char* path) noexcept
 	std::fclose(file);
 	return true;
 #endif
+}
+
+bool createFile(const char* path) noexcept
+{
+	std::FILE* file = std::fopen(path, "w");
+	if (file == NULL) return false;
+	std::fclose(file);
+	return true;
 }
 
 bool createDirectory(const char* path) noexcept
@@ -95,6 +112,16 @@ bool copyFile(const char* srcPath, const char* dstPath) noexcept
 	std::fclose(destination);
 
 	return true;
+}
+
+int64_t sizeofFile(const char* path) noexcept
+{
+	std::FILE* file = std::fopen(path, "rb");
+	if (file == NULL) return -1;
+	std::fseek(file, 0, SEEK_END);
+	int64_t size = std::ftell(file);
+	std::fclose(file);
+	return size;
 }
 
 } // namespace sfz
