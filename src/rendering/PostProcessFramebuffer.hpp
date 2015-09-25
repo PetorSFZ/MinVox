@@ -4,9 +4,8 @@
 
 #include <algorithm> // std::swap
 
-#include "sfz/GL.hpp"
-
-
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
 
 namespace vox {
 
@@ -39,6 +38,5 @@ struct DirectionalLightingFramebuffer final {
 };
 
 } // namespace vox
-
 
 #endif

@@ -2,7 +2,8 @@
 #ifndef VOX_SHADOW_MAP_HPP
 #define VOX_SHADOW_MAP_HPP
 
-#include "sfz/GL.hpp"
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
 #include <sfz/math/Vector.hpp>
 
 namespace vox {

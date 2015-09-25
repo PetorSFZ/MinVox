@@ -42,8 +42,8 @@ public:
 	// Overriden methods from sfz::BaseScreen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	virtual UpdateOp update(const UpdateState& state) override final;
-	virtual void render(const UpdateState& state) override final;
+	virtual UpdateOp update(UpdateState& state) override final;
+	virtual void render(UpdateState& state) override final;
 	virtual void onQuit() override final;
 	virtual void onResize(vec2 dimensions, vec2 drawableDimensions) override final;
 

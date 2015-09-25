@@ -4,9 +4,8 @@
 
 #include <sfz/Math.hpp>
 #include "rendering/Camera.hpp"
-#include "sfz/GL.hpp"
-
-
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
 
 namespace vox {
 
@@ -61,6 +60,5 @@ struct DirectionalLight final {
 };
 
 } // namespace vox
-
 
 #endif

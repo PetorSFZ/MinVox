@@ -2,9 +2,8 @@
 #ifndef VOX_SKY_CUBE_OBJECT_HPP
 #define VOX_SKY_CUBE_OBJECT_HPP
 
-#include "sfz/GL.hpp"
-
-
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp>
 
 namespace vox {
 
@@ -25,6 +24,4 @@ private:
 
 
 } // namespace vox
-
-
 #endif

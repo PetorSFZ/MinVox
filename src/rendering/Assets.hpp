@@ -2,13 +2,13 @@
 #ifndef VOX_RENDERING_ASSETS_HPP
 #define VOX_RENDERING_ASSETS_HPP
 
-#include "sfz/GL.hpp"
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
+
 #include "model/Voxel.hpp"
 #include <memory>
 #include <cstddef> // size_t
 #include <string>
-
-
 
 namespace vox {
 
@@ -69,7 +69,5 @@ private:
 };
 
 } // namespace vox
-
-
 
 #endif

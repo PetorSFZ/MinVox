@@ -2,9 +2,8 @@
 #ifndef VOX_RENDERING_SHADERS_HPP
 #define VOX_RENDERING_SHADERS_HPP
 
-#include "sfz/GL.hpp"
-
-
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
 
 namespace vox {
 

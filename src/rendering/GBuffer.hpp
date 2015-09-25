@@ -6,8 +6,7 @@
 
 #include <sfz/Assert.hpp>
 #include <sfz/GL.hpp>
-
-
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
 
 namespace vox {
 
@@ -27,6 +26,4 @@ struct GBuffer final {
 };
 
 } // namespace vox
-
-
 #endif

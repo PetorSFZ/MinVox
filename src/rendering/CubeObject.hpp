@@ -4,7 +4,8 @@
 
 #include <cmath>
 
-#include "sfz/GL.hpp"
+#include <sfz/GL.hpp>
+#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
 
 namespace vox {
 

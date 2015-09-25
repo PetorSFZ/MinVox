@@ -134,7 +134,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 // Overriden methods from BaseScreen
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-UpdateOp GameScreen::update(const UpdateState& state)
+UpdateOp GameScreen::update(UpdateState& state)
 {
 	for (auto& event : state.events) {
 		switch (event.type) {
@@ -384,7 +384,7 @@ UpdateOp GameScreen::update(const UpdateState& state)
 	return sfz::SCREEN_NO_OP;
 }
 
-void GameScreen::render(const UpdateState& state)
+void GameScreen::render(UpdateState& state)
 {
 	// Enable blending
 	glEnable(GL_BLEND);
