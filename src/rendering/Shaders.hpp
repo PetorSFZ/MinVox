@@ -2,10 +2,11 @@
 #ifndef VOX_RENDERING_SHADERS_HPP
 #define VOX_RENDERING_SHADERS_HPP
 
-#include <sfz/GL.hpp>
-#include <sfz/gl/OpenGL.hpp> // TODO: Move to .cpp
+#include <sfz/gl/Program.hpp>
 
 namespace vox {
+
+using gl::Program;
 
 /**
  * Shaders are compiled and returned by the functions in this file. The motivation for this is
@@ -14,17 +15,17 @@ namespace vox {
  * one object file.
  */
 
-GLuint compileShadowMapShaderProgram() noexcept;
+Program compileShadowMapShaderProgram() noexcept;
 
-GLuint compileGBufferGenShaderProgram() noexcept;
+Program compileGBufferGenShaderProgram() noexcept;
 
-GLuint compileDirectionalLightingStencilShaderProgram() noexcept;
+Program compileDirectionalLightingStencilShaderProgram() noexcept;
 
-GLuint compileDirectionalLightingShaderProgram() noexcept;
+Program compileDirectionalLightingShaderProgram() noexcept;
 
-GLuint compileGlobalLightingShaderProgram() noexcept;
+Program compileGlobalLightingShaderProgram() noexcept;
 
-GLuint compileOutputSelectShaderProgram() noexcept;
+Program compileOutputSelectShaderProgram() noexcept;
 
 } // namespace vox
 

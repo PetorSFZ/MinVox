@@ -1,6 +1,6 @@
 #include "rendering/Shaders.hpp"
 
-
+#include <sfz/gl/OpenGL.hpp>
 
 namespace vox {
 
@@ -26,28 +26,14 @@ const char* POST_PROCESS_VERTEX_SHADER_SOURCE = R"(
 	}
 )";
 
-GLuint compilePostProcessShaderProgram(const char* fragmentShaderSource) noexcept
+Program compilePostProcessShaderProgram(const char* fragmentShaderSource) noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(POST_PROCESS_VERTEX_SHADER_SOURCE);
-
-	GLuint fragmentShader = gl::compileFragmentShader(fragmentShaderSource);
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "positionIn");
-	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-	return shaderProgram;
+	return Program::fromSource(POST_PROCESS_VERTEX_SHADER_SOURCE, fragmentShaderSource,
+	[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "positionIn");
+		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+		glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
+	});
 }
 
 } // anoynous namespace
@@ -55,9 +41,9 @@ GLuint compilePostProcessShaderProgram(const char* fragmentShaderSource) noexcep
 // Shader programs
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint compileShadowMapShaderProgram() noexcept
+Program compileShadowMapShaderProgram() noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(R"(
+	return Program::fromSource(R"(
 		#version 330
 
 		in vec3 positionIn;
@@ -71,10 +57,7 @@ GLuint compileShadowMapShaderProgram() noexcept
 			mat4 modelViewProj = uProjectionMatrix * uViewMatrix * uModelMatrix;
 			gl_Position = modelViewProj * vec4(positionIn, 1.0);
 		}
-	)");
-
-
-	GLuint fragmentShader = gl::compileFragmentShader(R"(
+	)", R"(
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
@@ -85,28 +68,15 @@ GLuint compileShadowMapShaderProgram() noexcept
 		{
 			fragmentColor = vec4(1.0);
 		}
-	)");
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "positionIn");
-	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-	return shaderProgram;
+	)", [](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "positionIn");
+		glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
+	});
 }
 
-GLuint compileGBufferGenShaderProgram() noexcept
+Program compileGBufferGenShaderProgram() noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(R"(
+	return Program::fromSource(R"(
 		#version 330
 
 		// Input
@@ -136,10 +106,7 @@ GLuint compileGBufferGenShaderProgram() noexcept
 			vsPos = vec3(modelView * vec4(positionIn, 1));
 			vsNormal = normalize((normalMatrix * vec4(normalIn, 0)).xyz);
 		}
-	)");
-
-
-	GLuint fragmentShader = gl::compileFragmentShader(R"(
+	)", R"(
 		#version 330
 
 		precision highp float; // Required by GLSL spec Sect 4.5.3
@@ -177,35 +144,21 @@ GLuint compileGBufferGenShaderProgram() noexcept
 			}
 			fragmentMaterial = vec4(uMaterial, 1.0);
 		}
-	)");
-
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "positionIn");
-	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-	glBindAttribLocation(shaderProgram, 2, "normalIn");
-	glBindFragDataLocation(shaderProgram, 0, "fragmentDiffuse");
-	glBindFragDataLocation(shaderProgram, 1, "fragmentPosition");
-	glBindFragDataLocation(shaderProgram, 2, "fragmentNormal");
-	glBindFragDataLocation(shaderProgram, 3, "fragmentEmissive");
-	glBindFragDataLocation(shaderProgram, 4, "fragmentMaterial");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-	return shaderProgram;
+	)", [](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "positionIn");
+		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+		glBindAttribLocation(shaderProgram, 2, "normalIn");
+		glBindFragDataLocation(shaderProgram, 0, "fragmentDiffuse");
+		glBindFragDataLocation(shaderProgram, 1, "fragmentPosition");
+		glBindFragDataLocation(shaderProgram, 2, "fragmentNormal");
+		glBindFragDataLocation(shaderProgram, 3, "fragmentEmissive");
+		glBindFragDataLocation(shaderProgram, 4, "fragmentMaterial");
+	});
 }
 
-GLuint compileDirectionalLightingStencilShaderProgram() noexcept
+Program compileDirectionalLightingStencilShaderProgram() noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(R"(
+	return Program::fromSource(R"(
 		#version 330
 
 		// Input
@@ -221,9 +174,7 @@ GLuint compileDirectionalLightingStencilShaderProgram() noexcept
 			mat4 modelViewProj = uProjectionMatrix * uViewMatrix * uModelMatrix;
 			gl_Position = modelViewProj * vec4(positionIn, 1.0);
 		}
-	)");
-
-	GLuint fragmentShader = gl::compileFragmentShader(R"(
+	)",R"(
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
@@ -232,25 +183,12 @@ GLuint compileDirectionalLightingStencilShaderProgram() noexcept
 		{
 			// Do nothing, stencil buffer should be incremented at this point.
 		}
-	)");
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "positionIn");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-	return shaderProgram;
+	)", [](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "positionIn");
+	});
 }
 
-GLuint compileDirectionalLightingShaderProgram() noexcept
+Program compileDirectionalLightingShaderProgram() noexcept
 {
 	return compilePostProcessShaderProgram(R"(
 		#version 330
@@ -365,7 +303,7 @@ GLuint compileDirectionalLightingShaderProgram() noexcept
 	)");
 }
 
-GLuint compileGlobalLightingShaderProgram() noexcept
+Program compileGlobalLightingShaderProgram() noexcept
 {
 	return compilePostProcessShaderProgram(R"(
 		#version 330
@@ -406,7 +344,7 @@ GLuint compileGlobalLightingShaderProgram() noexcept
 	)");
 }
 
-GLuint compileOutputSelectShaderProgram() noexcept
+Program compileOutputSelectShaderProgram() noexcept
 {
 	return compilePostProcessShaderProgram(R"(
 		#version 330

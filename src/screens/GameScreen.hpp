@@ -64,8 +64,8 @@ private:
 
 	sdl::Window& mWindow;
 
-	GLuint mShadowMapShader, mGBufferGenShader, mDirLightingStencilShader, mDirLightingShader, mGlobalLightingShader,
-	       mOutputSelectShader;
+	gl::Program mShadowMapShader, mGBufferGenShader, mDirLightingStencilShader, mDirLightingShader,
+	            mGlobalLightingShader, mOutputSelectShader;
 	ShadowMap mShadowMap;
 	GBuffer mGBuffer;
 	DirectionalLightingFramebuffer mDirLightFramebuffer;
