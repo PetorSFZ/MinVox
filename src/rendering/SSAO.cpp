@@ -156,52 +156,22 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 // Anonymous functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint compileSSAOShaderProgram() noexcept
+gl::Program compileSSAOShaderProgram() noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(VERTEX_SHADER);
-	GLuint fragmentShader = gl::compileFragmentShader(SSAO_FRAGMENT_SHADER);
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "position");
-	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-	glBindFragDataLocation(shaderProgram, 0, "occlusionOut");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-
-	return shaderProgram;
+	return gl::Program::fromSource(VERTEX_SHADER, SSAO_FRAGMENT_SHADER, [](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "position");
+		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+		glBindFragDataLocation(shaderProgram, 0, "occlusionOut");
+	});
 }
 
-GLuint compileBlurShaderProgram() noexcept
+gl::Program compileBlurShaderProgram() noexcept
 {
-	GLuint vertexShader = gl::compileVertexShader(VERTEX_SHADER);
-	GLuint fragmentShader = gl::compileFragmentShader(SSAO_BLUR_FRAGMENT_SHADER);
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glBindAttribLocation(shaderProgram, 0, "position");
-	glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-	glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-
-	gl::linkProgram(shaderProgram);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors caused by shader compiling & linking." << std::endl;
-	}
-
-	return shaderProgram;
+	return gl::Program::fromSource(VERTEX_SHADER, SSAO_BLUR_FRAGMENT_SHADER, [](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "position");
+		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+		glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
+	});
 }
 
 vector<vec3> generateKernel(size_t kernelSize) noexcept
@@ -348,8 +318,6 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusi
 
 SSAO::~SSAO() noexcept
 {
-	glDeleteProgram(mSSAOProgram);
-	glDeleteProgram(mBlurProgram);
 	glDeleteTextures(1, &mNoiseTexture);
 }
 
@@ -361,7 +329,7 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 	// Render occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	glUseProgram(mSSAOProgram);
+	glUseProgram(mSSAOProgram.handle());
 	glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.mFBO);
 	glViewport(0, 0, mOcclusionFBO.mWidth, mOcclusionFBO.mHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -399,7 +367,7 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	if (clean) {
-		glUseProgram(mBlurProgram);
+		glUseProgram(mBlurProgram.handle());
 		glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.mFBO);
 		glViewport(0, 0, mBlurredFBO.mWidth, mBlurredFBO.mHeight);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

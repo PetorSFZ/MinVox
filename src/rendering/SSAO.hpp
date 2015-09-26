@@ -11,8 +11,6 @@
 
 #include "rendering/FullscreenQuadObject.hpp"
 
-
-
 namespace vox {
 
 using sfz::vec2;
@@ -79,7 +77,7 @@ public:
 private:
 	int mWidth, mHeight;
 
-	GLuint mSSAOProgram, mBlurProgram;
+	gl::Program mSSAOProgram, mBlurProgram;
 	FullscreenQuadObject mFullscreenQuad;
 	OcclusionFramebuffer mOcclusionFBO, mBlurredFBO;
 
@@ -95,6 +93,5 @@ private:
 };
 
 } // namespace vox
-
 
 #endif

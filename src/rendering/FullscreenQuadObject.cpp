@@ -1,5 +1,7 @@
 #include "rendering/FullscreenQuadObject.hpp"
 
+#include <iostream>
+
 namespace vox {
 
 FullscreenQuadObject::FullscreenQuadObject()

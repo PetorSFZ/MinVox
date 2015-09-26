@@ -55,11 +55,11 @@ GLuint Assets::cubeFaceIndividualTexture(Voxel voxel) const noexcept
 	case VOXEL_AIR:
 		std::cerr << "AIR shouldn't be rendered." << std::endl;
 		std::terminate();
-	case VOXEL_BLUE: return BLUE.handle;
-	case VOXEL_GREEN: return GREEN.handle;
-	case VOXEL_ORANGE: return ORANGE.handle;
-	case VOXEL_VANILLA: return VANILLA.handle;
-	case VOXEL_YELLOW: return YELLOW.handle;
+	case VOXEL_BLUE: return BLUE.handle();
+	case VOXEL_GREEN: return GREEN.handle();
+	case VOXEL_ORANGE: return ORANGE.handle();
+	case VOXEL_VANILLA: return VANILLA.handle();
+	case VOXEL_YELLOW: return YELLOW.handle();
 	default:
 		std::cerr << "Texture not created." << std::endl;
 		std::terminate();
@@ -87,11 +87,11 @@ Assets::Assets() noexcept
 	mCubeFaceRegions{new (std::nothrow) TextureRegion[mNumVoxelTypes]},
 	mCubeFaceNames{new (std::nothrow) string[mNumVoxelTypes]},
 
-	BLUE{cubeFacePath() + "blue_b.png"},
-	GREEN{cubeFacePath() + "green_b.png"},
-	ORANGE{cubeFacePath() + "orange_b.png"},
-	VANILLA{cubeFacePath() + "vanilla_b.png"},
-	YELLOW{cubeFacePath() + "yellow_b.png"}
+	BLUE{Texture::fromFile((cubeFacePath() + "blue_b.png").c_str())},
+	GREEN{Texture::fromFile((cubeFacePath() + "green_b.png").c_str())},
+	ORANGE{Texture::fromFile((cubeFacePath() + "orange_b.png").c_str())},
+	VANILLA{Texture::fromFile((cubeFacePath() + "vanilla_b.png").c_str())},
+	YELLOW{Texture::fromFile((cubeFacePath() + "yellow_b.png").c_str())}
 {
 	mCubeFaceRegions[VOXEL_AIR] = TextureRegion{vec2{0.0f, 0.0f}, vec2{0.0f, 0.0f}}; // 0
 	mCubeFaceRegions[VOXEL_LIGHT] = TextureRegion{vec2{0.0f, 0.0f}, vec2{0.0f, 0.0f}}; // 1
