@@ -10,6 +10,7 @@
 #include <sfz/GL.hpp>
 #include <sfz/Screens.hpp>
 
+
 #include "IO.hpp"
 #include "Model.hpp"
 #include "Rendering.hpp"
@@ -72,7 +73,7 @@ private:
 	PostProcessFramebuffer mGlobalLightingFramebuffer, mOutputSelectFramebuffer;
 	
 	SSAO mSSAO;
-	FullscreenQuadObject mFullscreenQuad;
+	gl::PostProcessQuad mFullscreenQuad;
 	WorldRenderer mWorldRenderer;
 	
 	bool mOldWorldRenderer = false;

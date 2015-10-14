@@ -9,7 +9,9 @@
 #include <sfz/GL.hpp>
 #include <sfz/Math.hpp>
 
-#include "rendering/FullscreenQuadObject.hpp"
+#include <sfz/gl/PostProcessQuad.hpp>
+
+#include <sfz/gl/OpenGL.hpp>
 
 namespace vox {
 
@@ -78,7 +80,7 @@ private:
 	int mWidth, mHeight;
 
 	gl::Program mSSAOProgram, mBlurProgram;
-	FullscreenQuadObject mFullscreenQuad;
+	gl::PostProcessQuad mPostProcessQuad;
 	OcclusionFramebuffer mOcclusionFBO, mBlurredFBO;
 
 	static const size_t MAX_KERNEL_SIZE = 256;

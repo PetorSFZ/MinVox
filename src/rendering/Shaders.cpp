@@ -4,40 +4,6 @@
 
 namespace vox {
 
-// Anonymous namespace
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-namespace {
-
-const char* POST_PROCESS_VERTEX_SHADER_SOURCE = R"(
-	#version 330
-
-	// Input
-	in vec3 positionIn;
-	in vec2 texCoordIn;
-
-	// Output
-	out vec2 texCoord;
-
-	void main()
-	{
-		gl_Position = vec4(positionIn, 1.0);
-		texCoord = texCoordIn;
-	}
-)";
-
-Program compilePostProcessShaderProgram(const char* fragmentShaderSource) noexcept
-{
-	return Program::fromSource(POST_PROCESS_VERTEX_SHADER_SOURCE, fragmentShaderSource,
-	[](uint32_t shaderProgram) {
-		glBindAttribLocation(shaderProgram, 0, "positionIn");
-		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-		glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-	});
-}
-
-} // anoynous namespace
-
 // Shader programs
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -190,13 +156,13 @@ Program compileDirectionalLightingStencilShaderProgram() noexcept
 
 Program compileDirectionalLightingShaderProgram() noexcept
 {
-	return compilePostProcessShaderProgram(R"(
+	return gl::Program::postProcessFromSource(R"(
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
 		
 		// Input
-		in vec2 texCoord;
+		in vec2 uvCoord;
 
 		// Output
 		out vec4 fragmentColor;
@@ -258,14 +224,14 @@ Program compileDirectionalLightingShaderProgram() noexcept
 			const float materialShininess = 6;
 
 			// Values from textures
-			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
-			vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
-			vec3 vsNormal = normalize(texture(uNormalTexture, texCoord).xyz);
-			vec3 material = texture(uMaterialTexture, texCoord).xyz;
+			vec3 diffuseColor = texture(uDiffuseTexture, uvCoord).rgb;
+			vec3 vsPos = texture(uPositionTexture, uvCoord).xyz;
+			vec3 vsNormal = normalize(texture(uNormalTexture, uvCoord).xyz);
+			vec3 material = texture(uMaterialTexture, uvCoord).xyz;
 			float materialDiffuse = material.y;
 			float materialSpecular = material.z;
 			float shadow = sampleShadowMap(vsPos);
-			vec3 dirLights = texture(uDirectionalLightingTexture, texCoord).rgb;
+			vec3 dirLights = texture(uDirectionalLightingTexture, uvCoord).rgb;
 
 			// Light calculation positions
 			vec3 vsLightPos = (uViewMatrix * vec4(uLightPos, 1)).xyz;
@@ -305,13 +271,13 @@ Program compileDirectionalLightingShaderProgram() noexcept
 
 Program compileGlobalLightingShaderProgram() noexcept
 {
-	return compilePostProcessShaderProgram(R"(
+	return gl::Program::postProcessFromSource(R"(
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
 		
 		// Input
-		in vec2 texCoord;
+		in vec2 uvCoord;
 
 		// Output
 		out vec4 fragmentColor;
@@ -328,12 +294,12 @@ Program compileGlobalLightingShaderProgram() noexcept
 		void main()
 		{
 			// Values from textures
-			vec3 diffuseColor = texture(uDiffuseTexture, texCoord).rgb;
-			vec3 emissive = texture(uEmissiveTexture, texCoord).rgb;
-			vec3 material = texture(uMaterialTexture, texCoord).xyz;
+			vec3 diffuseColor = texture(uDiffuseTexture, uvCoord).rgb;
+			vec3 emissive = texture(uEmissiveTexture, uvCoord).rgb;
+			vec3 material = texture(uMaterialTexture, uvCoord).xyz;
 			float materialAmbient = material.x;
-			float ao = texture(uAOTexture, texCoord).r;
-			vec3 dirLights = texture(uDirectionalLightsTexture, texCoord).rgb;
+			float ao = texture(uAOTexture, uvCoord).r;
+			vec3 dirLights = texture(uDirectionalLightsTexture, uvCoord).rgb;
 
 			vec3 shading = emissive
 			             + materialAmbient * uAmbientLight * diffuseColor * ao
@@ -346,13 +312,13 @@ Program compileGlobalLightingShaderProgram() noexcept
 
 Program compileOutputSelectShaderProgram() noexcept
 {
-	return compilePostProcessShaderProgram(R"(
+	return gl::Program::postProcessFromSource(R"(
 		#version 330
 
 		precision highp float; // required by GLSL spec Sect 4.5.3
 
 		// Input
-		in vec2 texCoord;
+		in vec2 uvCoord;
 
 		// Output
 		out vec4 fragmentColor;
@@ -377,14 +343,14 @@ Program compileOutputSelectShaderProgram() noexcept
 		void main()
 		{
 			switch(uRenderMode) {
-			case 1: fragmentColor = vec4(texture(uFinishedTexture, texCoord).rgb, 1.0); break;
-			case 2: fragmentColor = vec4(texture(uDiffuseTexture, texCoord).rgb, 1.0); break;
-			case 3: fragmentColor = vec4(texture(uPositionTexture, texCoord).xyz, 1.0); break;
-			case 4: fragmentColor = vec4(texture(uNormalTexture, texCoord).xyz, 1.0); break;
-			case 5: fragmentColor = vec4(texture(uEmissiveTexture, texCoord).rgb, 1.0); break;
-			case 6: fragmentColor = vec4(texture(uMaterialTexture, texCoord).xyz, 1.0); break;
-			case 7: fragmentColor = vec4(vec3(texture(uAOTexture, texCoord).r), 1.0); break;
-			case 8: fragmentColor = vec4(texture(uDirectionalLightsTexture, texCoord).rgb, 1.0); break;
+			case 1: fragmentColor = vec4(texture(uFinishedTexture, uvCoord).rgb, 1.0); break;
+			case 2: fragmentColor = vec4(texture(uDiffuseTexture, uvCoord).rgb, 1.0); break;
+			case 3: fragmentColor = vec4(texture(uPositionTexture, uvCoord).xyz, 1.0); break;
+			case 4: fragmentColor = vec4(texture(uNormalTexture, uvCoord).xyz, 1.0); break;
+			case 5: fragmentColor = vec4(texture(uEmissiveTexture, uvCoord).rgb, 1.0); break;
+			case 6: fragmentColor = vec4(texture(uMaterialTexture, uvCoord).xyz, 1.0); break;
+			case 7: fragmentColor = vec4(vec3(texture(uAOTexture, uvCoord).r), 1.0); break;
+			case 8: fragmentColor = vec4(texture(uDirectionalLightsTexture, uvCoord).rgb, 1.0); break;
 			}
 		}
 	)");

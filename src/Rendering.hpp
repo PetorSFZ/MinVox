@@ -5,7 +5,6 @@
 #include "rendering/Assets.hpp"
 #include "rendering/Camera.hpp"
 #include "rendering/CubeObject.hpp"
-#include "rendering/FullscreenQuadObject.hpp"
 #include "rendering/GBuffer.hpp"
 #include "rendering/Light.hpp"
 #include "rendering/PostProcessFramebuffer.hpp"

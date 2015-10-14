@@ -1,29 +1,13 @@
 #include "rendering/SSAO.hpp"
 
+#include <sfz/gl/OpenGL.hpp>
+
 namespace vox {
 
 // Anonymous namespace
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 namespace {
-
-// Common vertex shader
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-const char* VERTEX_SHADER = R"(
-	#version 330
-
-	in vec2 position;
-	in vec2 texCoordIn;
-
-	out vec2 texCoord;
-
-	void main()
-	{
-		gl_Position = vec4(position, 0.0, 1.0);
-		texCoord = texCoordIn;
-	}
-)";
 
 // SSAO shader
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -34,7 +18,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	precision highp float; // required by GLSL spec Sect 4.5.3
 
 	// Input
-	in vec2 texCoord;
+	in vec2 uvCoord;
 
 	// Output
 	out vec4 occlusionOut;
@@ -75,10 +59,10 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 		// SSAO implementation using normal oriented hemisphere, inspired by this tutorial:
 		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 
-		vec3 vsPos = texture(uPositionTexture, texCoord).xyz;
-		vec3 normal = normalize(texture(uNormalTexture, texCoord).xyz);	
+		vec3 vsPos = texture(uPositionTexture, uvCoord).xyz;
+		vec3 normal = normalize(texture(uNormalTexture, uvCoord).xyz);
 		float depth = vsPosToDepth(vsPos);
-		vec3 noiseVec = texture(uNoiseTexture, texCoord * uNoiseTexCoordScale).xyz;
+		vec3 noiseVec = texture(uNoiseTexture, uvCoord * uNoiseTexCoordScale).xyz;
 
 		// Calculates matrix to rotate kernel into normal hemisphere using Gram Schmidt process
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
@@ -116,7 +100,7 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 	precision highp float; // required by GLSL spec Sect 4.5.3
 
 	// Input
-	in vec2 texCoord;
+	in vec2 uvCoord;
 	
 	// Output
 	out vec4 fragmentColor;
@@ -144,7 +128,7 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 				vec2 offset = vec2(float(x), float(y));
 				offset += offsetOffset;
 				offset *= texelSize;
-				blur += texture(uOcclusionTexture, texCoord + offset).r;
+				blur += texture(uOcclusionTexture, uvCoord + offset).r;
 			}
 		}
 		blur /= (blurWidthFloat*blurWidthFloat);
@@ -158,20 +142,12 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 
 gl::Program compileSSAOShaderProgram() noexcept
 {
-	return gl::Program::fromSource(VERTEX_SHADER, SSAO_FRAGMENT_SHADER, [](uint32_t shaderProgram) {
-		glBindAttribLocation(shaderProgram, 0, "position");
-		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-		glBindFragDataLocation(shaderProgram, 0, "occlusionOut");
-	});
+	return gl::Program::postProcessFromSource(SSAO_FRAGMENT_SHADER);
 }
 
 gl::Program compileBlurShaderProgram() noexcept
 {
-	return gl::Program::fromSource(VERTEX_SHADER, SSAO_BLUR_FRAGMENT_SHADER, [](uint32_t shaderProgram) {
-		glBindAttribLocation(shaderProgram, 0, "position");
-		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-		glBindFragDataLocation(shaderProgram, 0, "fragmentColor");
-	});
+	return gl::Program::postProcessFromSource(SSAO_BLUR_FRAGMENT_SHADER);
 }
 
 vector<vec3> generateKernel(size_t kernelSize) noexcept
@@ -361,7 +337,7 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
 	gl::setUniform(mSSAOProgram, "uOcclusionExp", mOcclusionExp);
 
-	mFullscreenQuad.render();
+	mPostProcessQuad.render();
 
 	// Blur occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -377,7 +353,7 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 		glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.mTexture);
 		gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
 
-		mFullscreenQuad.render();
+		mPostProcessQuad.render();
 
 		return mBlurredFBO.mTexture;
 	} else {
