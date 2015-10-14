@@ -190,7 +190,7 @@ void addVoxelVertex(const unique_ptr<vec3[]>& array, size_t voxelNum,
 }
 
 void addVoxelUV(const unique_ptr<vec2[]>& array, size_t voxelNum,
-                const sfz::TextureRegion& texRegion) noexcept
+                const gl::TextureRegion& texRegion) noexcept
 {
 	size_t arrayPos = voxelNum * NUM_ELEMENTS;
 	vec2 dim = texRegion.dimensions();
