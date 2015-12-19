@@ -12,6 +12,11 @@ int main()
 {
 	using namespace sdl;
 
+	// Small hack to enable hi-dpi awareness on Windows.
+#ifdef _WIN32
+	SetProcessDPIAware();
+#endif
+
 	vox::GlobalConfig& cfg = vox::getGlobalConfig();
 	Session sdlSession{{InitFlags::EVENTS, InitFlags::VIDEO, InitFlags::GAMECONTROLLER}};
 	Window window{"MinVox", cfg.mWindowResolutionX, cfg.mWindowResolutionY, {WindowFlags::OPENGL,
