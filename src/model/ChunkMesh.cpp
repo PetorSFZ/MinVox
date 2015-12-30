@@ -257,10 +257,6 @@ ChunkMesh::ChunkMesh() noexcept
 	glBindBuffer(GL_ARRAY_BUFFER, mNormalBuffer);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors likely caused by ChunkMesh constructor." << std::endl;
-	}
 }
 
 ChunkMesh::~ChunkMesh() noexcept

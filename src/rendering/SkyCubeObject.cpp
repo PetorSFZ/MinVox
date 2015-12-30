@@ -1,7 +1,5 @@
 #include "rendering/SkyCubeObject.hpp"
 
-
-
 namespace vox {
 
 // Constructors & destructors
@@ -261,10 +259,6 @@ SkyCubeObject::SkyCubeObject() noexcept
 	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
 	glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
 	glEnableVertexAttribArray(2);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors likely caused by CubeObject constructor." << std::endl;
-	}
 }
 
 SkyCubeObject::~SkyCubeObject() noexcept

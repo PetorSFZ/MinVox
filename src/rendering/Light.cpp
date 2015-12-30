@@ -88,10 +88,6 @@ DirectionalLightMesh::DirectionalLightMesh(float fov, float near, float far) noe
 	glBindBuffer(GL_ARRAY_BUFFER, mPosBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(0);
-
-	if (gl::checkAllGLErrors()) {
-		std::cerr << "^^^ Above errors likely caused by DirectionalLightMesh constructor." << std::endl;
-	}
 }
 
 DirectionalLightMesh::DirectionalLightMesh(DirectionalLightMesh&& other) noexcept

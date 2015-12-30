@@ -1,18 +1,11 @@
 #include "screens/GameScreen.hpp"
 
-
-
 namespace vox {
 
 // Anonymous functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 namespace {
-
-void checkGLErrorsMessage(const std::string& msg)
-{
-	if (gl::checkAllGLErrors()) std::cerr << msg << std::endl;
-}
 
 vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
 {
@@ -397,8 +390,6 @@ void GameScreen::render(UpdateState& state)
 	// Enable culling
 	glEnable(GL_CULL_FACE);
 
-	checkGLErrorsMessage("^^^ Errors caused by: render() setup.");
-
 	// Draw GBuffer
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -443,8 +434,6 @@ void GameScreen::render(UpdateState& state)
 		gl::setUniform(mGBufferGenShader, "uMaterial", vec3{1.0, 0.50, 0.25});
 		drawPlacementCube(modelMatrixLocGBufferGen, mCurrentVoxelPos, mCurrentVoxel);
 	}
-
-	checkGLErrorsMessage("^^^ Errors caused by: render() GBuffer.");
 
 	// Directional Lights (+Shadow Maps)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -565,8 +554,6 @@ void GameScreen::render(UpdateState& state)
 		lightIndex++;
 	}
 
-	checkGLErrorsMessage("^^^ Errors caused by: render() directional lights.");
-
 	// Global Lighting + SSAO + Shadow Map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -606,8 +593,6 @@ void GameScreen::render(UpdateState& state)
 	
 	glUseProgram(0);
 
-	checkGLErrorsMessage("^^^ Errors caused by: render() Global Lighting + SSAO + Shadow Map");
-
 	// Rendering some text
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -641,14 +626,14 @@ void GameScreen::render(UpdateState& state)
 
 		// Drop shadow
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2{1.15f, 99.85f}, fontSize, deltaString);
-		font.write(vec2{1.15f, 99.85f - fontSize}, fontSize, fpsString);
+		font.write(vec2{1.15f, 99.85f}, fontSize, deltaString.c_str());
+		font.write(vec2{1.15f, 99.85f - fontSize}, fontSize, fpsString.c_str());
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2{1.0, 100.0f}, fontSize, deltaString);
-		font.write(vec2{1.0, 100.0f - fontSize}, fontSize, fpsString);
+		font.write(vec2{1.0, 100.0f}, fontSize, deltaString.c_str());
+		font.write(vec2{1.0, 100.0f - fontSize}, fontSize, fpsString.c_str());
 		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
 						  vec4{1.0f, 0.0f, 1.0f, 1.0f});
 	}
@@ -661,16 +646,14 @@ void GameScreen::render(UpdateState& state)
 	float xPos = 1.15f;
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 	xPos = font.write(vec2{xPos, 0.2f}, 4.0f, "Voxel: ");
-	font.write(vec2{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
+	font.write(vec2{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel).c_str());
 	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 	xPos = 1.15f;
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 	xPos = font.write(vec2{xPos, 0.5f}, 4.0f, "Voxel: ");
-	font.write(vec2{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel));
+	font.write(vec2{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel).c_str());
 	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4{1.0f, 1.0f, 1.0f, 1.0f});
-
-	checkGLErrorsMessage("^^^ Errors caused by: render() text rendering.");
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -720,8 +703,6 @@ void GameScreen::render(UpdateState& state)
 	
 	glUseProgram(0);
 
-	checkGLErrorsMessage("^^^ Errors caused by: render() output select.");
-
 	// Blitting post-processed framebuffer to screen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -735,8 +716,6 @@ void GameScreen::render(UpdateState& state)
 	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight,
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
-	
-	checkGLErrorsMessage("^^^ Errors caused by: render() blitting.");
 }
 
 void GameScreen::onQuit()

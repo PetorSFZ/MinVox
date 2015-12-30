@@ -78,7 +78,7 @@ Assets& Assets::INSTANCE() noexcept
 Assets::Assets() noexcept
 :
 	mSpriteBatch{3000},
-	mFontRenderer{assetsPath() + "fonts/SourceCodePro-Regular.ttf", 1024, 1024, 74.0f, 3000},
+	mFontRenderer{(assetsPath() + "fonts/SourceCodePro-Regular.ttf").c_str(), 1024, 1024, 74.0f, 3000},
 
 	mNumVoxelTypes{7},
 	CUBE_FACE_ATLAS{cubeFacePath(), {"blue_b.png", "green_b.png", "orange_b.png", "vanilla_b.png",
