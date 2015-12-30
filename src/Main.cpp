@@ -19,11 +19,16 @@ int main()
 
 	vox::GlobalConfig& cfg = vox::getGlobalConfig();
 	Session sdlSession{{InitFlags::EVENTS, InitFlags::VIDEO, InitFlags::GAMECONTROLLER}};
-	Window window{"MinVox", cfg.mWindowResolutionX, cfg.mWindowResolutionY, {WindowFlags::OPENGL,
-	 WindowFlags::RESIZABLE, cfg.mRetinaAware ? WindowFlags::ALLOW_HIGHDPI : WindowFlags::OPENGL,
-	 cfg.mFullscreen ? WindowFlags::FULLSCREEN_DESKTOP : WindowFlags::OPENGL}};
+	Window window{"MinVox", cfg.mWindowResolutionX, cfg.mWindowResolutionY,
+	             {WindowFlags::OPENGL, WindowFlags::RESIZABLE, WindowFlags::ALLOW_HIGHDPI, 
+	             cfg.mFullscreen ? WindowFlags::FULLSCREEN_DESKTOP : WindowFlags::OPENGL}};
 
-	gl::Context glContext{window.mPtr, 3, 3, gl::GLContextProfile::CORE};
+	// Creates OpenGL context, debug if SFZ_NO_DEBUG is not defined
+#if !defined(SFZ_NO_DEBUG)
+	gl::Context glContext{window.mPtr, 4, 1, gl::GLContextProfile::CORE, true};
+#else
+	gl::Context glContext{window.mPtr, 4, 1, gl::GLContextProfile::CORE, false};
+#endif
 
 	// Initializes GLEW, must happen after GL context is created.
 	glewExperimental = GL_TRUE;
@@ -32,6 +37,13 @@ int main()
 		std::cerr << "GLEW initialization failure:\n" << glewGetErrorString(glewError) << std::endl;
 		std::terminate();
 	}
+
+	gl::printSystemGLInfo();
+
+	// Enable OpenGL debug message if in debug mode
+#if !defined(SFZ_NO_DEBUG)
+	gl::setupDebugMessages(gl::Severity::MEDIUM, gl::Severity::HIGH);
+#endif
 
 	// Enable/disable vsync
 	if (!cfg.mVSync) SDL_GL_SetSwapInterval(0);
