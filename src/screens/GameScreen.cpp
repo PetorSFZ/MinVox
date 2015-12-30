@@ -2,24 +2,28 @@
 
 namespace vox {
 
-// Anonymous functions
+// Statics
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-namespace {
+static const uint32_t GBUFFER_DIFFUSE = 0;
+static const uint32_t GBUFFER_POSITION = 1;
+static const uint32_t GBUFFER_NORMAL = 2;
+static const uint32_t GBUFFER_EMISSIVE = 3;
+static const uint32_t GBUFFER_MATERIAL = 4;
 
-vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
+static vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
 {
 	using std::sinf;
 	using std::cosf;
 	return vec3{r*sinf(theta)*sinf(phi), r*cosf(phi), r*cosf(theta)*sinf(phi)};
 }
 
-vec3 sphericalToCartesian(const vec3& spherical) noexcept
+static vec3 sphericalToCartesian(const vec3& spherical) noexcept
 {
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
 }
 
-void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
+static void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
 {
 	static CubeObject cubeObj;
 	static vec3 halfLightSize{2.0f, 2.0f, 2.0f};
@@ -32,7 +36,7 @@ void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
 	cubeObj.render();
 }
 
-void drawSkyCube(int modelMatrixLoc, const ViewFrustum& cam) noexcept
+static void drawSkyCube(int modelMatrixLoc, const ViewFrustum& cam) noexcept
 {
 	static SkyCubeObject skyCubeObj;
 	static const vec3 halfSkyCubeSize{400.0f, 400.0f, 400.0f};
@@ -45,15 +49,13 @@ void drawSkyCube(int modelMatrixLoc, const ViewFrustum& cam) noexcept
 	skyCubeObj.render();
 }
 
-void drawPlacementCube(int modelMatrixLoc, const vec3& pos, Voxel voxel) noexcept
+static void drawPlacementCube(int modelMatrixLoc, const vec3& pos, Voxel voxel) noexcept
 {
 	static CubeObject cubeObj;
 	gl::setUniform(modelMatrixLoc, sfz::translationMatrix<float>(pos - vec3{0.025f, 0.025f, 0.025f})*sfz::scalingMatrix4<float>(1.05f));
 	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(voxel));
 	cubeObj.render();
 }
-
-} // anonymous namespace
 
 // Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -75,10 +77,6 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
 	mShadowMap{mCfg.mShadowResolution, ShadowMapRes::BITS_16, mCfg.mShadowPCF, vec4{0.f, 0.f, 0.f, 1.f}},
-	mGBuffer{window.drawableWidth(), window.drawableHeight()},
-	mDirLightFramebuffer{window.drawableWidth(), window.drawableHeight()},
-	mGlobalLightingFramebuffer{window.drawableWidth(), window.drawableHeight()},
-	mOutputSelectFramebuffer{window.drawableWidth(), window.drawableHeight()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
@@ -376,8 +374,8 @@ void GameScreen::render(UpdateState& state)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mGBufferGenShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mGBuffer.mFBO);
-	glViewport(0, 0, mGBuffer.mWidth, mGBuffer.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mGBuffer.fbo());
+	glViewport(0, 0, mGBuffer.width(), mGBuffer.height());
 
 	// Clearing screen
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -422,8 +420,8 @@ void GameScreen::render(UpdateState& state)
 
 	// Clear directional lighting texture
 	glUseProgram(mDirLightingShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.mFBO);
-	glViewport(0, 0, mDirLightFramebuffer.mWidth, mDirLightFramebuffer.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.fbo());
+	glViewport(0, 0, mDirLightFramebuffer.width(), mDirLightFramebuffer.height());
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -465,8 +463,8 @@ void GameScreen::render(UpdateState& state)
 		
 		// Render stencil buffer for light region
 		glUseProgram(mDirLightingStencilShader.handle());
-		glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.mFBO);
-		glViewport(0, 0, mDirLightFramebuffer.mWidth, mDirLightFramebuffer.mHeight);
+		glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.fbo());
+		glViewport(0, 0, mDirLightFramebuffer.width(), mDirLightFramebuffer.height());
 		glClearStencil(0);
 		glClear(GL_STENCIL_BUFFER_BIT); // Clears stencil buffer to 0.
 
@@ -488,19 +486,19 @@ void GameScreen::render(UpdateState& state)
 
 		// Texture uniforms
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
 		gl::setUniform(mDirLightingShader, "uDiffuseTexture", 0);
 
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
 		gl::setUniform(mDirLightingShader, "uPositionTexture", 1);
 
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
 		gl::setUniform(mDirLightingShader, "uNormalTexture", 2);
 
 		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
 		gl::setUniform(mDirLightingShader, "uMaterialTexture", 3);
 
 		// Shadow map uniform
@@ -509,7 +507,7 @@ void GameScreen::render(UpdateState& state)
 		gl::setUniform(mDirLightingShader, "uShadowMap", 4);
 
 		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
+		glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.texture(0));
 		gl::setUniform(mDirLightingShader, "uDirectionalLightingTexture", 5);
 
 		// Set view matrix uniform
@@ -540,26 +538,27 @@ void GameScreen::render(UpdateState& state)
 	// Global Lighting + SSAO + Shadow Map
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
+	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_POSITION),
+	                               mGBuffer.texture(GBUFFER_NORMAL),
 	                               mCam.projMatrix(), mCfg.mSSAOClean);
 
 	glUseProgram(mGlobalLightingShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.mFBO);
-	glViewport(0, 0, mGlobalLightingFramebuffer.mWidth, mGlobalLightingFramebuffer.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.fbo());
+	glViewport(0, 0, mGlobalLightingFramebuffer.width(), mGlobalLightingFramebuffer.height());
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Texture uniforms
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
 	gl::setUniform(mGlobalLightingShader, "uDiffuseTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_EMISSIVE));
 	gl::setUniform(mGlobalLightingShader, "uEmissiveTexture", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
 	gl::setUniform(mGlobalLightingShader, "uMaterialTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
@@ -567,7 +566,7 @@ void GameScreen::render(UpdateState& state)
 	gl::setUniform(mGlobalLightingShader, "uAOTexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
+	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.texture(0));
 	gl::setUniform(mGlobalLightingShader, "uDirectionalLightsTexture", 4);
 
 	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3{0.2f, 0.2f, 0.2f});
@@ -582,9 +581,9 @@ void GameScreen::render(UpdateState& state)
 	using gl::HorizontalAlign;
 	using gl::VerticalAlign;
 
-	float aspect = (float)mGlobalLightingFramebuffer.mWidth / (float)mGlobalLightingFramebuffer.mHeight;
+	float aspect = mGlobalLightingFramebuffer.widthFloat() / mGlobalLightingFramebuffer.heightFloat();
 	vec2 fontWindowDimensions{100.0f * aspect, 100.0f};
-	vec2 lightingViewport{(float)mGlobalLightingFramebuffer.mWidth, (float)mGlobalLightingFramebuffer.mHeight};
+	vec2 lightingViewport = mGlobalLightingFramebuffer.dimensionsFloat();
 
 	float fps = 1.0f/state.delta;
 	if (fps > 10000.0f) fps = 10000.0f; // Small hack
@@ -611,13 +610,13 @@ void GameScreen::render(UpdateState& state)
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 		font.write(vec2{1.15f, 99.85f}, fontSize, deltaString.c_str());
 		font.write(vec2{1.15f, 99.85f - fontSize}, fontSize, fpsString.c_str());
-		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
+		font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport,
 						  vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 		font.write(vec2{1.0, 100.0f}, fontSize, deltaString.c_str());
 		font.write(vec2{1.0, 100.0f - fontSize}, fontSize, fpsString.c_str());
-		font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport,
+		font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport,
 						  vec4{1.0f, 0.0f, 1.0f, 1.0f});
 	}
 
@@ -630,46 +629,46 @@ void GameScreen::render(UpdateState& state)
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 	xPos = font.write(vec2{xPos, 0.2f}, 4.0f, "Voxel: ");
 	font.write(vec2{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel).c_str());
-	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4{0.0f, 0.0f, 0.0f, 1.0f});
+	font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport, vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 	xPos = 1.15f;
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 	xPos = font.write(vec2{xPos, 0.5f}, 4.0f, "Voxel: ");
 	font.write(vec2{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel).c_str());
-	font.end(mGlobalLightingFramebuffer.mFBO, lightingViewport, vec4{1.0f, 1.0f, 1.0f, 1.0f});
+	font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport, vec4{1.0f, 1.0f, 1.0f, 1.0f});
 
 	// Output select
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mOutputSelectShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mOutputSelectFramebuffer.mFBO);
-	glViewport(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mOutputSelectFramebuffer.fbo());
+	glViewport(0, 0, mOutputSelectFramebuffer.width(), mOutputSelectFramebuffer.height());
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Texture uniforms
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGlobalLightingFramebuffer.mTexture);
+	glBindTexture(GL_TEXTURE_2D, mGlobalLightingFramebuffer.texture(0));
 	gl::setUniform(mOutputSelectShader, "uFinishedTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mDiffuseTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
 	gl::setUniform(mOutputSelectShader, "uDiffuseTexture", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mPositionTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
 	gl::setUniform(mOutputSelectShader, "uPositionTexture", 2);
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mNormalTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
 	gl::setUniform(mOutputSelectShader, "uNormalTexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mEmissiveTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_EMISSIVE));
 	gl::setUniform(mOutputSelectShader, "uEmissiveTexture", 4);
 
 	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.mMaterialTexture);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
 	gl::setUniform(mOutputSelectShader, "uMaterialTexture", 5);
 
 	glActiveTexture(GL_TEXTURE6);
@@ -677,7 +676,7 @@ void GameScreen::render(UpdateState& state)
 	gl::setUniform(mOutputSelectShader, "uAOTexture", 6);
 
 	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.mTexture);
+	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.texture(0));
 	gl::setUniform(mOutputSelectShader, "uDirectionalLightsTexture", 7);
 
 	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
@@ -695,8 +694,8 @@ void GameScreen::render(UpdateState& state)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, mOutputSelectFramebuffer.mFBO);
-	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.mWidth, mOutputSelectFramebuffer.mHeight,
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mOutputSelectFramebuffer.fbo());
+	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.width(), mOutputSelectFramebuffer.height(),
 	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
 	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
@@ -718,7 +717,7 @@ void GameScreen::updateResolutions(int width, int height) noexcept
 {
 	float w = static_cast<float>(width);
 	float h = static_cast<float>(height);
-	//mCam.mAspectRatio = w/h;
+	mCam.setAspectRatio(w/h);
 	if (mCfg.mLockedResolution) {
 		int lockedW = static_cast<int>((w/h)*mCfg.mLockedResolutionY);
 		reloadFramebuffers(lockedW, mCfg.mLockedResolutionY);
@@ -731,10 +730,27 @@ void GameScreen::updateResolutions(int width, int height) noexcept
 
 void GameScreen::reloadFramebuffers(int width, int height) noexcept
 {
-	mGBuffer = GBuffer{width, height};
-	mDirLightFramebuffer = DirectionalLightingFramebuffer{width, height};
-	mGlobalLightingFramebuffer = PostProcessFramebuffer{width, height};
-	mOutputSelectFramebuffer = PostProcessFramebuffer{width, height};
+	mGBuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
+	          .addDepthBuffer(gl::FBDepthFormat::F32)
+	          .addTexture(GBUFFER_DIFFUSE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_POSITION, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_NORMAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_EMISSIVE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_MATERIAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
+	          .build();
+
+	mDirLightFramebuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
+	                      .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	                      .addStencilBuffer()
+	                      .build();
+
+	mGlobalLightingFramebuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
+	                            .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	                            .build();
+
+	mOutputSelectFramebuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
+	                          .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	                          .build();
 }
 
 } // namespace vox

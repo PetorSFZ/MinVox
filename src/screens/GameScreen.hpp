@@ -19,6 +19,7 @@
 
 namespace vox {
 
+using gl::Framebuffer;
 using gl::Spotlight;
 using gl::ViewFrustum;
 
@@ -72,9 +73,10 @@ private:
 	gl::Program mShadowMapShader, mGBufferGenShader, mDirLightingStencilShader, mDirLightingShader,
 	            mGlobalLightingShader, mOutputSelectShader;
 	ShadowMap mShadowMap;
-	GBuffer mGBuffer;
-	DirectionalLightingFramebuffer mDirLightFramebuffer;
-	PostProcessFramebuffer mGlobalLightingFramebuffer, mOutputSelectFramebuffer;
+	
+	Framebuffer mGBuffer;
+	Framebuffer mDirLightFramebuffer;
+	Framebuffer mGlobalLightingFramebuffer, mOutputSelectFramebuffer;
 	
 	SSAO mSSAO;
 	gl::PostProcessQuad mFullscreenQuad;

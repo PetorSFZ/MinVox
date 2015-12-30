@@ -4,8 +4,6 @@
 
 #include "rendering/Assets.hpp"
 #include "rendering/CubeObject.hpp"
-#include "rendering/GBuffer.hpp"
-#include "rendering/PostProcessFramebuffer.hpp"
 #include "rendering/Shaders.hpp"
 #include "rendering/ShadowMap.hpp"
 #include "rendering/SkyCubeObject.hpp"
