@@ -7,6 +7,7 @@
 #include <random>
 #include <vector>
 
+#include <sfz/geometry/ViewFrustum.hpp>
 #include <sfz/GL.hpp>
 #include <sfz/Screens.hpp>
 
@@ -17,6 +18,9 @@
 #include "GlobalConfig.hpp"
 
 namespace vox {
+
+using gl::Spotlight;
+using gl::ViewFrustum;
 
 using sfz::vec3;
 using sfz::vec4;
@@ -61,7 +65,7 @@ private:
 	GlobalConfig& mCfg;
 
 	World mWorld;
-	Camera mCam;
+	ViewFrustum mCam;
 
 	sdl::Window& mWindow;
 
@@ -89,9 +93,8 @@ private:
 	float lightCurrentSpeed = 1.0f;
 	float lightNormalSpeed = 0.5f;
 	float lightMaxSpeed = sfz::PI();*/
-
-	vector<DirectionalLight> mLights;
-	vector<DirectionalLightMesh> mLightMeshes;
+	
+	vector<Spotlight> mSpotlights;
 
 	float mLightShaftExposure = 0.4f;
 

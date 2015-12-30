@@ -24,7 +24,7 @@ WorldRenderer::WorldRenderer(const World& world) noexcept
 // Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
+void WorldRenderer::drawWorld(const ViewFrustum& cam, int modelMatrixLoc) noexcept
 {
 	mat4 transform = sfz::identityMatrix4<float>();
 	AABB aabb;
@@ -45,7 +45,7 @@ void WorldRenderer::drawWorld(const Camera& cam, int modelMatrixLoc) noexcept
 	}
 }
 
-void WorldRenderer::drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept
+void WorldRenderer::drawWorldOld(const ViewFrustum& cam, int modelMatrixLoc) noexcept
 {
 	mat4 transform = sfz::identityMatrix4<float>();
 	AABB aabb;

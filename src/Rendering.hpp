@@ -3,10 +3,8 @@
 #define VOX_RENDERING_HPP
 
 #include "rendering/Assets.hpp"
-#include "rendering/Camera.hpp"
 #include "rendering/CubeObject.hpp"
 #include "rendering/GBuffer.hpp"
-#include "rendering/Light.hpp"
 #include "rendering/PostProcessFramebuffer.hpp"
 #include "rendering/Shaders.hpp"
 #include "rendering/ShadowMap.hpp"

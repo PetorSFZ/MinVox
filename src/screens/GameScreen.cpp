@@ -32,14 +32,14 @@ void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
 	cubeObj.render();
 }
 
-void drawSkyCube(int modelMatrixLoc, const Camera& cam) noexcept
+void drawSkyCube(int modelMatrixLoc, const ViewFrustum& cam) noexcept
 {
 	static SkyCubeObject skyCubeObj;
 	static const vec3 halfSkyCubeSize{400.0f, 400.0f, 400.0f};
 	mat4 transform = sfz::scalingMatrix4(800.0f, 800.0f, 800.0f);
 
 	// Render skycube
-	sfz::translation(transform, cam.mPos - halfSkyCubeSize);
+	sfz::translation(transform, cam.pos() - halfSkyCubeSize);
 	gl::setUniform(modelMatrixLoc, transform);
 	glBindTexture(GL_TEXTURE_2D, Assets::INSTANCE().cubeFaceIndividualTexture(Voxel{VOXEL_VANILLA}));
 	skyCubeObj.render();
@@ -91,7 +91,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	//mLightTarget = vec3{16.0f, 0.0f, 16.0f};
 
 	// First corridor
-	vec3 f1Color{0.0f, 0.0f, 1.0f};
+	/*vec3 f1Color{0.0f, 0.0f, 1.0f};
 	mLights.emplace_back(vec3{-21.430313f, 5.780775f, 5.168257f}, vec3{0.499439f, -0.200375f, 0.842858f}, 0.5f, 20.0f, f1Color);
 	mLights.emplace_back(vec3{-21.720879f, 1.155828f, 15.699636f}, vec3{-0.563084f, 0.218246f, -0.797059f}, 0.5f, 20.0f, f1Color);
 
@@ -111,7 +111,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 
 	for (auto& light : mLights) {
 		mLightMeshes.emplace_back(light.mCam.mVerticalFov, light.mCam.mNear, light.mRange);
-	}
+	}*/
 }
 
 /*GameScreen::GameScreen(const GameScreen& gameScreen)
@@ -171,6 +171,16 @@ UpdateOp GameScreen::update(UpdateState& state)
 				if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
 				std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
 				break;
+			
+			case ',':
+				mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov(), mCam.verticalFov() * 0.95f, 40.0f);
+				break;
+
+			case '.':
+				if (!mSpotlights.empty()) {
+					mSpotlights.pop_back();
+				}
+				break;
 
 			case '1':
 				mRenderMode = 1;
@@ -197,39 +207,31 @@ UpdateOp GameScreen::update(UpdateState& state)
 				mRenderMode = 8;
 				break;
 
-			/*case 'l':
-				std::random_device rd;
-				std::mt19937_64 gen{rd()};
-				std::uniform_real_distribution<float> distr{0.0f, 1.0f};
-				mSun.mColor = vec3{distr(gen), distr(gen), distr(gen)};
-				std::cout << "New random light color: " << mSun.mColor << std::endl;
-				break;*/
-
 			case 'w':
 			case 'W':
-				mCam.mPos += (mCam.mDir * 25.0f * state.delta);
+				mCam.setPos(mCam.pos() + (mCam.dir() * 25.0f * state.delta));
 				break;
 			case 's':
 			case 'S':
-				mCam.mPos -= (mCam.mDir * 25.0f * state.delta);
+				mCam.setPos(mCam.pos() - (mCam.dir() * 25.0f * state.delta));
 				break;
 			case 'a':
 			case 'A':
-				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				mCam.mPos += (-right * 25.0f * state.delta);}
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
+				mCam.setPos(mCam.pos() - right * 25.0f * state.delta);}
 				break;
 			case 'd':
 			case 'D':
-				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-				mCam.mPos += (right * 25.0f * state.delta);}
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
+				mCam.setPos(mCam.pos() + right * 25.0f * state.delta);}
 				break;
 			case 'q':
 			case 'Q':
-				mCam.mPos += (sfz::vec3{0.0f,-1.0f,0.0} * 25.0f * state.delta);
+				mCam.setPos(mCam.pos() + sfz::vec3{0.0f, -1.0f, 0.0} * 25.0f * state.delta);
 				break;
 			case 'e':
 			case 'E':
-				mCam.mPos += (sfz::vec3{0.0f,1.0f,0.0} * 25.0f * state.delta);
+				mCam.setPos(mCam.pos() + sfz::vec3{0.0f, 1.0f, 0.0} *25.0f * state.delta);
 				break;
 			case 'p':
 			case 'P':
@@ -238,35 +240,31 @@ UpdateOp GameScreen::update(UpdateState& state)
 				else std::cout << "Using (meshed) world renderer.\n";
 				break;
 			case SDLK_UP:
-				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
 				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*state.delta);
 				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 1.0f*sfz::PI()*state.delta);
-				mCam.mDir = (yTurn * xTurn * mCam.mDir);
-				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
+				mCam.setDir(yTurn * xTurn * mCam.dir(), yTurn * xTurn * mCam.up());}
 				break;
 			case SDLK_DOWN:
-				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
 				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 0.0f*sfz::PI()*state.delta);
 				sfz::mat3 yTurn = sfz::rotationMatrix3(right, -1.0f*sfz::PI()*state.delta);
-				mCam.mDir = (yTurn * xTurn * mCam.mDir);
-				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
+				mCam.setDir(yTurn * xTurn * mCam.dir(), yTurn * xTurn * mCam.up());}
 				break;
 			case SDLK_LEFT:
-				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
 				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, -1.0f*sfz::PI()*state.delta);
 				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*state.delta);
-				mCam.mDir = (yTurn * xTurn * mCam.mDir);
-				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
+				mCam.setDir(yTurn * xTurn * mCam.dir(), yTurn * xTurn * mCam.up());}
 				break;
 			case SDLK_RIGHT:
-				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+				{sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
 				sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, 1.0f*sfz::PI()*state.delta);
 				sfz::mat3 yTurn = sfz::rotationMatrix3(right, 0.0f*sfz::PI()*state.delta);
-				mCam.mDir = (yTurn * xTurn * mCam.mDir);
-				mCam.mUp = (yTurn * xTurn * mCam.mUp);}
+				mCam.setDir(yTurn * xTurn * mCam.dir(), yTurn * xTurn * mCam.up()); }
 				break;
 			case SDLK_SPACE:
-				vec3 pos = mCam.mPos + mCam.mDir * 1.5f;
+				vec3 pos = mCam.pos() + mCam.dir() * 1.5f;
 				Voxel v = mWorld.getVoxel(pos);
 				if (v.mType != VOXEL_AIR) mWorld.setVoxel(pos, Voxel{VOXEL_AIR});
 				else mWorld.setVoxel(pos, Voxel{VOXEL_ORANGE});
@@ -274,7 +272,6 @@ UpdateOp GameScreen::update(UpdateState& state)
 			}
 			break;
 		}
-		
 	}
 
 	if (state.controllers.find(0) != state.controllers.end()) {
@@ -293,15 +290,14 @@ UpdateOp GameScreen::update(UpdateState& state)
 
 		// Analogue Sticks
 		if (sfz::length(ctrl.rightStick) > ctrl.stickDeadzone) {
-			sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
+			sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
 			sfz::mat3 xTurn = sfz::rotationMatrix3(sfz::vec3{0.0f,-1.0f,0.0f}, ctrl.rightStick[0]*turningSpeed*state.delta);
 			sfz::mat3 yTurn = sfz::rotationMatrix3(right, ctrl.rightStick[1]*turningSpeed*state.delta);
-			mCam.mDir = (yTurn * xTurn * mCam.mDir);
-			mCam.mUp = (yTurn * xTurn * mCam.mUp);
+			mCam.setDir(yTurn * xTurn * mCam.dir(), yTurn * xTurn * mCam.up());
 		}
 		if (sfz::length(ctrl.leftStick) > ctrl.stickDeadzone) {
-			sfz::vec3 right = sfz::normalize(sfz::cross(mCam.mDir, mCam.mUp));
-			mCam.mPos += ((mCam.mDir * ctrl.leftStick[1] + right * ctrl.leftStick[0]) * currentSpeed * state.delta);
+			sfz::vec3 right = sfz::normalize(sfz::cross(mCam.dir(), mCam.up()));
+			mCam.setPos(mCam.pos() + ((mCam.dir() * ctrl.leftStick[1] + right * ctrl.leftStick[0]) * currentSpeed * state.delta));
 		}
 
 		// Control Pad
@@ -325,28 +321,22 @@ UpdateOp GameScreen::update(UpdateState& state)
 
 		// Shoulder buttons
 		if (ctrl.leftShoulder == sdl::ButtonState::DOWN || ctrl.leftShoulder == sdl::ButtonState::HELD) {
-			mCam.mPos -= (sfz::vec3{0,1,0} * currentSpeed * state.delta);
+			mCam.setPos(mCam.pos() - sfz::vec3{0, 1, 0} * currentSpeed * state.delta);
 		}
 		else if (ctrl.rightShoulder == sdl::ButtonState::DOWN || ctrl.rightShoulder == sdl::ButtonState::HELD) {
-			mCam.mPos += (sfz::vec3{0,1,0} * currentSpeed * state.delta);
+			mCam.setPos(mCam.pos() + sfz::vec3{0, 1, 0} * currentSpeed * state.delta);
 		}
 
-		auto vPos = mCam.mPos + mCam.mDir * 4.0f;
+		auto vPos = mCam.pos() + mCam.dir() * 4.0f;
 		mCurrentVoxelPos = vec3{std::floorf(vPos[0]), std::floorf(vPos[1]), std::floorf(vPos[2])};
 
 		// Face buttons
 		if (ctrl.y == sdl::ButtonState::UP) {
-			std::random_device rd;
-			std::mt19937_64 gen{rd()};
-			std::uniform_real_distribution<float> distr{0.0f, 1.0f};
-			mLights.emplace_back(mCam.mPos, mCam.mDir, 0.5f, 40.0f, vec3{distr(gen), distr(gen), distr(gen)});
-			mLightMeshes.emplace_back(mLights.back().mCam.mVerticalFov, mLights.back().mCam.mNear, mLights.back().mCam.mFar);
-			std::cout << "Light: Pos: " << mLights.back().mCam.mPos << ", Dir: " << mLights.back().mCam.mDir << ", Color: " << mLights.back().mColor << std::endl;
+			mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov(), mCam.verticalFov() * 0.95f, 40.0f);
 		}
 		if (ctrl.x == sdl::ButtonState::UP) {
-			if (mLights.size() > 0) {
-				mLights.pop_back();
-				mLightMeshes.pop_back();
+			if (mSpotlights.empty()) {
+				mSpotlights.pop_back();
 			}
 		}
 		if (ctrl.b == sdl::ButtonState::UP) {
@@ -361,18 +351,10 @@ UpdateOp GameScreen::update(UpdateState& state)
 			return sfz::SCREEN_QUIT;
 		}
 
-		mCam.mUp = vec3{0.0f, 1.0f, 0.0f};
+		mCam.setDir(mCam.dir(), vec3{0.0f, 1.0f, 0.0f});
 	}
 
-	/*if (currentLightAxis != -1) {
-		mLightPosSpherical[currentLightAxis] += delta * lightCurrentSpeed;
-		mLightPosSpherical[currentLightAxis] = std::fmod(mLightPosSpherical[currentLightAxis],
-		                                                (sfz::PI()*2.0f));
-	}*/
-
-	mCam.updateMatrices();
-	mCam.updatePlanes();
-	mWorld.update(mCam.mPos);
+	mWorld.update(mCam.pos());
 
 	return sfz::SCREEN_NO_OP;
 }
@@ -402,8 +384,8 @@ void GameScreen::render(UpdateState& state)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set view and projection matrix uniforms
-	gl::setUniform(mGBufferGenShader, "uViewMatrix", mCam.mViewMatrix);
-	gl::setUniform(mGBufferGenShader, "uProjectionMatrix", mCam.mProjMatrix);
+	gl::setUniform(mGBufferGenShader, "uViewMatrix", mCam.viewMatrix());
+	gl::setUniform(mGBufferGenShader, "uProjectionMatrix", mCam.projMatrix());
 
 	// Prepare for binding the diffuse textures
 	gl::setUniform(mGBufferGenShader, "uDiffuseTexture", 0);
@@ -445,10 +427,12 @@ void GameScreen::render(UpdateState& state)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	mat4 inverseViewMatrix = inverse(mCam.mViewMatrix);
+	mat4 inverseViewMatrix = inverse(mCam.viewMatrix());
 
 	size_t lightIndex = 0;
-	for (auto& light : mLights) {
+	for (auto& light : mSpotlights) {
+		const auto& lightFrustum = light.viewFrustum();
+
 		// Check if light is visible
 		//if (!mCam.isVisible(light.mCam)) continue;
 
@@ -460,9 +444,8 @@ void GameScreen::render(UpdateState& state)
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		light.update();
-		gl::setUniform(mShadowMapShader, "uViewMatrix", light.mCam.mViewMatrix);
-		gl::setUniform(mShadowMapShader, "uProjectionMatrix", light.mCam.mProjMatrix);
+		gl::setUniform(mShadowMapShader, "uViewMatrix", lightFrustum.viewMatrix());
+		gl::setUniform(mShadowMapShader, "uProjectionMatrix", lightFrustum.projMatrix());
 
 		// Fix surface acne
 		glEnable(GL_POLYGON_OFFSET_FILL);
@@ -471,8 +454,8 @@ void GameScreen::render(UpdateState& state)
 
 		// Draw shadow casters
 		int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader.handle(), "uModelMatrix");
-		if (!mOldWorldRenderer) mWorldRenderer.drawWorld(light.mCam, modelMatrixLocShadowMap);
-		else mWorldRenderer.drawWorldOld(light.mCam, modelMatrixLocShadowMap);
+		if (!mOldWorldRenderer) mWorldRenderer.drawWorld(lightFrustum, modelMatrixLocShadowMap);
+		else mWorldRenderer.drawWorldOld(lightFrustum, modelMatrixLocShadowMap);
 
 		// Shadow Map: Cleanup
 		glDisable(GL_POLYGON_OFFSET_FILL);
@@ -487,16 +470,16 @@ void GameScreen::render(UpdateState& state)
 		glClearStencil(0);
 		glClear(GL_STENCIL_BUFFER_BIT); // Clears stencil buffer to 0.
 
-		gl::setUniform(mDirLightingStencilShader, "uModelMatrix", DirectionalLightMesh::generateTransform(light.mCam.mPos, light.mCam.mDir, light.mCam.mUp));
-		gl::setUniform(mDirLightingStencilShader, "uViewMatrix", mCam.mViewMatrix);
-		gl::setUniform(mDirLightingStencilShader, "uProjectionMatrix", mCam.mProjMatrix);
+		gl::setUniform(mDirLightingStencilShader, "uModelMatrix", light.viewFrustumTransform());
+		gl::setUniform(mDirLightingStencilShader, "uViewMatrix", mCam.viewMatrix());
+		gl::setUniform(mDirLightingStencilShader, "uProjectionMatrix", mCam.projMatrix());
 
 		glDisable(GL_CULL_FACE);
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(GL_ALWAYS, 0, 0xFF);
 		glStencilOp(GL_INCR, GL_INCR, GL_INCR);
 
-		mLightMeshes[lightIndex].render();
+		light.renderViewFrustum();
 		glEnable(GL_CULL_FACE);
 
 
@@ -530,15 +513,15 @@ void GameScreen::render(UpdateState& state)
 		gl::setUniform(mDirLightingShader, "uDirectionalLightingTexture", 5);
 
 		// Set view matrix uniform
-		gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.mViewMatrix);
+		gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.viewMatrix());
 
 		// Calculate and set lightMatrix
 		gl::setUniform(mDirLightingShader, "uLightMatrix", light.lightMatrix(inverseViewMatrix));
 
 		// Set light position uniform
-		gl::setUniform(mDirLightingShader, "uLightPos", light.mCam.mPos);
-		gl::setUniform(mDirLightingShader, "uLightRange", light.mRange);
-		gl::setUniform(mDirLightingShader, "uLightColor", light.mColor);
+		gl::setUniform(mDirLightingShader, "uLightPos", lightFrustum.pos());
+		gl::setUniform(mDirLightingShader, "uLightRange", lightFrustum.far());
+		gl::setUniform(mDirLightingShader, "uLightColor", light.color());
 	
 		gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
 		gl::setUniform(mDirLightingShader, "uLightShaftRange", mCfg.mLightShaftRange);
@@ -558,7 +541,7 @@ void GameScreen::render(UpdateState& state)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.mPositionTexture, mGBuffer.mNormalTexture,
-	                               mCam.mProjMatrix, mCfg.mSSAOClean);
+	                               mCam.projMatrix(), mCfg.mSSAOClean);
 
 	glUseProgram(mGlobalLightingShader.handle());
 	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.mFBO);
@@ -735,7 +718,7 @@ void GameScreen::updateResolutions(int width, int height) noexcept
 {
 	float w = static_cast<float>(width);
 	float h = static_cast<float>(height);
-	mCam.mAspectRatio = w/h;
+	//mCam.mAspectRatio = w/h;
 	if (mCfg.mLockedResolution) {
 		int lockedW = static_cast<int>((w/h)*mCfg.mLockedResolutionY);
 		reloadFramebuffers(lockedW, mCfg.mLockedResolutionY);

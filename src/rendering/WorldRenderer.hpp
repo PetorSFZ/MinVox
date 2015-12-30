@@ -2,18 +2,18 @@
 #ifndef VOX_RENDERING_WORLD_RENDERER_HPP
 #define VOX_RENDERING_WORLD_RENDERER_HPP
 
+#include <sfz/geometry/ViewFrustum.hpp>
+#include <sfz/GL.hpp>
 #include <sfz/Math.hpp>
-#include "sfz/GL.hpp"
+
 
 #include "rendering/Assets.hpp"
-#include "rendering/Camera.hpp"
 #include "rendering/CubeObject.hpp"
 #include "Model.hpp"
 
-
-
 namespace vox {
 
+using gl::ViewFrustum;
 using sfz::vec3;
 using sfz::mat4;
 
@@ -33,8 +33,8 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void drawWorld(const Camera& cam, int modelMatrixLoc) noexcept;
-	void drawWorldOld(const Camera& cam, int modelMatrixLoc) noexcept;
+	void drawWorld(const ViewFrustum& cam, int modelMatrixLoc) noexcept;
+	void drawWorldOld(const ViewFrustum& cam, int modelMatrixLoc) noexcept;
 
 private:
 	// Private members
