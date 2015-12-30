@@ -71,6 +71,8 @@ public:
 
 	inline uint32_t handle() const noexcept { return mHandle; }
 	inline bool isValid() const noexcept { return (mHandle != 0); }
+	inline bool wasReloaded() const noexcept { return mWasReloaded; }
+	inline void clearWasReloadedFlag() noexcept { mWasReloaded = false; }
 
 	/**
 	 * @brief Attempts to load source from file and recompile the program
@@ -108,6 +110,9 @@ private:
 	// Bool that specifies if program is post process or not
 	bool mIsPostProcess = false;
 
+	// Bool that specifies if program was recently reloaded or not, needs to be manually cleared.
+	bool mWasReloaded = false;
+
 	// Optional function used to call glBindAttribLocation() & glBindFragDataLocation()
 	void(*mBindAttribFragFunc)(uint32_t shaderProgram) = nullptr;
 };
@@ -138,6 +143,11 @@ void setUniform(int location, int i) noexcept;
 void setUniform(const Program& program, const char* name, int i) noexcept;
 void setUniform(int location, const int* intArray, size_t count) noexcept;
 void setUniform(const Program& program, const char* name, const int* intArray, size_t count) noexcept;
+
+void setUniform(int location, uint32_t u) noexcept;
+void setUniform(const Program& program, const char* name, uint32_t u) noexcept;
+void setUniform(int location, const uint32_t* uintArray, size_t count) noexcept;
+void setUniform(const Program& program, const char* name, const uint32_t* uintArray, size_t count) noexcept;
 
 void setUniform(int location, float f) noexcept;
 void setUniform(const Program& program, const char* name, float f) noexcept;

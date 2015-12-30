@@ -152,6 +152,7 @@ Program Program::fromFile(const char* vertexPath, const char* geometryPath, cons
 	tmp.mFragmentPath = fragmentPath;
 	tmp.mBindAttribFragFunc = bindAttribFragFunc;
 	tmp.reload();
+	tmp.mWasReloaded = false;
 	return tmp;
 }
 
@@ -163,6 +164,7 @@ Program Program::fromFile(const char* vertexPath, const char* fragmentPath,
 	tmp.mFragmentPath = fragmentPath;
 	tmp.mBindAttribFragFunc = bindAttribFragFunc;
 	tmp.reload();
+	tmp.mWasReloaded = false;
 	return tmp;
 }
 
@@ -172,6 +174,7 @@ Program Program::postProcessFromFile(const char* postProcessPath) noexcept
 	tmp.mFragmentPath = postProcessPath;
 	tmp.mIsPostProcess = true;
 	tmp.reload();
+	tmp.mWasReloaded = false;
 	return tmp;
 }
 
@@ -190,6 +193,7 @@ bool Program::reload() noexcept
 
 		tmp.mFragmentPath = this->mFragmentPath;
 		tmp.mIsPostProcess = true;
+		tmp.mWasReloaded = true;
 		*this = std::move(tmp);
 		return true;
 	}
@@ -202,6 +206,7 @@ bool Program::reload() noexcept
 		tmp.mGeometryPath = this->mGeometryPath;
 		tmp.mFragmentPath = this->mFragmentPath;
 		tmp.mBindAttribFragFunc = this->mBindAttribFragFunc;
+		tmp.mWasReloaded = true;
 		*this = std::move(tmp);
 		return true;
 	}
@@ -212,6 +217,7 @@ bool Program::reload() noexcept
 		tmp.mVertexPath = this->mVertexPath;
 		tmp.mFragmentPath = this->mFragmentPath;
 		tmp.mBindAttribFragFunc = this->mBindAttribFragFunc;
+		tmp.mWasReloaded = true;
 		*this = std::move(tmp);
 		return true;
 	}
@@ -229,6 +235,8 @@ Program::Program(Program&& other) noexcept
 	std::swap(this->mVertexPath, other.mVertexPath);
 	std::swap(this->mGeometryPath, other.mGeometryPath);
 	std::swap(this->mFragmentPath, other.mFragmentPath);
+	std::swap(this->mIsPostProcess, other.mIsPostProcess);
+	std::swap(this->mWasReloaded, other.mWasReloaded);
 	std::swap(this->mBindAttribFragFunc, other.mBindAttribFragFunc);
 }
 
@@ -238,6 +246,8 @@ Program& Program::operator= (Program&& other) noexcept
 	std::swap(this->mVertexPath, other.mVertexPath);
 	std::swap(this->mGeometryPath, other.mGeometryPath);
 	std::swap(this->mFragmentPath, other.mFragmentPath);
+	std::swap(this->mIsPostProcess, other.mIsPostProcess);
+	std::swap(this->mWasReloaded, other.mWasReloaded);
 	std::swap(this->mBindAttribFragFunc, other.mBindAttribFragFunc);
 	return *this;
 }
@@ -317,6 +327,31 @@ void setUniform(const Program& program, const char* name, const int* intArray, s
 {
 	int loc = glGetUniformLocation(program.handle(), name);
 	setUniform(loc, intArray, count);
+}
+
+// Uniform setters: uint
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void setUniform(int location, uint32_t u) noexcept
+{
+	glUniform1ui(location, u);
+}
+
+void setUniform(const Program& program, const char* name, uint32_t u) noexcept
+{
+	int loc = glGetUniformLocation(program.handle(), name);
+	setUniform(loc, u);
+}
+
+void setUniform(int location, const uint32_t* uintArray, size_t count) noexcept
+{
+	glUniform1uiv(location, count, uintArray);
+}
+
+void setUniform(const Program& program, const char* name, const uint32_t* uintArray, size_t count) noexcept
+{
+	int loc = glGetUniformLocation(program.handle(), name);
+	setUniform(loc, uintArray, count);
 }
 
 // Uniform setters: float
