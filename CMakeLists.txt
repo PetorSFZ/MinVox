@@ -110,15 +110,14 @@ endif()
 
 # MSVC specific file copying
 if(MSVC)
-	
-	# Assets folder
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Debug)
-	file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/Release)
+	# Create assets symlinks batch file
+	file(COPY RuntimeDLLs/CREATE_ASSETS_SYMLINKS.BAT DESTINATION ${CMAKE_BINARY_DIR})
 
 	# Runtime DLLs
-	file(COPY RuntimeDLLs/msvc12_x64_debug/SDL2.dll DESTINATION ${CMAKE_BINARY_DIR})
+	file(COPY RuntimeDLLs/msvc12_x64_debug/SDL2.dll DESTINATION ${CMAKE_BINARY_DIR}/Debug)
+	file(COPY RuntimeDLLs/msvc12_x64_release/SDL2.dll DESTINATION ${CMAKE_BINARY_DIR}/Release)
 
-	file(COPY RuntimeDLLs/msvc12_x64_release/SDL2.dll DESTINATION ${CMAKE_BINARY_DIR})
-
+else()
+	# Create assets symlinks bash script (for non windows platforms)
+	file(COPY RuntimeDLLs/CREATE_ASSETS_SYMLINKS.SH DESTINATION ${CMAKE_BINARY_DIR})
 endif()
