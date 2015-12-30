@@ -5,7 +5,6 @@
 #include "rendering/Assets.hpp"
 #include "rendering/CubeObject.hpp"
 #include "rendering/Shaders.hpp"
-#include "rendering/ShadowMap.hpp"
 #include "rendering/SkyCubeObject.hpp"
 #include "rendering/SSAO.hpp"
 #include "rendering/WorldRenderer.hpp"

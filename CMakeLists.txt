@@ -72,8 +72,6 @@ set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/CubeObject.cpp
 	${SRC_DIR}/rendering/Shaders.hpp
 	${SRC_DIR}/rendering/Shaders.cpp
-	${SRC_DIR}/rendering/ShadowMap.hpp
-	${SRC_DIR}/rendering/ShadowMap.cpp
 	${SRC_DIR}/rendering/SkyCubeObject.hpp
 	${SRC_DIR}/rendering/SkyCubeObject.cpp
 	${SRC_DIR}/rendering/SSAO.hpp

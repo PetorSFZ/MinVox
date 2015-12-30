@@ -76,7 +76,6 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mDirLightingShader{compileDirectionalLightingShaderProgram()},
 	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
 	mOutputSelectShader{compileOutputSelectShaderProgram()},
-	mShadowMap{mCfg.mShadowResolution, ShadowMapRes::BITS_16, mCfg.mShadowPCF, vec4{0.f, 0.f, 0.f, 1.f}},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
@@ -84,6 +83,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	//mSun{vec3{0.0f, 0.0f, 0.0f}, vec3{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3{0.2f, 0.25f, 0.8f}}
 {
 	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
+	mShadowMap = gl::createShadowMap(sfz::vec2i(mCfg.mShadowResolution), gl::FBDepthFormat::F16, mCfg.mShadowPCF, vec4{0.f, 0.f, 0.f, 1.f});
 
 	//mLightPosSpherical = vec3{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	//mLightTarget = vec3{16.0f, 0.0f, 16.0f};
@@ -436,8 +436,8 @@ void GameScreen::render(UpdateState& state)
 
 		// Shadow map
 		glUseProgram(mShadowMapShader.handle());
-		glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.mFBO);
-		glViewport(0, 0, mShadowMap.mResolution, mShadowMap.mResolution);
+		glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.fbo());
+		glViewport(0, 0, mShadowMap.width(), mShadowMap.height());
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -503,7 +503,7 @@ void GameScreen::render(UpdateState& state)
 
 		// Shadow map uniform
 		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mShadowMap.mDepthTexture);
+		glBindTexture(GL_TEXTURE_2D, mShadowMap.depthTexture());
 		gl::setUniform(mDirLightingShader, "uShadowMap", 4);
 
 		glActiveTexture(GL_TEXTURE5);

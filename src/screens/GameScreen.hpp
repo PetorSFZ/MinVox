@@ -72,7 +72,7 @@ private:
 
 	gl::Program mShadowMapShader, mGBufferGenShader, mDirLightingStencilShader, mDirLightingShader,
 	            mGlobalLightingShader, mOutputSelectShader;
-	ShadowMap mShadowMap;
+	Framebuffer mShadowMap;
 	
 	Framebuffer mGBuffer;
 	Framebuffer mDirLightFramebuffer;
