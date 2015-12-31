@@ -70,8 +70,6 @@ set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/Assets.cpp
 	${SRC_DIR}/rendering/CubeObject.hpp
 	${SRC_DIR}/rendering/CubeObject.cpp
-	${SRC_DIR}/rendering/Shaders.hpp
-	${SRC_DIR}/rendering/Shaders.cpp
 	${SRC_DIR}/rendering/SkyCubeObject.hpp
 	${SRC_DIR}/rendering/SkyCubeObject.cpp
 	${SRC_DIR}/rendering/SSAO.hpp

@@ -1,5 +1,7 @@
 #include "screens/GameScreen.hpp"
 
+#include <sfz/util/IO.hpp>
+
 namespace vox {
 
 // Statics
@@ -69,13 +71,6 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
 
 	mWindow{window},
-
-	mShadowMapShader{compileShadowMapShaderProgram()},
-	mGBufferGenShader{compileGBufferGenShaderProgram()},
-	mDirLightingStencilShader{compileDirectionalLightingStencilShaderProgram()},
-	mDirLightingShader{compileDirectionalLightingShaderProgram()},
-	mGlobalLightingShader{compileGlobalLightingShaderProgram()},
-	mOutputSelectShader{compileOutputSelectShaderProgram()},
 	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
 	mWorldRenderer{mWorld},
 
@@ -84,6 +79,39 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 {
 	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
 	mShadowMap = gl::createShadowMap(sfz::vec2i(mCfg.mShadowResolution), gl::FBDepthFormat::F16, mCfg.mShadowPCF, vec4{0.f, 0.f, 0.f, 1.f});
+
+	mShadowMapShader = Program::fromFile((sfz::basePath() + "assets/shaders/shadow_map.vert").c_str(),
+		                                 (sfz::basePath() + "assets/shaders/shadow_map.frag").c_str(),
+		[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "inPosition");
+		glBindFragDataLocation(shaderProgram, 0, "outFragColor");
+	});
+
+	mGBufferGenShader = Program::fromFile((sfz::basePath() + "assets/shaders/gbuffer_gen.vert").c_str(),
+	                                      (sfz::basePath() + "assets/shaders/gbuffer_gen.frag").c_str(),
+		[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "positionIn");
+		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
+		glBindAttribLocation(shaderProgram, 2, "normalIn");
+		glBindFragDataLocation(shaderProgram, 0, "fragmentDiffuse");
+		glBindFragDataLocation(shaderProgram, 1, "fragmentPosition");
+		glBindFragDataLocation(shaderProgram, 2, "fragmentNormal");
+		glBindFragDataLocation(shaderProgram, 3, "fragmentEmissive");
+		glBindFragDataLocation(shaderProgram, 4, "fragmentMaterial");
+	});
+
+	mDirLightingStencilShader = Program::fromFile((sfz::basePath() + "assets/shaders/stencil_shader.vert").c_str(),
+	                                              (sfz::basePath() + "assets/shaders/stencil_shader.frag").c_str(),
+		[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "positionIn");
+	});
+
+	mDirLightingShader = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/spotlight_shading.frag").c_str());
+
+	mGlobalLightingShader = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/global_shading.frag").c_str());
+
+	mOutputSelectShader = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/output_select.frag").c_str());
+
 
 	//mLightPosSpherical = vec3{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
 	//mLightTarget = vec3{16.0f, 0.0f, 16.0f};

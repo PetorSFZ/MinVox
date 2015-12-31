@@ -20,6 +20,7 @@
 namespace vox {
 
 using gl::Framebuffer;
+using gl::Program;
 using gl::Spotlight;
 using gl::ViewFrustum;
 
