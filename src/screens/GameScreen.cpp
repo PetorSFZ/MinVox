@@ -64,21 +64,22 @@ static void drawPlacementCube(int modelMatrixLoc, const vec3& pos, Voxel voxel) 
 
 GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 :
-	mCfg{getGlobalConfig()},
+	mCfg{GlobalConfig::INSTANCE()},
 
-	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.mHorizontalRange, mCfg.mVerticalRange},
+	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.horizontalRange, mCfg.verticalRange},
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
 
 	mWindow{window},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
+	//mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
+	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f, 1.1f},
 	mWorldRenderer{mWorld},
 
 	mCurrentVoxel{VOXEL_AIR}
 	//mSun{vec3{0.0f, 0.0f, 0.0f}, vec3{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3{0.2f, 0.25f, 0.8f}}
 {
 	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
-	mShadowMap = gl::createShadowMap(sfz::vec2i(mCfg.mShadowResolution), gl::FBDepthFormat::F16, mCfg.mShadowPCF, vec4{0.f, 0.f, 0.f, 1.f});
+	mShadowMap = gl::createShadowMap(sfz::vec2i(1024), gl::FBDepthFormat::F16, true, vec4{0.f, 0.f, 0.f, 1.f});
 
 	mShadowMapShader = Program::fromFile((sfz::basePath() + "assets/shaders/shadow_map.vert").c_str(),
 		                                 (sfz::basePath() + "assets/shaders/shadow_map.frag").c_str(),
@@ -161,7 +162,7 @@ UpdateOp GameScreen::update(UpdateState& state)
 			switch (event.key.keysym.sym) {
 			case SDLK_ESCAPE: return sfz::SCREEN_QUIT;
 			case SDLK_F1:
-				mCfg.mPrintFPS = !mCfg.mPrintFPS;
+				mCfg.printFrametimes = !mCfg.printFrametimes;
 				break;
 			case 'r':
 				mSSAO.radius(mSSAO.radius() - 0.1f);
@@ -186,16 +187,6 @@ UpdateOp GameScreen::update(UpdateState& state)
 			case 'b':
 				mSSAO.numSamples(mSSAO.numSamples() + 8);
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
-				break;
-			case 'n':
-				mLightShaftExposure -= 0.05f;
-				if (mLightShaftExposure < 0.0f) mLightShaftExposure = 0.0f;
-				std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
-				break;
-			case 'm':
-				mLightShaftExposure += 0.05f;
-				if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
-				std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
 				break;
 			
 			case ',':
@@ -328,13 +319,9 @@ UpdateOp GameScreen::update(UpdateState& state)
 
 		// Control Pad
 		if (ctrl.padUp == sdl::ButtonState::DOWN) {
-			mLightShaftExposure += 0.05f;
-			if (mLightShaftExposure > 1.0f) mLightShaftExposure = 1.0f;
-			std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
+			
 		} else if (ctrl.padDown == sdl::ButtonState::DOWN) {
-			mLightShaftExposure -= 0.05f;
-			if (mLightShaftExposure < 0.0f) mLightShaftExposure = 0.0f;
-			std::cout << "Light shaft exposure: " << mLightShaftExposure << std::endl;
+
 		} else if (ctrl.padLeft == sdl::ButtonState::DOWN) {
 			if (mCurrentVoxel.mType >= 1) {
 				mCurrentVoxel = Voxel(mCurrentVoxel.mType - uint8_t(1));
@@ -549,9 +536,9 @@ void GameScreen::render(UpdateState& state)
 		gl::setUniform(mDirLightingShader, "uLightRange", lightFrustum.far());
 		gl::setUniform(mDirLightingShader, "uLightColor", light.color());
 	
-		gl::setUniform(mDirLightingShader, "uLightShaftExposure", mLightShaftExposure);
-		gl::setUniform(mDirLightingShader, "uLightShaftRange", mCfg.mLightShaftRange);
-		gl::setUniform(mDirLightingShader, "uLightShaftSamples", mCfg.mLightShaftSamples);
+		gl::setUniform(mDirLightingShader, "uLightShaftExposure", 0.5f);
+		gl::setUniform(mDirLightingShader, "uLightShaftRange", 18.0f);
+		gl::setUniform(mDirLightingShader, "uLightShaftSamples", 38);
 
 		glStencilFunc(GL_NOTEQUAL, 0, 0xFF); // Pass stencil test if not 0.
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -568,7 +555,7 @@ void GameScreen::render(UpdateState& state)
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_POSITION),
 	                               mGBuffer.texture(GBUFFER_NORMAL),
-	                               mCam.projMatrix(), mCfg.mSSAOClean);
+	                               mCam.projMatrix(), false);
 
 	glUseProgram(mGlobalLightingShader.handle());
 	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.fbo());
@@ -625,7 +612,7 @@ void GameScreen::render(UpdateState& state)
 
 	FontRenderer& font = Assets::INSTANCE().mFontRenderer;
 
-	if (mCfg.mPrintFPS) {
+	if (mCfg.printFrametimes) {
 		using std::string;
 		using std::to_string;
 		string deltaString = "Delta: " + to_string(state.delta*1000.0f) + "ms, Mean: " + to_string(1000.0f / mFPSMean) + "ms";;
@@ -746,10 +733,10 @@ void GameScreen::updateResolutions(int width, int height) noexcept
 	float w = static_cast<float>(width);
 	float h = static_cast<float>(height);
 	mCam.setAspectRatio(w/h);
-	if (mCfg.mLockedResolution) {
-		int lockedW = static_cast<int>((w/h)*mCfg.mLockedResolutionY);
-		reloadFramebuffers(lockedW, mCfg.mLockedResolutionY);
-		mSSAO.textureSize(lockedW, mCfg.mLockedResolutionY);
+	if (false) {
+		//int lockedW = static_cast<int>((w/h)*mCfg.mLockedResolutionY);
+		//reloadFramebuffers(lockedW, mCfg.mLockedResolutionY);
+		//mSSAO.textureSize(lockedW, mCfg.mLockedResolutionY);
 	} else {
 		reloadFramebuffers(width, height);
 		mSSAO.textureSize(width, height);

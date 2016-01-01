@@ -2,35 +2,77 @@
 #ifndef VOX_GLOBAL_CONFIG_HPP
 #define VOX_GLOBAL_CONFIG_HPP
 
-#include <cstddef> // size_t
+#include <cstdint>
+
+#include <sfz/util/IniParser.hpp>
 
 namespace vox {
 
-using std::size_t;
+using std::int32_t;
 
-struct GlobalConfig {
-	bool mVSync, mFullscreen, mPrintFPS;
-	int mWindowResolutionX, mWindowResolutionY;
-	bool mLockedResolution;
-	int mLockedResolutionY;
-	bool mRetinaAware;
+// ConfigData struct
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	int mShadowResolution;
-	bool mShadowPCF;
-	int mLightShaftSamples;
-	float mLightShaftRange;
+struct ConfigData {
+	// Debug
+	bool continuousShaderReload;
+	bool printFrametimes;
 
-	bool mSSAOClean;
-	size_t mSSAONumSamples;
-	float mSSAORadius, mSSAOExp;
+	// Graphics
+	int32_t displayIndex;
+	int32_t fullscreenMode; // 0 = off, 1 = windowed, 2 = exclusive
+	int32_t refreshRate, resolutionX, resolutionY; // DisplayMode
+	int32_t windowWidth, windowHeight;
+	int32_t vsync; // 0 = off, 1 = on, 2 = swap control tear
+	float internalResScaling;
+	float spotlightResScaling;
+	float lightShaftsResScaling;
+	int32_t scalingAlgorithm;
 
-	size_t mVerticalRange, mHorizontalRange;
-
-	GlobalConfig() noexcept;
+	// Voxel
+	int32_t verticalRange, horizontalRange;
 };
 
-/** @brief Gets the global config instance. */
-GlobalConfig& getGlobalConfig() noexcept;
+bool operator== (const ConfigData& lhs, const ConfigData& rhs) noexcept;
+bool operator!= (const ConfigData& lhs, const ConfigData& rhs) noexcept;
+
+// GlobalConfig class
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+class GlobalConfig final : public ConfigData {
+public:
+	// Singleton instance
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	static GlobalConfig& INSTANCE() noexcept;
+
+	// Loading and saving to file
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	void load() noexcept;
+	void save() noexcept;
+
+	// ConfigData getters & setters
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	inline ConfigData data() const noexcept { return *this; }
+	void data(const ConfigData& configData) noexcept;
+
+private:
+	// Private constructors & destructors
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	GlobalConfig(const GlobalConfig&) = default;
+	GlobalConfig& operator= (const GlobalConfig&) = default;
+	~GlobalConfig() noexcept = default;
+
+	GlobalConfig() noexcept;
+
+	// Private members
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	sfz::IniParser mIniParser;
+};
 
 } // namespace vox
 

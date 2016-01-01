@@ -99,8 +99,6 @@ private:
 	
 	vector<Spotlight> mSpotlights;
 
-	float mLightShaftExposure = 0.4f;
-
 	float mFPSMean = 0.0f;
 	long mFPSSamples = 0;
 };
