@@ -361,7 +361,7 @@ UpdateOp GameScreen::update(UpdateState& state)
 			mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov(), mCam.verticalFov() * 0.95f, 40.0f);
 		}
 		if (ctrl.x == sdl::ButtonState::UP) {
-			if (mSpotlights.empty()) {
+			if (!mSpotlights.empty()) {
 				mSpotlights.pop_back();
 			}
 		}
