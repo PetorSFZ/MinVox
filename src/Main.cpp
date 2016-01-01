@@ -33,7 +33,11 @@ int main()
 	gl::Context glContext{window.mPtr, MAJOR_VERSION, MINOR_VERSION, gl::GLContextProfile::CORE, true};
 #endif
 #else
+#ifdef _WIN32
+	gl::Context glContext{window.mPtr, MAJOR_VERSION, MINOR_VERSION, gl::GLContextProfile::COMPATIBILITY, false};
+#else
 	gl::Context glContext{window.mPtr, MAJOR_VERSION, MINOR_VERSION, gl::GLContextProfile::CORE, false};
+#endif
 #endif
 
 	// Initializes GLEW, must happen after GL context is created.
