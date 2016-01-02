@@ -1,15 +1,14 @@
 #version 330
 
 // Input
-in vec3 positionIn;
+in vec3 inPosition;
 
 // Uniforms
 uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjectionMatrix;
+uniform mat4 uViewProjMatrix;
 
 void main()
 {
-	mat4 modelViewProj = uProjectionMatrix * uViewMatrix * uModelMatrix;
-	gl_Position = modelViewProj * vec4(positionIn, 1.0);
+	mat4 modelViewProj = uViewProjMatrix * uModelMatrix;
+	gl_Position = modelViewProj * vec4(inPosition, 1.0);
 }

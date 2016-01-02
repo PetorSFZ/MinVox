@@ -19,7 +19,7 @@ public:
 
 private:
 	GLuint vertexArrayObject;
-	GLuint posBuffer, uvBuffer, normalBuffer, indexBuffer;
+	GLuint posBuffer, normalBuffer, uvBuffer, indexBuffer;
 };
 
 

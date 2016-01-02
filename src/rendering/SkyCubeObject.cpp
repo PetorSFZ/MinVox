@@ -46,82 +46,6 @@ SkyCubeObject::SkyCubeObject() noexcept
 		1.0f, 1.0f, 1.0f  // 23, right-top-front
 
 	};
-	/*const float uvCoords[] = {
-		// u, v
-		// Left
-		0.0f, 0.0f, // 0, left-bottom-back
-		1.0f, 0.0f, // 1, left-bottom-front
-		0.0f, 1.0f, // 2, left-top-back
-		1.0f, 1.0f, // 3, left-top-front
-
-		// Right
-		1.0f, 0.0f, // 4, right-bottom-back
-		0.0f, 0.0f, // 5, right-bottom-front
-		1.0f, 1.0f, // 6, right-top-back
-		0.0f, 1.0f, // 7, right-top-front
-
-		// Bottom
-		0.0f, 0.0f, // 8, left-bottom-back
-		0.0f, 1.0f, // 9, left-bottom-front
-		1.0f, 0.0f, // 10, right-bottom-back
-		1.0f, 1.0f, // 11, right-bottom-front
-
-		// Top
-		0.0f, 1.0f, // 12, left-top-back
-		0.0f, 0.0f, // 13, left-top-front
-		1.0f, 1.0f, // 14, right-top-back
-		1.0f, 0.0f, // 15, right-top-front
-
-		// Back
-		1.0f, 0.0f, // 16, left-bottom-back
-		1.0f, 1.0f, // 17, left-top-back
-		0.0f, 0.0f, // 18, right-bottom-back
-		0.0f, 1.0f, // 19, right-top-back
-
-		// Front
-		0.0f, 0.0f, // 20, left-bottom-front
-		0.0f, 1.0f, // 21, left-top-front
-		1.0f, 0.0f, // 22, right-bottom-front
-		1.0f, 1.0f  // 23, right-top-front
-	};*/
-	const float uvCoords[] = { // Slight hack to remove "edge" from textures.
-		// u, v
-		// Left
-		0.05f, 0.05f, // 0, left-bottom-back
-		0.95f, 0.05f, // 1, left-bottom-front
-		0.05f, 0.95f, // 2, left-top-back
-		0.95f, 0.95f, // 3, left-top-front
-
-		// Right
-		0.95f, 0.05f, // 4, right-bottom-back
-		0.05f, 0.05f, // 5, right-bottom-front
-		0.95f, 0.95f, // 6, right-top-back
-		0.05f, 0.95f, // 7, right-top-front
-
-		// Bottom
-		0.05f, 0.05f, // 8, left-bottom-back
-		0.05f, 0.95f, // 9, left-bottom-front
-		0.95f, 0.05f, // 10, right-bottom-back
-		0.95f, 0.95f, // 11, right-bottom-front
-
-		// Top
-		0.05f, 0.95f, // 12, left-top-back
-		0.05f, 0.05f, // 13, left-top-front
-		0.95f, 0.95f, // 14, right-top-back
-		0.95f, 0.05f, // 15, right-top-front
-
-		// Back
-		0.95f, 0.05f, // 16, left-bottom-back
-		0.95f, 0.95f, // 17, left-top-back
-		0.05f, 0.05f, // 18, right-bottom-back
-		0.05f, 0.95f, // 19, right-top-back
-
-		// Front
-		0.05f, 0.05f, // 20, left-bottom-front
-		0.05f, 0.95f, // 21, left-top-front
-		0.95f, 0.05f, // 22, right-bottom-front
-		0.95f, 0.95f  // 23, right-top-front
-	};
 	const float flatNormals[] = {
 		// x, y, z
 		// Left
@@ -199,6 +123,82 @@ SkyCubeObject::SkyCubeObject() noexcept
 		val, -val, val, // 22, right-bottom-front
 		val, val, val, // 23, right-top-front
 	};*/
+	/*const float uvCoords[] = {
+	// u, v
+	// Left
+	0.0f, 0.0f, // 0, left-bottom-back
+	1.0f, 0.0f, // 1, left-bottom-front
+	0.0f, 1.0f, // 2, left-top-back
+	1.0f, 1.0f, // 3, left-top-front
+
+	// Right
+	1.0f, 0.0f, // 4, right-bottom-back
+	0.0f, 0.0f, // 5, right-bottom-front
+	1.0f, 1.0f, // 6, right-top-back
+	0.0f, 1.0f, // 7, right-top-front
+
+	// Bottom
+	0.0f, 0.0f, // 8, left-bottom-back
+	0.0f, 1.0f, // 9, left-bottom-front
+	1.0f, 0.0f, // 10, right-bottom-back
+	1.0f, 1.0f, // 11, right-bottom-front
+
+	// Top
+	0.0f, 1.0f, // 12, left-top-back
+	0.0f, 0.0f, // 13, left-top-front
+	1.0f, 1.0f, // 14, right-top-back
+	1.0f, 0.0f, // 15, right-top-front
+
+	// Back
+	1.0f, 0.0f, // 16, left-bottom-back
+	1.0f, 1.0f, // 17, left-top-back
+	0.0f, 0.0f, // 18, right-bottom-back
+	0.0f, 1.0f, // 19, right-top-back
+
+	// Front
+	0.0f, 0.0f, // 20, left-bottom-front
+	0.0f, 1.0f, // 21, left-top-front
+	1.0f, 0.0f, // 22, right-bottom-front
+	1.0f, 1.0f  // 23, right-top-front
+	};*/
+	const float uvCoords[] ={ // Slight hack to remove "edge" from textures.
+							  // u, v
+							  // Left
+		0.05f, 0.05f, // 0, left-bottom-back
+		0.95f, 0.05f, // 1, left-bottom-front
+		0.05f, 0.95f, // 2, left-top-back
+		0.95f, 0.95f, // 3, left-top-front
+
+					  // Right
+		0.95f, 0.05f, // 4, right-bottom-back
+		0.05f, 0.05f, // 5, right-bottom-front
+		0.95f, 0.95f, // 6, right-top-back
+		0.05f, 0.95f, // 7, right-top-front
+
+					  // Bottom
+		0.05f, 0.05f, // 8, left-bottom-back
+		0.05f, 0.95f, // 9, left-bottom-front
+		0.95f, 0.05f, // 10, right-bottom-back
+		0.95f, 0.95f, // 11, right-bottom-front
+
+					  // Top
+		0.05f, 0.95f, // 12, left-top-back
+		0.05f, 0.05f, // 13, left-top-front
+		0.95f, 0.95f, // 14, right-top-back
+		0.95f, 0.05f, // 15, right-top-front
+
+					  // Back
+		0.95f, 0.05f, // 16, left-bottom-back
+		0.95f, 0.95f, // 17, left-top-back
+		0.05f, 0.05f, // 18, right-bottom-back
+		0.05f, 0.95f, // 19, right-top-back
+
+					  // Front
+		0.05f, 0.05f, // 20, left-bottom-front
+		0.05f, 0.95f, // 21, left-top-front
+		0.95f, 0.05f, // 22, right-bottom-front
+		0.95f, 0.95f  // 23, right-top-front
+	};
 	const unsigned int indices[] = {
 		// Left
 		2, 1, 0,
@@ -252,12 +252,12 @@ SkyCubeObject::SkyCubeObject() noexcept
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 	glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
 	glEnableVertexAttribArray(1);
 
-	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-	glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
 	glEnableVertexAttribArray(2);
 }
 

@@ -3,11 +3,10 @@
 in vec3 inPosition;
 
 uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjectionMatrix;
+uniform mat4 uViewProjMatrix;
 
 void main()
 {
-	mat4 modelViewProj = uProjectionMatrix * uViewMatrix * uModelMatrix;
+	mat4 modelViewProj = uViewProjMatrix * uModelMatrix;
 	gl_Position = modelViewProj * vec4(inPosition, 1.0);
 }

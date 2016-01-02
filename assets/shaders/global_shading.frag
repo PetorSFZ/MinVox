@@ -1,35 +1,47 @@
 #version 330
 
-precision highp float; // required by GLSL spec Sect 4.5.3
-
 // Input
 in vec2 uvCoord;
 
 // Output
-out vec4 fragmentColor;
+out vec4 outFragColor;
 
 // Uniforms
+uniform sampler2D uPositionTexture;
+uniform sampler2D uNormalTexture;
 uniform sampler2D uDiffuseTexture;
-uniform sampler2D uEmissiveTexture;
 uniform sampler2D uMaterialTexture;
 uniform sampler2D uAOTexture;
-uniform sampler2D uDirectionalLightsTexture;
+uniform sampler2D uSpotlightTexture;
+uniform sampler2D uLightShaftsTexture;
 
 uniform vec3 uAmbientLight = vec3(0.25);
+uniform int uOutputSelect = 1;
 
 void main()
 {
-	// Values from textures
-	vec3 diffuseColor = texture(uDiffuseTexture, uvCoord).rgb;
-	vec3 emissive = texture(uEmissiveTexture, uvCoord).rgb;
-	vec3 material = texture(uMaterialTexture, uvCoord).xyz;
-	float materialAmbient = material.x;
+	vec3 vsPos = texture(uPositionTexture, uvCoord).rgb;
+	vec3 vsNormal = texture(uNormalTexture, uvCoord).rgb;
+	vec3 diffuse = texture(uDiffuseTexture, uvCoord).rgb;
+	vec3 material = texture(uMaterialTexture, uvCoord).rgb;
 	float ao = texture(uAOTexture, uvCoord).r;
-	vec3 dirLights = texture(uDirectionalLightsTexture, uvCoord).rgb;
+	vec3 spotlightShading = texture(uSpotlightTexture, uvCoord).rgb;
+	vec3 lightShafts = texture(uLightShaftsTexture, uvCoord).rgb;
 
-	vec3 shading = emissive
-	             + materialAmbient * uAmbientLight * diffuseColor * ao
-	             + dirLights;
+	vec3 shading = material.x * uAmbientLight * diffuse * ao
+	             + spotlightShading
+	             + lightShafts;
 
-	fragmentColor = vec4(shading, 1.0);
+	switch (uOutputSelect) {
+	case 1: outFragColor = vec4(shading, 1); break;
+	
+	case 2: outFragColor = vec4(vsPos, 1); break;
+	case 3: outFragColor = vec4(vsNormal, 1); break;
+	case 4: outFragColor = vec4(diffuse, 1); break;
+	case 5: outFragColor = vec4(material, 1); break;
+	
+	case 6: outFragColor = vec4(vec3(ao), 1); break;
+	case 7: outFragColor = vec4(spotlightShading, 1); break;
+	case 8: outFragColor = vec4(lightShafts, 1); break;
+	}
 }

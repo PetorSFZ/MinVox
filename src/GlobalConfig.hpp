@@ -25,6 +25,7 @@ struct ConfigData {
 	int32_t windowWidth, windowHeight;
 	int32_t vsync; // 0 = off, 1 = on, 2 = swap control tear
 	float internalResScaling;
+	float ssaoResScaling;
 	float spotlightResScaling;
 	float lightShaftsResScaling;
 	int32_t scalingAlgorithm;

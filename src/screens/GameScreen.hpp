@@ -10,7 +10,7 @@
 #include <sfz/geometry/ViewFrustum.hpp>
 #include <sfz/GL.hpp>
 #include <sfz/Screens.hpp>
-
+#include <sfz/util/FrametimeStats.hpp>
 
 #include "IO.hpp"
 #include "Model.hpp"
@@ -24,8 +24,12 @@ using gl::Program;
 using gl::Spotlight;
 using gl::ViewFrustum;
 
+using sfz::vec2;
 using sfz::vec3;
 using sfz::vec4;
+using sfz::vec2i;
+using sfz::vec3i;
+using sfz::vec4i;
 using sfz::mat4;
 
 using sfz::UpdateOp;
@@ -58,49 +62,35 @@ private:
 	// Private methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	void updateResolutions(int width, int height) noexcept;
-	void reloadFramebuffers(int width, int height) noexcept;
+	void updatePrograms() noexcept;
+	void updateResolutions(vec2 drawableDim) noexcept;
 
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	GlobalConfig& mCfg;
-
-	World mWorld;
-	ViewFrustum mCam;
-
 	sdl::Window& mWindow;
+	World mWorld;
 
-	gl::Program mShadowMapShader, mGBufferGenShader, mDirLightingStencilShader, mDirLightingShader,
-	            mGlobalLightingShader, mOutputSelectShader;
-	Framebuffer mShadowMap;
-	
-	Framebuffer mGBuffer;
-	Framebuffer mDirLightFramebuffer;
-	Framebuffer mGlobalLightingFramebuffer, mOutputSelectFramebuffer;
+	gl::PostProcessQuad mPostProcessQuad;
+	Program mGBufferGenProgram, mShadowMapProgram, mStencilLightProgram, mSpotlightShadingProgram,
+	        mLightShaftsProgram, mGlobalShadingProgram;
 	
 	SSAO mSSAO;
-	gl::PostProcessQuad mFullscreenQuad;
-	WorldRenderer mWorldRenderer;
+	Framebuffer mGBuffer, mSpotlightShadingFB, mLightShaftsFB;
+	Framebuffer mShadowMapHighRes, mShadowMapLowRes;
 	
+	ViewFrustum mCam;
+	vector<Spotlight> mSpotlights;
+
+	WorldRenderer mWorldRenderer;
 	bool mOldWorldRenderer = false;
-	int mRenderMode = 1;
+	int mOutputSelect = 1;
 
 	vec3 mCurrentVoxelPos; // TODO: Move this to CreationGameScreen
 	Voxel mCurrentVoxel; // TODO: Move this to CreationGameScreen
 
-	/*DirectionalLight mSun;
-	vec3 mLightPosSpherical, mLightTarget;
-
-	int currentLightAxis = 1;
-	float lightCurrentSpeed = 1.0f;
-	float lightNormalSpeed = 0.5f;
-	float lightMaxSpeed = sfz::PI();*/
-	
-	vector<Spotlight> mSpotlights;
-
-	float mFPSMean = 0.0f;
-	long mFPSSamples = 0;
+	sfz::FrametimeStats mShortTermPerfStats, mLongerTermPerfStats, mLongestTermPerfStats;
 };
 
 } // namespace vox

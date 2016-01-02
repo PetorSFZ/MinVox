@@ -47,6 +47,7 @@ bool operator== (const ConfigData& lhs, const ConfigData& rhs) noexcept
 	lhs.windowHeight == rhs.windowHeight &&
 	lhs.vsync == rhs.vsync &&
 	lhs.internalResScaling == rhs.internalResScaling &&
+	lhs.ssaoResScaling == rhs.ssaoResScaling &&
 	lhs.spotlightResScaling == rhs.spotlightResScaling &&
 	lhs.lightShaftsResScaling == rhs.lightShaftsResScaling &&
 	lhs.scalingAlgorithm == rhs.scalingAlgorithm &&
@@ -103,9 +104,10 @@ void GlobalConfig::load() noexcept
 
 	// [Graphics]
 	static const string grStr = "Graphics";
-	internalResScaling = ip.sanitizeFloat(grStr, "fInternalResScaling", 2.0f, 0.01f, 10.0f);
-	lightShaftsResScaling = ip.sanitizeFloat(grStr, "fLightShaftsResScaling", 0.5f, 0.01f, 10.0f);
+	internalResScaling = ip.sanitizeFloat(grStr, "fInternalResScaling", 1.0f, 0.01f, 10.0f);
+	lightShaftsResScaling = ip.sanitizeFloat(grStr, "fLightShaftsResScaling", 1.0f, 0.01f, 10.0f);
 	spotlightResScaling = ip.sanitizeFloat(grStr, "fSpotlightResScaling", 1.0f, 0.01f, 10.0f);
+	ssaoResScaling =    ip.sanitizeFloat(grStr, "fSSAOResScaling", 1.0f, 0.01f, 10.0f);
 	displayIndex =      ip.sanitizeInt(grStr, "iDisplayIndex", 0, 0, 32);
 	fullscreenMode =    ip.sanitizeInt(grStr, "iFullscreenMode", 0, 0, 2);
 	refreshRate =       ip.sanitizeInt(grStr, "iRefreshRate", 60, 15, 240);
@@ -134,6 +136,7 @@ void GlobalConfig::save() noexcept
 	mIniParser.setFloat(grStr, "fInternalResScaling", internalResScaling);
 	mIniParser.setFloat(grStr, "fLightShaftsResScaling", lightShaftsResScaling);
 	mIniParser.setFloat(grStr, "fSpotlightResScaling", spotlightResScaling);
+	mIniParser.setFloat(grStr, "fSSAOResScaling", ssaoResScaling);
 	mIniParser.setInt(grStr, "iDisplayIndex", displayIndex);
 	mIniParser.setInt(grStr, "iFullscreenMode", fullscreenMode);
 	mIniParser.setInt(grStr, "iRefreshRate", refreshRate);
@@ -173,6 +176,7 @@ void GlobalConfig::data(const ConfigData& configData) noexcept
 	this->windowHeight = configData.windowHeight;
 	this->vsync = configData.vsync;
 	this->internalResScaling = configData.internalResScaling;
+	this->ssaoResScaling = configData.ssaoResScaling;
 	this->spotlightResScaling = configData.spotlightResScaling;
 	this->lightShaftsResScaling = configData.lightShaftsResScaling;
 	this->scalingAlgorithm = configData.scalingAlgorithm;

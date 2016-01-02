@@ -7,13 +7,12 @@ namespace vox {
 // Statics
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-static const uint32_t GBUFFER_DIFFUSE = 0;
-static const uint32_t GBUFFER_POSITION = 1;
-static const uint32_t GBUFFER_NORMAL = 2;
-static const uint32_t GBUFFER_EMISSIVE = 3;
-static const uint32_t GBUFFER_MATERIAL = 4;
+static const uint32_t GBUFFER_POSITION = 0;
+static const uint32_t GBUFFER_NORMAL = 1;
+static const uint32_t GBUFFER_DIFFUSE = 2;
+static const uint32_t GBUFFER_MATERIAL = 3;
 
-static vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
+/*static vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
 {
 	using std::sinf;
 	using std::cosf;
@@ -23,6 +22,32 @@ static vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
 static vec3 sphericalToCartesian(const vec3& spherical) noexcept
 {
 	return sphericalToCartesian(spherical[0], spherical[1], spherical[2]);
+}*/
+
+static void stupidSetSpotlightUniform(const gl::Program& program, const char* name, const Spotlight& spotlight,
+                                      const mat4& viewMatrix, const mat4& invViewMatrix) noexcept
+{
+	using std::snprintf;
+	char buffer[128];
+	const auto& frustum = spotlight.viewFrustum();
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "vsPos");
+	gl::setUniform(program, buffer, transformPoint(viewMatrix, frustum.pos()));
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "vsDir");
+	gl::setUniform(program, buffer, normalize(transformDir(viewMatrix, frustum.dir())));
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "color");
+	gl::setUniform(program, buffer, spotlight.color());
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "range");
+	gl::setUniform(program, buffer, frustum.far());
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "softFovRad");
+	gl::setUniform(program, buffer, frustum.verticalFov() * sfz::DEG_TO_RAD());
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "sharpFovRad");
+	gl::setUniform(program, buffer, spotlight.sharpFov() * sfz::DEG_TO_RAD());
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "softAngleCos");
+	gl::setUniform(program, buffer, std::cos((frustum.verticalFov() / 2.0f) * sfz::DEG_TO_RAD()));
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "sharpAngleCos");
+	gl::setUniform(program, buffer, std::cos((spotlight.sharpFov() / 2.0f) * sfz::DEG_TO_RAD()));
+	snprintf(buffer, sizeof(buffer), "%s.%s", name, "lightMatrix");
+	gl::setUniform(program, buffer, spotlight.lightMatrix(invViewMatrix));
 }
 
 static void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
@@ -65,97 +90,38 @@ static void drawPlacementCube(int modelMatrixLoc, const vec3& pos, Voxel voxel) 
 GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 :
 	mCfg{GlobalConfig::INSTANCE()},
-
+	mWindow{window},
 	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.horizontalRange, mCfg.verticalRange},
+		
+	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f, 1.1f},
+
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
 
-	mWindow{window},
-	//mSSAO{window.drawableWidth(), window.drawableHeight(), mCfg.mSSAONumSamples, mCfg.mSSAORadius, mCfg.mSSAOExp},
-	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f, 1.1f},
 	mWorldRenderer{mWorld},
 
-	mCurrentVoxel{VOXEL_AIR}
-	//mSun{vec3{0.0f, 0.0f, 0.0f}, vec3{1.0f, 0.0f, 0.0f}, 3.0f, 80.0f, vec3{0.2f, 0.25f, 0.8f}}
+	mCurrentVoxel{VOXEL_AIR},
+
+	mShortTermPerfStats{20},
+	mLongerTermPerfStats{120},
+	mLongestTermPerfStats{960}
 {
-	updateResolutions((int)window.drawableWidth(), (int)window.drawableHeight());
-	mShadowMap = gl::createShadowMap(sfz::vec2i(1024), gl::FBDepthFormat::F16, true, vec4{0.f, 0.f, 0.f, 1.f});
+	updateResolutions(window.drawableDimensions());
+	updatePrograms();
 
-	mShadowMapShader = Program::fromFile((sfz::basePath() + "assets/shaders/shadow_map.vert").c_str(),
-		                                 (sfz::basePath() + "assets/shaders/shadow_map.frag").c_str(),
-		[](uint32_t shaderProgram) {
-		glBindAttribLocation(shaderProgram, 0, "inPosition");
-		glBindFragDataLocation(shaderProgram, 0, "outFragColor");
-	});
-
-	mGBufferGenShader = Program::fromFile((sfz::basePath() + "assets/shaders/gbuffer_gen.vert").c_str(),
-	                                      (sfz::basePath() + "assets/shaders/gbuffer_gen.frag").c_str(),
-		[](uint32_t shaderProgram) {
-		glBindAttribLocation(shaderProgram, 0, "positionIn");
-		glBindAttribLocation(shaderProgram, 1, "texCoordIn");
-		glBindAttribLocation(shaderProgram, 2, "normalIn");
-		glBindFragDataLocation(shaderProgram, 0, "fragmentDiffuse");
-		glBindFragDataLocation(shaderProgram, 1, "fragmentPosition");
-		glBindFragDataLocation(shaderProgram, 2, "fragmentNormal");
-		glBindFragDataLocation(shaderProgram, 3, "fragmentEmissive");
-		glBindFragDataLocation(shaderProgram, 4, "fragmentMaterial");
-	});
-
-	mDirLightingStencilShader = Program::fromFile((sfz::basePath() + "assets/shaders/stencil_shader.vert").c_str(),
-	                                              (sfz::basePath() + "assets/shaders/stencil_shader.frag").c_str(),
-		[](uint32_t shaderProgram) {
-		glBindAttribLocation(shaderProgram, 0, "positionIn");
-	});
-
-	mDirLightingShader = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/spotlight_shading.frag").c_str());
-
-	mGlobalLightingShader = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/global_shading.frag").c_str());
-
-	mOutputSelectShader = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/output_select.frag").c_str());
-
-
-	//mLightPosSpherical = vec3{60.0f, sfz::PI()*0.15f, sfz::PI()*0.35f}; // [0] = r, [1] = theta, [2] = phi
-	//mLightTarget = vec3{16.0f, 0.0f, 16.0f};
-
-	// First corridor
-	/*vec3 f1Color{0.0f, 0.0f, 1.0f};
-	mLights.emplace_back(vec3{-21.430313f, 5.780775f, 5.168257f}, vec3{0.499439f, -0.200375f, 0.842858f}, 0.5f, 20.0f, f1Color);
-	mLights.emplace_back(vec3{-21.720879f, 1.155828f, 15.699636f}, vec3{-0.563084f, 0.218246f, -0.797059f}, 0.5f, 20.0f, f1Color);
-
-	// Staircase
-	mLights.emplace_back(vec3{-33.711731f, 13.120087f, 32.218548f}, vec3{0.038979f, -0.521176f, -0.852557f}, 0.5f, 40.0f, vec3{0.8f, 0.2f, 0.8f});
-
-	// Second corridor
-	vec3 f2Color{0.0f, 1.0f, 0.0f};
-	mLights.emplace_back(vec3{-23.068808f, 8.956177f, 33.155720f}, vec3{-0.092388f, -0.226080f, -0.969712f}, 0.5f, 20.0f, f2Color);
-	mLights.emplace_back(vec3{-20.271776f, 2.191609f, 26.143528f}, vec3{-0.271371f, 0.962427f, 0.009065f}, 0.5f, 20.0f, f2Color);
-
-	// Balcony
-	mLights.emplace_back(vec3{-17.184530f, 10.616333f, 26.045494f}, vec3{0.932476f, -0.361071f, -0.010368f}, 0.5f, 100.0f, vec3{0.4f, 0.5f, 0.9f});
-
-	// Semi-global
-	mLights.emplace_back(vec3{46.868477f, 32.830544f, 18.390802f}, vec3{-0.776988f, -0.629503f, 0.004005f}, 35.0f, 120.0f, vec3{0.2f, 0.25f, 0.8f});
-
-	for (auto& light : mLights) {
-		mLightMeshes.emplace_back(light.mCam.mVerticalFov, light.mCam.mNear, light.mRange);
-	}*/
+	mShadowMapHighRes = gl::createShadowMap(vec2i(2048), gl::FBDepthFormat::F32, true, vec4{0.f, 0.f, 0.f, 1.f});
+	mShadowMapLowRes = gl::createShadowMap(vec2i(256), gl::FBDepthFormat::F32, true, vec4{0.f, 0.f, 0.f, 1.f});
 }
-
-/*GameScreen::GameScreen(const GameScreen& gameScreen)
-{
-
-}*/
-
-/*GameScreen::~GameScreen()
-{
-
-}*/
 
 // Overriden methods from BaseScreen
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 UpdateOp GameScreen::update(UpdateState& state)
 {
+	mShortTermPerfStats.addSample(state.delta);
+	mLongerTermPerfStats.addSample(state.delta);
+	mLongestTermPerfStats.addSample(state.delta);
+
 	for (auto& event : state.events) {
 		switch (event.type) {
 		case SDL_KEYDOWN:
@@ -200,28 +166,28 @@ UpdateOp GameScreen::update(UpdateState& state)
 				break;
 
 			case '1':
-				mRenderMode = 1;
+				mOutputSelect = 1;
 				break;
 			case '2':
-				mRenderMode = 2;
+				mOutputSelect = 2;
 				break;
 			case '3':
-				mRenderMode = 3;
+				mOutputSelect = 3;
 				break;
 			case '4':
-				mRenderMode = 4;
+				mOutputSelect = 4;
 				break;
 			case '5':
-				mRenderMode = 5;
+				mOutputSelect = 5;
 				break;
 			case '6':
-				mRenderMode = 6;
+				mOutputSelect = 6;
 				break;
 			case '7':
-				mRenderMode = 7;
+				mOutputSelect = 7;
 				break;
 			case '8':
-				mRenderMode = 8;
+				mOutputSelect = 8;
 				break;
 
 			case 'w':
@@ -369,270 +335,308 @@ UpdateOp GameScreen::update(UpdateState& state)
 
 	mWorld.update(mCam.pos());
 
+	updateResolutions(mWindow.drawableDimensions());
+	if (mCfg.continuousShaderReload) updatePrograms();
+
 	return sfz::SCREEN_NO_OP;
 }
 
 void GameScreen::render(UpdateState& state)
 {
-	// Enable blending
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// Rendering GBuffer
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	// Enable depth test
+	// Enable depth testing
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS); // Accept fragments closer to camera than former ones
+	glDepthFunc(GL_LESS);
+
+	// Disable alpha blending
+	glDisable(GL_BLEND);
 
 	// Enable culling
 	glEnable(GL_CULL_FACE);
 
-	// Draw GBuffer
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	glUseProgram(mGBufferGenShader.handle());
+	// Binding GBufferGen program and GBuffer
+	glUseProgram(mGBufferGenProgram.handle());
 	glBindFramebuffer(GL_FRAMEBUFFER, mGBuffer.fbo());
 	glViewport(0, 0, mGBuffer.width(), mGBuffer.height());
 
-	// Clearing screen
+	// Clearing GBuffer
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set view and projection matrix uniforms
-	gl::setUniform(mGBufferGenShader, "uViewMatrix", mCam.viewMatrix());
-	gl::setUniform(mGBufferGenShader, "uProjectionMatrix", mCam.projMatrix());
-
-	// Prepare for binding the diffuse textures
-	gl::setUniform(mGBufferGenShader, "uDiffuseTexture", 0);
+	// View Matrix and Projection Matrix uniforms
+	const mat4 viewMatrix = mCam.viewMatrix();
+	const mat4 invViewMatrix = inverse(viewMatrix);
+	const mat4 projMatrix = mCam.projMatrix();
+	gl::setUniform(mGBufferGenProgram, "uViewMatrix", viewMatrix);
+	gl::setUniform(mGBufferGenProgram, "uProjMatrix", projMatrix);
+	
+	// Prepare for binding diffuse texture
+	gl::setUniform(mGBufferGenProgram, "uDiffuseTexture", 0);
 	glActiveTexture(GL_TEXTURE0);
 
-	// Drawing objects
-	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenShader.handle(), "uModelMatrix");
+	int modelMatrixLocGBufferGen = glGetUniformLocation(mGBufferGenProgram.handle(), "uModelMatrix");
 
-	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", vec3{0.15f, 0.15f, 0.2f});
-	gl::setUniform(mGBufferGenShader, "uMaterial", vec3{0.0f, 0.0f, 0.0f});
+	gl::setUniform(mGBufferGenProgram, "uMaterial", vec3{0.25f});
 	drawSkyCube(modelMatrixLocGBufferGen, mCam);
 
-	gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", vec3{0.0f, 0.0f, 0.0f});
-	gl::setUniform(mGBufferGenShader, "uMaterial", vec3{1.0, 0.50, 0.25});
+	gl::setUniform(mGBufferGenProgram, "uMaterial", vec3{1.0, 0.50, 0.25});
 	if (!mOldWorldRenderer) mWorldRenderer.drawWorld(mCam, modelMatrixLocGBufferGen);
 	else mWorldRenderer.drawWorldOld(mCam, modelMatrixLocGBufferGen);
 
-	/*gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-	gl::setUniform(mGBufferGenShader, "uEmissive", mSun.mColor*0.5f);
-	gl::setUniform(mGBufferGenShader, "uMaterial", vec3{0.0f, 0.0f, 0.0f});
-	drawLight(modelMatrixLocGBufferGen, mSun.mCam.mPos);*/
-	
 	if (mCurrentVoxel.mType != VOXEL_AIR && mCurrentVoxel.mType != VOXEL_LIGHT) {
-		gl::setUniform(mGBufferGenShader, "uHasEmissiveTexture", 0);
-		gl::setUniform(mGBufferGenShader, "uEmissive", vec3{0.15f, 0.15f, 0.15f});
-		gl::setUniform(mGBufferGenShader, "uMaterial", vec3{1.0, 0.50, 0.25});
+		gl::setUniform(mGBufferGenProgram, "uMaterial", vec3{1.0, 0.50, 0.25});
 		drawPlacementCube(modelMatrixLocGBufferGen, mCurrentVoxelPos, mCurrentVoxel);
 	}
 
-	// Directional Lights (+Shadow Maps)
+	// Spotlights (Shadow Map + Shading + Lightshafts)
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	// Clear directional lighting texture
-	glUseProgram(mDirLightingShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.fbo());
-	glViewport(0, 0, mDirLightFramebuffer.width(), mDirLightFramebuffer.height());
+	// Binding textures in advance
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, mShadowMapHighRes.depthTexture());
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, mShadowMapLowRes.depthTexture());
+
+	glActiveTexture(GL_TEXTURE0);
+
+	// Settings uniforms and clearing framebuffers in advance
+	glUseProgram(mSpotlightShadingProgram.handle());
+	gl::setUniform(mSpotlightShadingProgram, "uPositionTexture", 1);
+	gl::setUniform(mSpotlightShadingProgram, "uNormalTexture", 2);
+	gl::setUniform(mSpotlightShadingProgram, "uDiffuseTexture", 3);
+	gl::setUniform(mSpotlightShadingProgram, "uMaterialTexture", 4);
+	gl::setUniform(mSpotlightShadingProgram, "uShadowMap", 5);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, mSpotlightShadingFB.fbo());
+	glViewport(0, 0, mSpotlightShadingFB.width(), mSpotlightShadingFB.height());
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	mat4 inverseViewMatrix = inverse(mCam.viewMatrix());
+	glUseProgram(mLightShaftsProgram.handle());
+	gl::setUniform(mLightShaftsProgram, "uPositionTexture", 1);
+	gl::setUniform(mLightShaftsProgram, "uShadowMap", 6);
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, mLightShaftsFB.fbo());
+	glViewport(0, 0, mLightShaftsFB.width(), mLightShaftsFB.height());
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	size_t lightIndex = 0;
-	for (auto& light : mSpotlights) {
-		const auto& lightFrustum = light.viewFrustum();
 
-		// Check if light is visible
-		//if (!mCam.isVisible(light.mCam)) continue;
+	glDisable(GL_BLEND);
 
-		// Shadow map
-		glUseProgram(mShadowMapShader.handle());
-		glBindFramebuffer(GL_FRAMEBUFFER, mShadowMap.fbo());
-		glViewport(0, 0, mShadowMap.width(), mShadowMap.height());
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClearDepth(1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	for (size_t i = 0; i < mSpotlights.size(); ++i) {
+		auto& spotlight = mSpotlights[i];
+		const auto& lightFrustum = mSpotlights[i].viewFrustum();
 
-		gl::setUniform(mShadowMapShader, "uViewMatrix", lightFrustum.viewMatrix());
-		gl::setUniform(mShadowMapShader, "uProjectionMatrix", lightFrustum.projMatrix());
+		if (!mCam.isVisible(lightFrustum)) continue;
 
-		// Fix surface acne
+
+		// Render shadow maps
+
+		glUseProgram(mShadowMapProgram.handle());
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(5.0f, 25.0f);
 		//glCullFace(GL_FRONT);
 
-		// Draw shadow casters
-		int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapShader.handle(), "uModelMatrix");
+		gl::setUniform(mShadowMapProgram, "uViewProjMatrix", lightFrustum.projMatrix() * lightFrustum.viewMatrix());
+		int modelMatrixLocShadowMap = glGetUniformLocation(mShadowMapProgram.handle(), "uModelMatrix");
+
+		glBindFramebuffer(GL_FRAMEBUFFER, mShadowMapHighRes.fbo());
+		glViewport(0, 0, mShadowMapHighRes.width(), mShadowMapHighRes.height());
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		if (!mOldWorldRenderer) mWorldRenderer.drawWorld(lightFrustum, modelMatrixLocShadowMap);
 		else mWorldRenderer.drawWorldOld(lightFrustum, modelMatrixLocShadowMap);
 
-		// Shadow Map: Cleanup
+		glBindFramebuffer(GL_FRAMEBUFFER, mShadowMapLowRes.fbo());
+		glViewport(0, 0, mShadowMapLowRes.width(), mShadowMapLowRes.height());
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (!mOldWorldRenderer) mWorldRenderer.drawWorld(lightFrustum, modelMatrixLocShadowMap);
+		else mWorldRenderer.drawWorldOld(lightFrustum, modelMatrixLocShadowMap);
+
 		glDisable(GL_POLYGON_OFFSET_FILL);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		//glCullFace(GL_BACK);
-
+		glDisable(GL_DEPTH_TEST);
 		
-		// Render stencil buffer for light region
-		glUseProgram(mDirLightingStencilShader.handle());
-		glBindFramebuffer(GL_FRAMEBUFFER, mDirLightFramebuffer.fbo());
-		glViewport(0, 0, mDirLightFramebuffer.width(), mDirLightFramebuffer.height());
-		glClearStencil(0);
-		glClear(GL_STENCIL_BUFFER_BIT); // Clears stencil buffer to 0.
 
-		gl::setUniform(mDirLightingStencilShader, "uModelMatrix", light.viewFrustumTransform());
-		gl::setUniform(mDirLightingStencilShader, "uViewMatrix", mCam.viewMatrix());
-		gl::setUniform(mDirLightingStencilShader, "uProjectionMatrix", mCam.projMatrix());
+
+		// Render Spotlight & light shafts stencil buffer
+
+		glUseProgram(mStencilLightProgram.handle());
 
 		glDisable(GL_CULL_FACE);
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(GL_ALWAYS, 0, 0xFF);
 		glStencilOp(GL_INCR, GL_INCR, GL_INCR);
 
-		light.renderViewFrustum();
+		gl::setUniform(mStencilLightProgram, "uViewProjMatrix", projMatrix * viewMatrix);
+		gl::setUniform(mStencilLightProgram, "uModelMatrix", spotlight.viewFrustumTransform());
+
+		glBindFramebuffer(GL_FRAMEBUFFER, mSpotlightShadingFB.fbo());
+		glViewport(0, 0, mSpotlightShadingFB.width(), mSpotlightShadingFB.height());
+		glClearStencil(0);
+		glClear(GL_STENCIL_BUFFER_BIT);
+
+		spotlight.renderViewFrustum();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, mLightShaftsFB.fbo());
+		glViewport(0, 0, mLightShaftsFB.width(), mLightShaftsFB.height());
+		glClearStencil(0);
+		glClear(GL_STENCIL_BUFFER_BIT);
+
+		spotlight.renderViewFrustum();
+
+
+		// Prepare for shading
+
 		glEnable(GL_CULL_FACE);
-
-
-		// Render Light
-		glUseProgram(mDirLightingShader.handle());
-
-		// Texture uniforms
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
-		gl::setUniform(mDirLightingShader, "uDiffuseTexture", 0);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
-		gl::setUniform(mDirLightingShader, "uPositionTexture", 1);
-
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
-		gl::setUniform(mDirLightingShader, "uNormalTexture", 2);
-
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
-		gl::setUniform(mDirLightingShader, "uMaterialTexture", 3);
-
-		// Shadow map uniform
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mShadowMap.depthTexture());
-		gl::setUniform(mDirLightingShader, "uShadowMap", 4);
-
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.texture(0));
-		gl::setUniform(mDirLightingShader, "uDirectionalLightingTexture", 5);
-
-		// Set view matrix uniform
-		gl::setUniform(mDirLightingShader, "uViewMatrix", mCam.viewMatrix());
-
-		// Calculate and set lightMatrix
-		gl::setUniform(mDirLightingShader, "uLightMatrix", light.lightMatrix(inverseViewMatrix));
-
-		// Set light position uniform
-		gl::setUniform(mDirLightingShader, "uLightPos", lightFrustum.pos());
-		gl::setUniform(mDirLightingShader, "uLightRange", lightFrustum.far());
-		gl::setUniform(mDirLightingShader, "uLightColor", light.color());
-	
-		gl::setUniform(mDirLightingShader, "uLightShaftExposure", 0.5f);
-		gl::setUniform(mDirLightingShader, "uLightShaftRange", 18.0f);
-		gl::setUniform(mDirLightingShader, "uLightShaftSamples", 38);
-
 		glStencilFunc(GL_NOTEQUAL, 0, 0xFF); // Pass stencil test if not 0.
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-		mFullscreenQuad.render();
-	
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE);
+
+
+		// Spotlight shading
+
+		glUseProgram(mSpotlightShadingProgram.handle());
+		glBindFramebuffer(GL_FRAMEBUFFER, mSpotlightShadingFB.fbo());
+		glViewport(0, 0, mSpotlightShadingFB.width(), mSpotlightShadingFB.height());
+
+		stupidSetSpotlightUniform(mSpotlightShadingProgram, "uSpotlight", spotlight, viewMatrix, invViewMatrix);
+
+		mPostProcessQuad.render();
+
+
+		// Light shafts
+
+		glUseProgram(mLightShaftsProgram.handle());
+		glBindFramebuffer(GL_FRAMEBUFFER, mLightShaftsFB.fbo());
+		glViewport(0, 0, mLightShaftsFB.width(), mLightShaftsFB.height());
+
+		stupidSetSpotlightUniform(mLightShaftsProgram, "uSpotlight", spotlight, viewMatrix, invViewMatrix);
+
+		mPostProcessQuad.render();
+
+
 		glDisable(GL_STENCIL_TEST);
-		glUseProgram(0);
-		lightIndex++;
 	}
 
-	// Global Lighting + SSAO + Shadow Map
+	// Ambient Occlusion
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_POSITION),
 	                               mGBuffer.texture(GBUFFER_NORMAL),
-	                               mCam.projMatrix(), false);
+	                               projMatrix, false);
 
-	glUseProgram(mGlobalLightingShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mGlobalLightingFramebuffer.fbo());
-	glViewport(0, 0, mGlobalLightingFramebuffer.width(), mGlobalLightingFramebuffer.height());
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Global shading
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	// Texture uniforms
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+
+	glUseProgram(mGlobalShadingProgram.handle());
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, mWindow.drawableWidth(), mWindow.drawableHeight());
+
+	// Binding input textures
+	gl::setUniform(mGlobalShadingProgram, "uPositionTexture", 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
-	gl::setUniform(mGlobalLightingShader, "uDiffuseTexture", 0);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
 
+	gl::setUniform(mGlobalShadingProgram, "uNormalTexture", 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_EMISSIVE));
-	gl::setUniform(mGlobalLightingShader, "uEmissiveTexture", 1);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
 
+	gl::setUniform(mGlobalShadingProgram, "uDiffuseTexture", 2);
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
-	gl::setUniform(mGlobalLightingShader, "uMaterialTexture", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, aoTex);
-	gl::setUniform(mGlobalLightingShader, "uAOTexture", 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.texture(0));
-	gl::setUniform(mGlobalLightingShader, "uDirectionalLightsTexture", 4);
-
-	gl::setUniform(mGlobalLightingShader, "uAmbientLight", vec3{0.2f, 0.2f, 0.2f});
-
-	mFullscreenQuad.render();
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
 	
-	glUseProgram(0);
+	gl::setUniform(mGlobalShadingProgram, "uMaterialTexture", 3);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
+	
+	gl::setUniform(mGlobalShadingProgram, "uAOTexture", 4);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, aoTex);
 
-	// Rendering some text
+	gl::setUniform(mGlobalShadingProgram, "uSpotlightTexture", 5);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, mSpotlightShadingFB.texture(0));
+
+	gl::setUniform(mGlobalShadingProgram, "uLightShaftsTexture", 6);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, mLightShaftsFB.texture(0));
+
+	gl::setUniform(mGlobalShadingProgram, "uAmbientLight", vec3{0.25f});
+	gl::setUniform(mGlobalShadingProgram, "uOutputSelect", mOutputSelect);
+
+	mPostProcessQuad.render();
+
+	// Rendering GUI
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	using gl::HorizontalAlign;
 	using gl::VerticalAlign;
-
-	float aspect = mGlobalLightingFramebuffer.widthFloat() / mGlobalLightingFramebuffer.heightFloat();
-	vec2 fontWindowDimensions{100.0f * aspect, 100.0f};
-	vec2 lightingViewport = mGlobalLightingFramebuffer.dimensionsFloat();
-
-	float fps = 1.0f/state.delta;
-	if (fps > 10000.0f) fps = 10000.0f; // Small hack
-	if (1.0f < fps && fps < 500.0f) {
-		float fpsTotal = (mFPSMean * (float)mFPSSamples) + fps;
-		mFPSSamples++;
-		mFPSMean = fpsTotal / (float)mFPSSamples;
-	}
-
-	float fontSize = 2.8f;
-
 	FontRenderer& font = Assets::INSTANCE().mFontRenderer;
 
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_CULL_FACE);
+
+	float aspect = mWindow.drawableWidth() / mWindow.drawableHeight();
+	vec2 fontWindowDimensions{100.0f * aspect, 100.0f};
+
+	// Render frametime stats
 	if (mCfg.printFrametimes) {
-		using std::string;
-		using std::to_string;
-		string deltaString = "Delta: " + to_string(state.delta*1000.0f) + "ms, Mean: " + to_string(1000.0f / mFPSMean) + "ms";;
-		string fpsString = "FPS: " + to_string(fps) + ", Mean: " + to_string(mFPSMean);
+		char shortTermPerfBuffer[128];
+		std::snprintf(shortTermPerfBuffer, 128, "Last %i frames: %s", mShortTermPerfStats.currentNumSamples(), mShortTermPerfStats.to_string());
+		char longerTermPerfBuffer[128];
+		std::snprintf(longerTermPerfBuffer, 128, "Last %i frames: %s", mLongerTermPerfStats.currentNumSamples(), mLongerTermPerfStats.to_string());
+		char longestTermPerfBuffer[128];
+		std::snprintf(longestTermPerfBuffer, 128, "Last %i frames: %s", mLongestTermPerfStats.currentNumSamples(), mLongestTermPerfStats.to_string());
 
-		font.horizontalAlign(HorizontalAlign::LEFT);
-		font.verticalAlign(VerticalAlign::TOP);
+		float fontSize = state.window.drawableHeight()/32.0f;
+		float offset = fontSize*0.04f;
+		float bottomOffset = state.window.drawableHeight()/25.0f;
 
-		// Drop shadow
-		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2{1.15f, 99.85f}, fontSize, deltaString.c_str());
-		font.write(vec2{1.15f, 99.85f - fontSize}, fontSize, fpsString.c_str());
-		font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport,
-						  vec4{0.0f, 0.0f, 0.0f, 1.0f});
+		font.verticalAlign(gl::VerticalAlign::BOTTOM);
+		font.horizontalAlign(gl::HorizontalAlign::LEFT);
 
-		font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
-		font.write(vec2{1.0, 100.0f}, fontSize, deltaString.c_str());
-		font.write(vec2{1.0, 100.0f - fontSize}, fontSize, fpsString.c_str());
-		font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport,
-						  vec4{1.0f, 0.0f, 1.0f, 1.0f});
+		font.begin(state.window.drawableDimensions()/2.0f, state.window.drawableDimensions());
+		font.write(vec2{offset, bottomOffset + fontSize*2.10f - offset}, fontSize, shortTermPerfBuffer);
+		font.write(vec2{offset, bottomOffset + fontSize*1.05f - offset}, fontSize, longerTermPerfBuffer);
+		font.write(vec2{offset, bottomOffset - offset}, fontSize, longestTermPerfBuffer);
+		font.end(0, state.window.drawableDimensions(), sfz::vec4{0.0f, 0.0f, 0.0f, 1.0f});
+
+		font.begin(state.window.drawableDimensions()/2.0f, state.window.drawableDimensions());
+		font.write(vec2{0.0f, bottomOffset + fontSize*2.10f}, fontSize, shortTermPerfBuffer);
+		font.write(vec2{0.0f, bottomOffset + fontSize*1.05f}, fontSize, longerTermPerfBuffer);
+		font.write(vec2{0.0f, bottomOffset}, fontSize, longestTermPerfBuffer);
+		font.end(0, state.window.drawableDimensions(), sfz::vec4{1.0f, 1.0f, 1.0f, 1.0f});
 	}
 
 	// Draw GUI
@@ -644,75 +648,13 @@ void GameScreen::render(UpdateState& state)
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 	xPos = font.write(vec2{xPos, 0.2f}, 4.0f, "Voxel: ");
 	font.write(vec2{xPos, 0.2f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel).c_str());
-	font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport, vec4{0.0f, 0.0f, 0.0f, 1.0f});
+	font.end(0, mWindow.drawableDimensions(), vec4{0.0f, 0.0f, 0.0f, 1.0f});
 
 	xPos = 1.15f;
 	font.begin(fontWindowDimensions/2.0f, fontWindowDimensions);
 	xPos = font.write(vec2{xPos, 0.5f}, 4.0f, "Voxel: ");
 	font.write(vec2{xPos, 0.5f}, 4.0f, Assets::INSTANCE().cubeFaceName(mCurrentVoxel).c_str());
-	font.end(mGlobalLightingFramebuffer.fbo(), lightingViewport, vec4{1.0f, 1.0f, 1.0f, 1.0f});
-
-	// Output select
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	glUseProgram(mOutputSelectShader.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mOutputSelectFramebuffer.fbo());
-	glViewport(0, 0, mOutputSelectFramebuffer.width(), mOutputSelectFramebuffer.height());
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Texture uniforms
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGlobalLightingFramebuffer.texture(0));
-	gl::setUniform(mOutputSelectShader, "uFinishedTexture", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_DIFFUSE));
-	gl::setUniform(mOutputSelectShader, "uDiffuseTexture", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
-	gl::setUniform(mOutputSelectShader, "uPositionTexture", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
-	gl::setUniform(mOutputSelectShader, "uNormalTexture", 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_EMISSIVE));
-	gl::setUniform(mOutputSelectShader, "uEmissiveTexture", 4);
-
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_MATERIAL));
-	gl::setUniform(mOutputSelectShader, "uMaterialTexture", 5);
-
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, aoTex);
-	gl::setUniform(mOutputSelectShader, "uAOTexture", 6);
-
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, mDirLightFramebuffer.texture(0));
-	gl::setUniform(mOutputSelectShader, "uDirectionalLightsTexture", 7);
-
-	gl::setUniform(mOutputSelectShader, "uRenderMode", mRenderMode);
-
-	mFullscreenQuad.render();
-	
-	glUseProgram(0);
-
-	// Blitting post-processed framebuffer to screen
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, mWindow.drawableWidth(), mWindow.drawableHeight());
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, mOutputSelectFramebuffer.fbo());
-	glBlitFramebuffer(0, 0, mOutputSelectFramebuffer.width(), mOutputSelectFramebuffer.height(),
-	                  0, 0, mWindow.drawableWidth(), mWindow.drawableHeight(),
-	                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	font.end(0, mWindow.drawableDimensions(), vec4{1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 void GameScreen::onQuit()
@@ -722,50 +664,80 @@ void GameScreen::onQuit()
 
 void GameScreen::onResize(vec2 dimensions, vec2 drawableDimensions)
 {
-	updateResolutions((int)dimensions.x, (int)dimensions.y);
+	updateResolutions(drawableDimensions);
 }
 
 // Private methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void GameScreen::updateResolutions(int width, int height) noexcept
+void GameScreen::updatePrograms() noexcept
 {
-	float w = static_cast<float>(width);
-	float h = static_cast<float>(height);
-	mCam.setAspectRatio(w/h);
-	if (false) {
-		//int lockedW = static_cast<int>((w/h)*mCfg.mLockedResolutionY);
-		//reloadFramebuffers(lockedW, mCfg.mLockedResolutionY);
-		//mSSAO.textureSize(lockedW, mCfg.mLockedResolutionY);
-	} else {
-		reloadFramebuffers(width, height);
-		mSSAO.textureSize(width, height);
-	}
+	mGBufferGenProgram = Program::fromFile((sfz::basePath() + "assets/shaders/gbuffer_gen.vert").c_str(),
+	                                       (sfz::basePath() + "assets/shaders/gbuffer_gen.frag").c_str(),
+		[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "inPosition");
+		glBindAttribLocation(shaderProgram, 1, "inNormal");
+		glBindAttribLocation(shaderProgram, 2, "inUVCoord");
+		glBindFragDataLocation(shaderProgram, 0, "outFragPos");
+		glBindFragDataLocation(shaderProgram, 1, "outFragNormal");
+		glBindFragDataLocation(shaderProgram, 2, "outFragDiffuse");
+		glBindFragDataLocation(shaderProgram, 3, "outFragMaterial");
+	});
+	
+	mShadowMapProgram = Program::fromFile((sfz::basePath() + "assets/shaders/shadow_map.vert").c_str(),
+	                                      (sfz::basePath() + "assets/shaders/shadow_map.frag").c_str(),
+		[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "inPosition");
+		glBindFragDataLocation(shaderProgram, 0, "outFragColor");
+	});
+
+	mStencilLightProgram = Program::fromFile((sfz::basePath() + "assets/shaders/stencil_shader.vert").c_str(),
+	                                         (sfz::basePath() + "assets/shaders/stencil_shader.frag").c_str(),
+		[](uint32_t shaderProgram) {
+		glBindAttribLocation(shaderProgram, 0, "inPosition");
+	});
+
+	mSpotlightShadingProgram = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/spotlight_shading.frag").c_str());
+	
+	mLightShaftsProgram = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/light_shafts.frag").c_str());
+	
+	mGlobalShadingProgram = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/global_shading.frag").c_str());
 }
 
-void GameScreen::reloadFramebuffers(int width, int height) noexcept
+void GameScreen::updateResolutions(vec2 drawableDim) noexcept
 {
-	mGBuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
+	vec2i internalRes{(int)std::round(mCfg.internalResScaling * drawableDim.x),
+	                  (int)std::round(mCfg.internalResScaling * drawableDim.y)};
+
+	if (internalRes == mGBuffer.dimensions()) return;
+	mCam.setAspectRatio(drawableDim.x / drawableDim.y);
+
+	vec2i ssaoRes{(int)std::round(mCfg.ssaoResScaling * internalRes.x),
+	              (int)std::round(mCfg.ssaoResScaling * internalRes.y)};
+	vec2i spotlightRes{(int)std::round(mCfg.spotlightResScaling * internalRes.x),
+	                   (int)std::round(mCfg.spotlightResScaling * internalRes.y)};
+	vec2i lightShaftsRes{(int)std::round(mCfg.lightShaftsResScaling * internalRes.x),
+	                     (int)std::round(mCfg.lightShaftsResScaling * internalRes.y)};
+
+	mGBuffer = gl::FramebufferBuilder{internalRes}
 	          .addDepthBuffer(gl::FBDepthFormat::F32)
 	          .addTexture(GBUFFER_DIFFUSE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
 	          .addTexture(GBUFFER_POSITION, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
 	          .addTexture(GBUFFER_NORMAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
-	          .addTexture(GBUFFER_EMISSIVE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
 	          .addTexture(GBUFFER_MATERIAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
 	          .build();
 
-	mDirLightFramebuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
-	                      .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
-	                      .addStencilBuffer()
-	                      .build();
+	mSpotlightShadingFB = gl::FramebufferBuilder{spotlightRes}
+	                     .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	                     .addStencilBuffer()
+	                     .build();
+	
+	mLightShaftsFB =  gl::FramebufferBuilder{lightShaftsRes}
+	                 .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	                 .addStencilBuffer()
+	                 .build();
 
-	mGlobalLightingFramebuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
-	                            .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
-	                            .build();
-
-	mOutputSelectFramebuffer = gl::FramebufferBuilder{sfz::vec2i{width, height}}
-	                          .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
-	                          .build();
+	mSSAO.textureSize(ssaoRes.x, ssaoRes.y);
 }
 
 } // namespace vox
