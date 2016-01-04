@@ -7,10 +7,11 @@ namespace vox {
 // Statics
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-static const uint32_t GBUFFER_POSITION = 0;
+static const uint32_t GBUFFER_LINEAR_DEPTH = 0;
 static const uint32_t GBUFFER_NORMAL = 1;
 static const uint32_t GBUFFER_DIFFUSE = 2;
 static const uint32_t GBUFFER_MATERIAL = 3;
+
 
 /*static vec3 sphericalToCartesian(float r, float theta, float phi) noexcept
 {
@@ -370,8 +371,10 @@ void GameScreen::render(UpdateState& state)
 	const mat4 viewMatrix = mCam.viewMatrix();
 	const mat4 invViewMatrix = inverse(viewMatrix);
 	const mat4 projMatrix = mCam.projMatrix();
+	const mat4 invProjMatrix = inverse(mCam.projMatrix());
 	gl::setUniform(mGBufferGenProgram, "uViewMatrix", viewMatrix);
 	gl::setUniform(mGBufferGenProgram, "uProjMatrix", projMatrix);
+	gl::setUniform(mGBufferGenProgram, "uFarPlaneDist", mCam.far());
 	
 	// Prepare for binding diffuse texture
 	gl::setUniform(mGBufferGenProgram, "uDiffuseTexture", 0);
@@ -396,7 +399,7 @@ void GameScreen::render(UpdateState& state)
 
 	// Binding textures in advance
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_LINEAR_DEPTH));
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_NORMAL));
 	glActiveTexture(GL_TEXTURE3);
@@ -412,7 +415,9 @@ void GameScreen::render(UpdateState& state)
 
 	// Settings uniforms and clearing framebuffers in advance
 	glUseProgram(mSpotlightShadingProgram.handle());
-	gl::setUniform(mSpotlightShadingProgram, "uPositionTexture", 1);
+	gl::setUniform(mSpotlightShadingProgram, "uInvProjMatrix", invProjMatrix);
+	gl::setUniform(mSpotlightShadingProgram, "uFarPlaneDist", mCam.far());
+	gl::setUniform(mSpotlightShadingProgram, "uLinearDepthTexture", 1);
 	gl::setUniform(mSpotlightShadingProgram, "uNormalTexture", 2);
 	gl::setUniform(mSpotlightShadingProgram, "uDiffuseTexture", 3);
 	gl::setUniform(mSpotlightShadingProgram, "uMaterialTexture", 4);
@@ -424,7 +429,9 @@ void GameScreen::render(UpdateState& state)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(mLightShaftsProgram.handle());
-	gl::setUniform(mLightShaftsProgram, "uPositionTexture", 1);
+	gl::setUniform(mLightShaftsProgram, "uInvProjMatrix", invProjMatrix);
+	gl::setUniform(mLightShaftsProgram, "uFarPlaneDist", mCam.far());
+	gl::setUniform(mLightShaftsProgram, "uLinearDepthTexture", 1);
 	gl::setUniform(mLightShaftsProgram, "uShadowMap", 6);
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, mLightShaftsFB.fbo());
@@ -545,9 +552,9 @@ void GameScreen::render(UpdateState& state)
 	// Ambient Occlusion
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_POSITION),
+	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_LINEAR_DEPTH),
 	                               mGBuffer.texture(GBUFFER_NORMAL),
-	                               projMatrix, false);
+	                               projMatrix, mCam.far(), false);
 
 	// Global shading
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -561,9 +568,9 @@ void GameScreen::render(UpdateState& state)
 	glViewport(0, 0, mWindow.drawableWidth(), mWindow.drawableHeight());
 
 	// Binding input textures
-	gl::setUniform(mGlobalShadingProgram, "uPositionTexture", 0);
+	gl::setUniform(mGlobalShadingProgram, "uLinearDepthTexture", 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_POSITION));
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_LINEAR_DEPTH));
 
 	gl::setUniform(mGlobalShadingProgram, "uNormalTexture", 1);
 	glActiveTexture(GL_TEXTURE1);
@@ -589,6 +596,12 @@ void GameScreen::render(UpdateState& state)
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, mLightShaftsFB.texture(0));
 
+	gl::setUniform(mGlobalShadingProgram, "uLinearDepthTexture", 7);
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, mGBuffer.texture(GBUFFER_LINEAR_DEPTH));
+
+	gl::setUniform(mGlobalShadingProgram, "uInvProjMatrix", invProjMatrix);
+	gl::setUniform(mGlobalShadingProgram, "uFarPlaneDist", mCam.far());
 	gl::setUniform(mGlobalShadingProgram, "uAmbientLight", vec3{0.25f});
 	gl::setUniform(mGlobalShadingProgram, "uOutputSelect", mOutputSelect);
 
@@ -678,7 +691,7 @@ void GameScreen::updatePrograms() noexcept
 		glBindAttribLocation(shaderProgram, 0, "inPosition");
 		glBindAttribLocation(shaderProgram, 1, "inNormal");
 		glBindAttribLocation(shaderProgram, 2, "inUVCoord");
-		glBindFragDataLocation(shaderProgram, 0, "outFragPos");
+		glBindFragDataLocation(shaderProgram, 0, "outFragLinearDepth");
 		glBindFragDataLocation(shaderProgram, 1, "outFragNormal");
 		glBindFragDataLocation(shaderProgram, 2, "outFragDiffuse");
 		glBindFragDataLocation(shaderProgram, 3, "outFragMaterial");
@@ -721,9 +734,9 @@ void GameScreen::updateResolutions(vec2 drawableDim) noexcept
 
 	mGBuffer = gl::FramebufferBuilder{internalRes}
 	          .addDepthBuffer(gl::FBDepthFormat::F32)
-	          .addTexture(GBUFFER_DIFFUSE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
-	          .addTexture(GBUFFER_POSITION, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_LINEAR_DEPTH, gl::FBTextureFormat::R_F32, gl::FBTextureFiltering::LINEAR)
 	          .addTexture(GBUFFER_NORMAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_DIFFUSE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
 	          .addTexture(GBUFFER_MATERIAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
 	          .build();
 

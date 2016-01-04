@@ -20,12 +20,14 @@ struct Spotlight {
 
 // Input
 in vec2 uvCoord;
+in vec3 nonNormRayDir;
 
 // Output
 out vec4 outFragColor;
 
 // Uniforms
-uniform sampler2D uPositionTexture;
+uniform float uFarPlaneDist;
+uniform sampler2D uLinearDepthTexture;
 uniform sampler2D uNormalTexture;
 uniform sampler2D uDiffuseTexture;
 uniform sampler2D uMaterialTexture;
@@ -57,7 +59,8 @@ float calcLightScale(vec3 samplePos)
 void main()
 {
 	// Values from GBuffer
-	vec3 vsPos = texture(uPositionTexture, uvCoord).xyz;
+	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
+	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
 	vec3 vsNormal = texture(uNormalTexture, uvCoord).xyz;
 	vec3 diffuseColor = texture(uDiffuseTexture, uvCoord).rgb;
 	vec3 material = texture(uMaterialTexture, uvCoord).rgb;

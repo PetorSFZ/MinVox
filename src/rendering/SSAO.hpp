@@ -56,7 +56,8 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, bool clean = false) noexcept;
+	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, float farPlaneDist,
+	                 bool clean = false) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

@@ -20,12 +20,14 @@ struct Spotlight {
 
 // Input
 in vec2 uvCoord;
+in vec3 nonNormRayDir;
 
 // Output
 out vec4 outFragColor;
 
 // Uniforms
-uniform sampler2D uPositionTexture;
+uniform float uFarPlaneDist;
+uniform sampler2D uLinearDepthTexture;
 uniform sampler2DShadow uShadowMap;
 uniform Spotlight uSpotlight;
 
@@ -37,7 +39,8 @@ void main()
 	const int NUM_SAMPLES = 128;
 	const float MAX_DIST = 40.0;
 
-	vec3 vsPos = texture(uPositionTexture, uvCoord).xyz;
+	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
+	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
 	vec3 camDir = normalize(vsPos);
 	vec3 sampleStep = (min(length(vsPos), MAX_DIST) / float(NUM_SAMPLES - 1)) * camDir;
 

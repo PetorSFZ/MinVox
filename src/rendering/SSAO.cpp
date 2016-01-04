@@ -19,6 +19,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 
 	// Input
 	in vec2 uvCoord;
+	in vec3 nonNormRayDir;
 
 	// Output
 	out vec4 occlusionOut;
@@ -27,7 +28,8 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	const int MAX_KERNEL_SIZE = 256;
 
 	// Uniforms
-	uniform sampler2D uPositionTexture;
+	uniform float uFarPlaneDist;
+	uniform sampler2D uLinearDepthTexture;
 	uniform sampler2D uNormalTexture;
 	uniform sampler2D uNoiseTexture;
 		
@@ -38,13 +40,6 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	uniform vec2 uNoiseTexCoordScale;
 	uniform float uRadius;
 	uniform float uOcclusionExp;
-
-	float vsPosToDepth(vec3 vsPos)
-	{
-		float depth = vsPos.z;
-		//if (depth >= 0) depth = -1000000.0;
-		return depth;
-	}
 
 	vec2 texCoordFromVSPos(vec3 vsPos)
 	{
@@ -59,9 +54,9 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 		// SSAO implementation using normal oriented hemisphere, inspired by this tutorial:
 		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 
-		vec3 vsPos = texture(uPositionTexture, uvCoord).xyz;
+		float linDepth = texture(uLinearDepthTexture, uvCoord).r;
+		vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
 		vec3 normal = normalize(texture(uNormalTexture, uvCoord).xyz);
-		float depth = vsPosToDepth(vsPos);
 		vec3 noiseVec = texture(uNoiseTexture, uvCoord * uNoiseTexCoordScale).xyz;
 
 		// Calculates matrix to rotate kernel into normal hemisphere using Gram Schmidt process
@@ -69,19 +64,21 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 		vec3 bitangent = cross(tangent, normal);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
 
+		float radius = uRadius / uFarPlaneDist;
+
 		float occlusion = 0.0;
 		for (int i = 0; i < uKernelSize; i++) {
 			vec3 samplePos = vsPos + uRadius * (kernelRot * uKernel[i]);
 			vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
-			float sampleDepth = vsPosToDepth(texture(uPositionTexture, sampleTexCoord).xyz);
+			float sampleDepth = texture(uLinearDepthTexture, sampleTexCoord).r;
 
-			float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
-			occlusion += (sampleDepth <= depth ? 0.0 : 1.0) * rangeCheck;
+			float rangeCheck = abs(linDepth - sampleDepth) < radius ? 1.0 : 0.0;
+			occlusion += (sampleDepth >= linDepth ? 0.0 : 1.0) * rangeCheck;
 
-			//float rangeCheck = abs(depth - sampleDepth) < uRadius ? 1.0 : 0.0;
+			//float rangeCheck = abs(linDepth - sampleDepth) < uRadius ? 1.0 : 0.0;
 			//occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
 			
-			//float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(depth - sampleDepth));
+			//float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(linDepth - sampleDepth));
 			//occlusion += (step(sampleDepth, samplePos.z)); // * rangeCheck);
 		}
 		occlusion = 1.0 - (occlusion / uKernelSize);
@@ -304,7 +301,8 @@ SSAO::~SSAO() noexcept
 // SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, bool clean) noexcept
+GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, float farPlaneDist,
+                       bool clean) noexcept
 {
 	// Render occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -316,10 +314,9 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Texture buffer uniforms
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, posTex);
-	gl::setUniform(mSSAOProgram, "uPositionTexture", 0);
+	gl::setUniform(mSSAOProgram, "uLinearDepthTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, normalTex);
@@ -330,6 +327,8 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 	gl::setUniform(mSSAOProgram, "uNoiseTexture", 2);
 
 	// Other uniforms
+	gl::setUniform(mSSAOProgram, "uInvProjMatrix", inverse(projMatrix));
+	gl::setUniform(mSSAOProgram, "uFarPlaneDist", farPlaneDist);
 
 	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projMatrix);
 

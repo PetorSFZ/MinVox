@@ -2,12 +2,14 @@
 
 // Input
 in vec2 uvCoord;
+in vec3 nonNormRayDir;
 
 // Output
 out vec4 outFragColor;
 
 // Uniforms
-uniform sampler2D uPositionTexture;
+uniform float uFarPlaneDist;
+uniform sampler2D uLinearDepthTexture;
 uniform sampler2D uNormalTexture;
 uniform sampler2D uDiffuseTexture;
 uniform sampler2D uMaterialTexture;
@@ -20,7 +22,8 @@ uniform int uOutputSelect = 1;
 
 void main()
 {
-	vec3 vsPos = texture(uPositionTexture, uvCoord).rgb;
+	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
+	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
 	vec3 vsNormal = texture(uNormalTexture, uvCoord).rgb;
 	vec3 diffuse = texture(uDiffuseTexture, uvCoord).rgb;
 	vec3 material = texture(uMaterialTexture, uvCoord).rgb;
