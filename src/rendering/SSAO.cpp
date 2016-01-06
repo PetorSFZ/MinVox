@@ -1,18 +1,16 @@
 #include "rendering/SSAO.hpp"
 
+#include <random>
+
 #include <sfz/gl/OpenGL.hpp>
+#include <sfz/math/MathHelpers.hpp>
 
-namespace vox {
+namespace gl {
 
-// Anonymous namespace
+// Statics
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-namespace {
-
-// SSAO shader
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-const char* SSAO_FRAGMENT_SHADER = R"(
+static const char* SSAO_FRAGMENT_SHADER = R"(
 	#version 330
 
 	precision highp float; // required by GLSL spec Sect 4.5.3
@@ -88,10 +86,7 @@ const char* SSAO_FRAGMENT_SHADER = R"(
 	}
 )";
 
-// SSAO blur shader
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
+static const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 	#version 330
 
 	precision highp float; // required by GLSL spec Sect 4.5.3
@@ -105,7 +100,7 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 	// Constants
 	const int blurWidth = 4;
 	const float blurWidthFloat = 4.0;
-
+	
 	// Uniforms
 	uniform sampler2D uOcclusionTexture;
 
@@ -134,20 +129,7 @@ const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
 	}
 )";
 
-// Anonymous functions
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-gl::Program compileSSAOShaderProgram() noexcept
-{
-	return gl::Program::postProcessFromSource(SSAO_FRAGMENT_SHADER);
-}
-
-gl::Program compileBlurShaderProgram() noexcept
-{
-	return gl::Program::postProcessFromSource(SSAO_BLUR_FRAGMENT_SHADER);
-}
-
-vector<vec3> generateKernel(size_t kernelSize) noexcept
+static vector<vec3> generateKernel(size_t kernelSize) noexcept
 {
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
@@ -175,7 +157,7 @@ vector<vec3> generateKernel(size_t kernelSize) noexcept
 	return std::move(kernel);
 }
 
-GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
+static GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 {
 	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
 
@@ -212,68 +194,6 @@ GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 	return noiseTex;
 }
 
-} // anonymous namespace
-
-// Occlusion Framebuffer
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-OcclusionFramebuffer::OcclusionFramebuffer(int width, int height) noexcept
-:
-	mWidth{width},
-	mHeight{height}
-{
-	// Generate framebuffer
-	glGenFramebuffers(1, &mFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-
-	// Color texture
-	glGenTextures(1, &mTexture);
-	glBindTexture(GL_TEXTURE_2D, mTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // TODO: Dunno?
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexture, 0);
-
-	// Check that framebuffer is okay
-	sfz_assert_release((glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE));
-
-	// Cleanup
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-OcclusionFramebuffer::OcclusionFramebuffer(OcclusionFramebuffer&& other) noexcept
-{
-	glGenFramebuffers(1, &mFBO);
-	glGenTextures(1, &mTexture);
-
-	std::swap(mFBO, other.mFBO);
-	std::swap(mTexture, other.mTexture);
-	std::swap(mWidth, other.mWidth);
-	std::swap(mHeight, other.mHeight);
-}
-
-OcclusionFramebuffer& OcclusionFramebuffer::operator= (OcclusionFramebuffer&& other) noexcept
-{
-	std::swap(mFBO, other.mFBO);
-	std::swap(mTexture, other.mTexture);
-	std::swap(mWidth, other.mWidth);
-	std::swap(mHeight, other.mHeight);
-	return *this;
-}
-
-OcclusionFramebuffer::~OcclusionFramebuffer() noexcept
-{
-	glDeleteTextures(1, &mTexture);
-	glDeleteFramebuffers(1, &mFBO);
-}
-
-
-// SSAO
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -281,17 +201,22 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusi
 :
 	mWidth{width},
 	mHeight{height},
-	mSSAOProgram{compileSSAOShaderProgram()},
-	mBlurProgram{compileBlurShaderProgram()},
-	mOcclusionFBO{mWidth, mHeight},
-	mBlurredFBO{mWidth, mHeight},
+	mSSAOProgram{Program::postProcessFromSource(SSAO_FRAGMENT_SHADER)},
+	mBlurProgram{Program::postProcessFromSource(SSAO_BLUR_FRAGMENT_SHADER)},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
 	mKernel(std::move(generateKernel(MAX_KERNEL_SIZE))),
 	mNoiseTexWidth{4},
 	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
 	mRadius{radius},
 	mOcclusionExp{occlusionExp}
-{ }
+{
+	mOcclusionFBO = FramebufferBuilder{vec2i{width, height}}
+	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	               .build();
+	mBlurredFBO = FramebufferBuilder{vec2i{width, height}}
+	             .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	             .build();
+}
 
 SSAO::~SSAO() noexcept
 {
@@ -301,21 +226,21 @@ SSAO::~SSAO() noexcept
 // SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, float farPlaneDist,
-                       bool clean) noexcept
+uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4& projMatrix,
+                         float farPlaneDist, bool blur) noexcept
 {
 	// Render occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glUseProgram(mSSAOProgram.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.mFBO);
-	glViewport(0, 0, mOcclusionFBO.mWidth, mOcclusionFBO.mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.fbo());
+	glViewport(0, 0, mOcclusionFBO.width(), mOcclusionFBO.height());
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Texture buffer uniforms
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, posTex);
+	glBindTexture(GL_TEXTURE_2D, linearDepthTex);
 	gl::setUniform(mSSAOProgram, "uLinearDepthTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -345,22 +270,22 @@ GLuint SSAO::calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, 
 	// Blur occlusion texture
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	if (clean) {
+	if (blur) {
 		glUseProgram(mBlurProgram.handle());
-		glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.mFBO);
-		glViewport(0, 0, mBlurredFBO.mWidth, mBlurredFBO.mHeight);
+		glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.fbo());
+		glViewport(0, 0, mBlurredFBO.width(), mBlurredFBO.height());
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.mTexture);
+		glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.texture(0));
 		gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
 
 		mPostProcessQuad.render();
 
-		return mBlurredFBO.mTexture;
+		return mBlurredFBO.texture(0);
 	} else {
-		return mOcclusionFBO.mTexture;
+		return mOcclusionFBO.texture(0);
 	}
 }
 
@@ -371,8 +296,12 @@ void SSAO::textureSize(int width, int height) noexcept
 {
 	mWidth = width;
 	mHeight = height;
-	mOcclusionFBO = OcclusionFramebuffer{mWidth, mHeight};
-	mBlurredFBO = OcclusionFramebuffer{mWidth, mHeight};
+	mOcclusionFBO = FramebufferBuilder{vec2i{width, height}}
+	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	               .build();
+	mBlurredFBO = FramebufferBuilder{vec2i{width, height}}
+	             .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	             .build();
 }
 
 void SSAO::numSamples(size_t numSamples) noexcept
@@ -393,4 +322,4 @@ void SSAO::occlusionExp(float occlusionExp) noexcept
 	mOcclusionExp = occlusionExp;
 }
 
-} // namespace vox
+} // namespace gl

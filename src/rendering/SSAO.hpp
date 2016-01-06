@@ -1,45 +1,27 @@
 #pragma once
-#ifndef VOX_RENDERING_SSAO_HPP
-#define VOX_RENDERING_SSAO_HPP
+#ifndef SFZ_GL_SSAO_HPP
+#define SFZ_GL_SSAO_HPP
 
-#include <algorithm> // std::swap
-#include <random>
+#include <cstdint>
+#include <memory>
 #include <vector>
-#include <cstddef> // size_t
-#include <sfz/GL.hpp>
-#include <sfz/Math.hpp>
 
+#include <sfz/gl/Framebuffer.hpp>
 #include <sfz/gl/PostProcessQuad.hpp>
+#include <sfz/gl/Program.hpp>
+#include <sfz/math/Matrix.hpp>
+#include <sfz/math/Vector.hpp>
 
-#include <sfz/gl/OpenGL.hpp>
-
-namespace vox {
+namespace gl {
 
 using sfz::vec2;
 using sfz::vec3;
+using sfz::vec2i;
 using sfz::mat4;
-using std::vector;
+
 using std::size_t;
-
-// Occlusion Framebuffer
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-struct OcclusionFramebuffer final {
-	GLuint mFBO, mTexture;
-	int mWidth, mHeight;
-
-	OcclusionFramebuffer() = delete;
-	OcclusionFramebuffer(const OcclusionFramebuffer&) = delete;
-	OcclusionFramebuffer& operator= (const OcclusionFramebuffer&) = delete;
-
-	OcclusionFramebuffer(int width, int height) noexcept;
-	OcclusionFramebuffer(OcclusionFramebuffer&& other) noexcept;
-	OcclusionFramebuffer& operator= (OcclusionFramebuffer&& other) noexcept;
-	~OcclusionFramebuffer() noexcept;
-};
-
-// SSAO
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+using std::uint32_t;
+using std::vector;
 
 class SSAO final {
 public:
@@ -56,8 +38,8 @@ public:
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	GLuint calculate(GLuint posTex, GLuint normalTex, const mat4& projMatrix, float farPlaneDist,
-	                 bool clean = false) noexcept;
+	uint32_t calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4& projMatrix,
+	                   float farPlaneDist, bool blur = false) noexcept;
 
 	// Getters / setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -80,9 +62,9 @@ public:
 private:
 	int mWidth, mHeight;
 
-	gl::Program mSSAOProgram, mBlurProgram;
-	gl::PostProcessQuad mPostProcessQuad;
-	OcclusionFramebuffer mOcclusionFBO, mBlurredFBO;
+	Program mSSAOProgram, mBlurProgram;
+	PostProcessQuad mPostProcessQuad;
+	Framebuffer mOcclusionFBO, mBlurredFBO;
 
 	static const size_t MAX_KERNEL_SIZE = 256;
 	size_t mKernelSize;
@@ -90,11 +72,10 @@ private:
 
 	static const size_t MAX_NOISE_TEX_WIDTH = 64;
 	size_t mNoiseTexWidth;
-	GLuint mNoiseTexture;
+	uint32_t mNoiseTexture;
 
 	float mRadius, mOcclusionExp;
 };
 
-} // namespace vox
-
+} // namespace gl
 #endif

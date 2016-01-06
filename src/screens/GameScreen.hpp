@@ -76,7 +76,7 @@ private:
 	Program mGBufferGenProgram, mShadowMapProgram, mStencilLightProgram, mSpotlightShadingProgram,
 	        mLightShaftsProgram, mGlobalShadingProgram;
 	
-	SSAO mSSAO;
+	gl::SSAO mSSAO;
 	Framebuffer mGBuffer, mSpotlightShadingFB, mLightShaftsFB;
 	Framebuffer mShadowMapHighRes, mShadowMapLowRes;
 	
