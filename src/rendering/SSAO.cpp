@@ -87,46 +87,49 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 	}
 )";
 
-static const char* SSAO_BLUR_FRAGMENT_SHADER = R"(
+static const char* HORIZONTAL_BLUR_4_SHADER = R"(
 	#version 330
 
-	precision highp float; // required by GLSL spec Sect 4.5.3
-
-	// Input
 	in vec2 uvCoord;
-	
-	// Output
-	out vec4 fragmentColor;
+	out vec4 outFragColor;
 
-	// Constants
-	const int blurWidth = 4;
-	const float blurWidthFloat = 4.0;
-	
-	// Uniforms
-	uniform sampler2D uOcclusionTexture;
+	uniform sampler2D uTexture;
+	uniform float uTexelWidth;
 
 	void main()
 	{
-		// Blur shader from: http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
-		// Used to blur away the noise applied during the first stage.
+		vec2 sampleCoord0 = uvCoord + vec2(uTexelWidth * -1.0, 0.0);
+		vec2 sampleCoord1 = uvCoord + vec2(uTexelWidth * 0.5, 0.0);
 
-		vec2 texelSize = 1.0 / vec2(textureSize(uOcclusionTexture, 0));
+		vec4 result = vec4(0);
+		result += texture(uTexture, sampleCoord0);
+		result += texture(uTexture, sampleCoord1);
+		result *= 0.5;
 
-		// Offset to the offset so we sample values around the current texcoord.
-		vec2 offsetOffset = vec2(-blurWidthFloat * 0.5 + 0.5);
+		outFragColor = result;
+	}
+)";
 
-		float blur = 0.0;
-		for (int x = 0; x < blurWidth; x++) {
-			for (int y = 0; y < blurWidth; y++) {
-				vec2 offset = vec2(float(x), float(y));
-				offset += offsetOffset;
-				offset *= texelSize;
-				blur += texture(uOcclusionTexture, uvCoord + offset).r;
-			}
-		}
-		blur /= (blurWidthFloat*blurWidthFloat);
-		
-		fragmentColor = vec4(vec3(blur), 1.0);
+static const char* VERTICAL_BLUR_4_SHADER = R"(
+	#version 330
+
+	in vec2 uvCoord;
+	out vec4 outFragColor;
+
+	uniform sampler2D uTexture;
+	uniform float uTexelHeight;
+
+	void main()
+	{
+		vec2 sampleCoord0 = uvCoord + vec2(0.0, uTexelHeight * -1.0);
+		vec2 sampleCoord1 = uvCoord + vec2(0.0, uTexelHeight * 0.5);
+
+		vec4 result = vec4(0);
+		result += texture(uTexture, sampleCoord0);
+		result += texture(uTexture, sampleCoord1);
+		result *= 0.5;
+
+		outFragColor = result;
 	}
 )";
 
@@ -202,7 +205,8 @@ SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp
 :
 	mDim{dimensions},
 	mSSAOProgram{Program::postProcessFromSource(SSAO_FRAGMENT_SHADER)},
-	mBlurProgram{Program::postProcessFromSource(SSAO_BLUR_FRAGMENT_SHADER)},
+	mHorizontalBlurProgram{Program::postProcessFromSource(HORIZONTAL_BLUR_4_SHADER)},
+	mVerticalBlurProgram{Program::postProcessFromSource(VERTICAL_BLUR_4_SHADER)},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
 	mKernel(std::move(generateKernel(MAX_KERNEL_SIZE))),
 	mNoiseTexWidth{4},
@@ -262,26 +266,39 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 
 	mPostProcessQuad.render();
 
-	// Blur occlusion texture
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
 	if (blur) {
-		glUseProgram(mBlurProgram.handle());
-		glBindFramebuffer(GL_FRAMEBUFFER, mBlurredFBO.fbo());
-		glViewport(0, 0, mBlurredFBO.width(), mBlurredFBO.height());
+		// Horizontal blur
+		glUseProgram(mHorizontalBlurProgram.handle());
+		glBindFramebuffer(GL_FRAMEBUFFER, mTempFBO.fbo());
+		glViewport(0, 0, mTempFBO.width(), mTempFBO.height());
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.texture(0));
-		gl::setUniform(mBlurProgram, "uOcclusionTexture", 0);
+		gl::setUniform(mHorizontalBlurProgram, "uTexture", 0);
+		gl::setUniform(mHorizontalBlurProgram, "uTexelWidth", 1.0f / mDim.x);
 
 		mPostProcessQuad.render();
 
-		return mBlurredFBO.texture(0);
-	} else {
-		return mOcclusionFBO.texture(0);
+		// Vertical blur
+		glUseProgram(mVerticalBlurProgram.handle());
+		glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.fbo());
+		glViewport(0, 0, mOcclusionFBO.width(), mOcclusionFBO.height());
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, mTempFBO.texture(0));
+		gl::setUniform(mVerticalBlurProgram, "uTexture", 0);
+		gl::setUniform(mVerticalBlurProgram, "uTexelHeight", 1.0f / mDim.y);
+
+		mPostProcessQuad.render();
 	}
+
+	return mOcclusionFBO.texture(0);
 }
 
 // SSAO: Setters
@@ -326,9 +343,9 @@ void SSAO::resizeFramebuffers() noexcept
 	mOcclusionFBO = FramebufferBuilder{mDim}
 	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
 	               .build();
-	mBlurredFBO = FramebufferBuilder{mDim}
-	             .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	             .build();
+	mTempFBO = FramebufferBuilder{mDim}
+	          .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	          .build();
 }
 
 } // namespace gl

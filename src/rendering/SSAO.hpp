@@ -72,9 +72,9 @@ private:
 
 	vec2i mDim;
 
-	Program mSSAOProgram, mBlurProgram;
+	Program mSSAOProgram, mHorizontalBlurProgram, mVerticalBlurProgram;
 	PostProcessQuad mPostProcessQuad;
-	Framebuffer mOcclusionFBO, mBlurredFBO;
+	Framebuffer mOcclusionFBO, mTempFBO;
 
 	static const size_t MAX_KERNEL_SIZE = 256;
 	size_t mKernelSize;
