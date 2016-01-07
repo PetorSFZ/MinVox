@@ -34,7 +34,6 @@ public:
 	SSAO& operator= (const SSAO&) = delete;
 	
 	SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp) noexcept;
-	~SSAO() noexcept;
 
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -80,9 +79,7 @@ private:
 	size_t mKernelSize;
 	vector<vec3> mKernel;
 
-	static const size_t MAX_NOISE_TEX_WIDTH = 64;
-	size_t mNoiseTexWidth;
-	uint32_t mNoiseTexture;
+	vector<vec3> mNoise;
 
 	float mRadius, mOcclusionExp;
 };

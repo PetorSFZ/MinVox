@@ -30,13 +30,14 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 	uniform float uFarPlaneDist;
 	uniform sampler2D uLinearDepthTexture;
 	uniform sampler2D uNormalTexture;
-	uniform sampler2D uNoiseTexture;
 		
 	uniform int uKernelSize;
 	uniform vec3 uKernel[MAX_KERNEL_SIZE];
 	uniform mat4 uProjectionMatrix;
 
-	uniform vec2 uNoiseTexCoordScale;
+	uniform vec3 uNoise[16];
+	uniform vec2 uDimensions;
+	
 	uniform float uRadius;
 	uniform float uOcclusionExp;
 
@@ -56,7 +57,10 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 		float linDepth = texture(uLinearDepthTexture, uvCoord).r;
 		vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
 		vec3 normal = normalize(texture(uNormalTexture, uvCoord).xyz);
-		vec3 noiseVec = texture(uNoiseTexture, uvCoord * uNoiseTexCoordScale).xyz;
+
+		// Sample 4x4 noise
+		ivec2 noiseCoord = ivec2(uvCoord * uDimensions) % ivec2(4);
+		vec3 noiseVec = uNoise[noiseCoord.y * 4 + noiseCoord.x];
 
 		// Calculates matrix to rotate kernel into normal hemisphere using Gram Schmidt process
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
@@ -161,17 +165,19 @@ static vector<vec3> generateKernel(size_t kernelSize) noexcept
 	return std::move(kernel);
 }
 
-static GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
+static vector<vec3> generateNoiseTexture() noexcept
 {
+	const int32_t NOISE_SIZE = 4;
+	const int32_t NUM_NOISE_VALUES = NOISE_SIZE * NOISE_SIZE;
+
 	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
 
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr{-1.0f, 1.0f};
 
-	size_t numNoiseValues = noiseTexWidth*noiseTexWidth;
-	vector<vec3> noise{numNoiseValues};
-	for (size_t i = 0; i < numNoiseValues; i++) {
+	vector<vec3> noise{(size_t)NUM_NOISE_VALUES};
+	for (int32_t i = 0; i < NUM_NOISE_VALUES; ++i) {
 		noise[i] = vec3{distr(gen), distr(gen), 0.0f};
 	}
 
@@ -181,21 +187,7 @@ static GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 	}
 	std::cout << std::endl;*/
 
-	GLuint noiseTex;
-	glGenTextures(1, &noiseTex);
-	glBindTexture(GL_TEXTURE_2D, noiseTex);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, static_cast<GLsizei>(noiseTexWidth), noiseTex, 0,
-	//             GL_RGB, GL_FLOAT, noise.data());
-	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, static_cast<GLsizei>(noiseTexWidth), static_cast<GLsizei>(noiseTexWidth), 0,
-	             GL_RGB, GL_FLOAT, noise.data());
-	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	return noiseTex;
+	return noise;
 }
 
 // SSAO: Constructors & destructors
@@ -209,17 +201,11 @@ SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp
 	mVerticalBlurProgram{Program::postProcessFromSource(VERTICAL_BLUR_4_SHADER)},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
 	mKernel(std::move(generateKernel(MAX_KERNEL_SIZE))),
-	mNoiseTexWidth{4},
-	mNoiseTexture{generateNoiseTexture(mNoiseTexWidth)},
+	mNoise{generateNoiseTexture()},
 	mRadius{radius},
 	mOcclusionExp{occlusionExp}
 {
 	resizeFramebuffers();
-}
-
-SSAO::~SSAO() noexcept
-{
-	glDeleteTextures(1, &mNoiseTexture);
 }
 
 // SSAO: Public methods
@@ -246,21 +232,20 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 	glBindTexture(GL_TEXTURE_2D, normalTex);
 	gl::setUniform(mSSAOProgram, "uNormalTexture", 1);
 
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mNoiseTexture);
-	gl::setUniform(mSSAOProgram, "uNoiseTexture", 2);
-
 	// Other uniforms
 	gl::setUniform(mSSAOProgram, "uInvProjMatrix", inverse(projMatrix));
 	gl::setUniform(mSSAOProgram, "uFarPlaneDist", farPlaneDist);
 
 	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projMatrix);
 
-	gl::setUniform(mSSAOProgram, "uKernelSize", static_cast<int>(mKernelSize));
-	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3*>(mKernel.data()), mKernelSize);
+	gl::setUniform(mSSAOProgram, "uKernelSize", (int32_t)mKernelSize);
+	gl::setUniform(mSSAOProgram, "uKernel", mKernel.data(), mKernelSize);
 
-	gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale",
-	     vec2{(float)mDim.x, (float)mDim.y} / (float)mNoiseTexWidth);
+	gl::setUniform(mSSAOProgram, "uNoise", mNoise.data(), 16);
+	gl::setUniform(mSSAOProgram, "uDimensions", vec2{(float)mDim.x, (float)mDim.y});
+	
+
+	//gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale", vec2{(float)mDim.x, (float)mDim.y} / 4.0f);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
 	gl::setUniform(mSSAOProgram, "uOcclusionExp", mOcclusionExp);
 
