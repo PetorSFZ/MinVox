@@ -2,6 +2,7 @@
 
 #include <random>
 
+#include <sfz/Assert.hpp>
 #include <sfz/gl/OpenGL.hpp>
 #include <sfz/math/MathHelpers.hpp>
 
@@ -197,10 +198,9 @@ static GLuint generateNoiseTexture(size_t noiseTexWidth) noexcept
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusionExp) noexcept
+SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp) noexcept
 :
-	mWidth{width},
-	mHeight{height},
+	mDim{dimensions},
 	mSSAOProgram{Program::postProcessFromSource(SSAO_FRAGMENT_SHADER)},
 	mBlurProgram{Program::postProcessFromSource(SSAO_BLUR_FRAGMENT_SHADER)},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
@@ -210,12 +210,7 @@ SSAO::SSAO(int width, int height, size_t numSamples, float radius, float occlusi
 	mRadius{radius},
 	mOcclusionExp{occlusionExp}
 {
-	mOcclusionFBO = FramebufferBuilder{vec2i{width, height}}
-	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	               .build();
-	mBlurredFBO = FramebufferBuilder{vec2i{width, height}}
-	             .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	             .build();
+	resizeFramebuffers();
 }
 
 SSAO::~SSAO() noexcept
@@ -261,7 +256,7 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 	gl::setUniform(mSSAOProgram, "uKernel", static_cast<vec3*>(mKernel.data()), mKernelSize);
 
 	gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale",
-	     vec2{(float)mWidth, (float)mHeight} / (float)mNoiseTexWidth);
+	     vec2{(float)mDim.x, (float)mDim.y} / (float)mNoiseTexWidth);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
 	gl::setUniform(mSSAOProgram, "uOcclusionExp", mOcclusionExp);
 
@@ -289,37 +284,51 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 	}
 }
 
-// SSAO: Getters / setters
+// SSAO: Setters
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-void SSAO::textureSize(int width, int height) noexcept
+void SSAO::dimensions(vec2i dim) noexcept
 {
-	mWidth = width;
-	mHeight = height;
-	mOcclusionFBO = FramebufferBuilder{vec2i{width, height}}
-	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	               .build();
-	mBlurredFBO = FramebufferBuilder{vec2i{width, height}}
-	             .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	             .build();
+	sfz_assert_debug(dim.x > 0);
+	sfz_assert_debug(dim.y > 0);
+	mDim = dim;
+	resizeFramebuffers();
+}
+
+void SSAO::dimensions(int width, int height) noexcept
+{
+	dimensions(vec2i{width, height});
 }
 
 void SSAO::numSamples(size_t numSamples) noexcept
 {
-	if (numSamples > MAX_KERNEL_SIZE) return;
+	sfz_assert_debug(numSamples <= MAX_KERNEL_SIZE);
 	mKernelSize = numSamples;
 }
 
 void SSAO::radius(float radius) noexcept
 {
-	if (radius <= 0.0f) return;
+	sfz_assert_debug(radius > 0.0f);
 	mRadius = radius;
 }
 
 void SSAO::occlusionExp(float occlusionExp) noexcept
 {
-	if (occlusionExp <= 0.0f) return;
+	sfz_assert_debug(occlusionExp > 0.0f);
 	mOcclusionExp = occlusionExp;
+}
+
+// SSAO: Private methods
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+void SSAO::resizeFramebuffers() noexcept
+{
+	mOcclusionFBO = FramebufferBuilder{mDim}
+	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	               .build();
+	mBlurredFBO = FramebufferBuilder{mDim}
+	             .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	             .build();
 }
 
 } // namespace gl

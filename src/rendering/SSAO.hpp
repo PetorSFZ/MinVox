@@ -19,6 +19,7 @@ using sfz::vec3;
 using sfz::vec2i;
 using sfz::mat4;
 
+using std::int32_t;
 using std::size_t;
 using std::uint32_t;
 using std::vector;
@@ -32,7 +33,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(int width, int height, size_t numSamples, float radius, float occlusionExp) noexcept;
+	SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp) noexcept;
 	~SSAO() noexcept;
 
 	// Public methods
@@ -41,26 +42,35 @@ public:
 	uint32_t calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4& projMatrix,
 	                   float farPlaneDist, bool blur = false) noexcept;
 
-	// Getters / setters
+	// Getters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	inline int textureWidth() const noexcept { return mWidth; }
-	inline int textureHeight() const noexcept { return mHeight; }
-	void textureSize(int width, int height) noexcept;
-
+	inline vec2i dimensions() const noexcept { return mDim; }
+	inline int32_t width() const noexcept { return mDim.x; }
+	inline int32_t height() const noexcept { return mDim.y; }
 	inline size_t numSamples() const noexcept { return mKernelSize; }
-	void numSamples(size_t numSamples) noexcept;
-
 	inline float radius() const noexcept { return mRadius; }
-	void radius(float radius) noexcept;
-
 	inline float occlusionExp() const noexcept { return mOcclusionExp; }
+
+	// Setters
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	void dimensions(vec2i dim) noexcept;
+	void dimensions(int width, int height) noexcept;
+	void numSamples(size_t numSamples) noexcept;
+	void radius(float radius) noexcept;
 	void occlusionExp(float occlusionExp) noexcept;
+
+private:
+	// Private methods
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	void resizeFramebuffers() noexcept;
 
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-private:
-	int mWidth, mHeight;
+
+	vec2i mDim;
 
 	Program mSSAOProgram, mBlurProgram;
 	PostProcessQuad mPostProcessQuad;

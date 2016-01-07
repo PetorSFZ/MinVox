@@ -94,7 +94,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mWindow{window},
 	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.horizontalRange, mCfg.verticalRange},
 		
-	mSSAO{window.drawableWidth(), window.drawableHeight(), 16, 2.0f, 1.1f},
+	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 16, 2.0f, 1.1f},
 
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
@@ -750,7 +750,7 @@ void GameScreen::updateResolutions(vec2 drawableDim) noexcept
 	                 .addStencilBuffer()
 	                 .build();
 
-	mSSAO.textureSize(ssaoRes.x, ssaoRes.y);
+	mSSAO.dimensions(ssaoRes);
 }
 
 } // namespace vox
