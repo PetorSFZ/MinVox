@@ -14,7 +14,8 @@ namespace gl {
 static const char* SSAO_FRAGMENT_SHADER = R"(
 	#version 330
 
-	precision highp float; // required by GLSL spec Sect 4.5.3
+	// SSAO implementation using normal oriented hemisphere, inspired by this tutorial:
+	// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
 
 	// Input
 	in vec2 uvCoord;
@@ -33,30 +34,27 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 		
 	uniform int uKernelSize;
 	uniform vec3 uKernel[MAX_KERNEL_SIZE];
-	uniform mat4 uProjectionMatrix;
+	uniform mat4 uProjMatrix;
 
 	uniform vec3 uNoise[16];
 	uniform vec2 uDimensions;
 	
 	uniform float uRadius;
-	uniform float uOcclusionExp;
+	uniform float uOcclusionPower;
 
-	vec2 texCoordFromVSPos(vec3 vsPos)
+	float sampleLinearDepth(vec3 vsPos)
 	{
-		vec4 offset = uProjectionMatrix * vec4(vsPos, 1.0);
+		vec4 offset = uProjMatrix * vec4(vsPos, 1.0);
 		offset.xy /= offset.w;
 		offset.xy = offset.xy * 0.5 + 0.5;
-		return offset.xy;
+		return texture(uLinearDepthTexture, offset.xy).r;
 	}
 
 	void main()
 	{
-		// SSAO implementation using normal oriented hemisphere, inspired by this tutorial:
-		// http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
-
 		float linDepth = texture(uLinearDepthTexture, uvCoord).r;
 		vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-		vec3 normal = normalize(texture(uNormalTexture, uvCoord).xyz);
+		vec3 normal = texture(uNormalTexture, uvCoord).xyz;
 
 		// Sample 4x4 noise
 		ivec2 noiseCoord = ivec2(uvCoord * uDimensions) % ivec2(4);
@@ -64,29 +62,22 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 
 		// Calculates matrix to rotate kernel into normal hemisphere using Gram Schmidt process
 		vec3 tangent = normalize(noiseVec - normal * dot(noiseVec, normal));
-		vec3 bitangent = cross(tangent, normal);
+		vec3 bitangent = cross(normal, tangent);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
 
-		float radius = uRadius / uFarPlaneDist;
+		float depthRadius = uRadius / uFarPlaneDist;
 
 		float occlusion = 0.0;
 		for (int i = 0; i < uKernelSize; i++) {
 			vec3 samplePos = vsPos + uRadius * (kernelRot * uKernel[i]);
-			vec2 sampleTexCoord = texCoordFromVSPos(samplePos);
-			float sampleDepth = texture(uLinearDepthTexture, sampleTexCoord).r;
+			float sampleDepth = sampleLinearDepth(samplePos);
 
-			float rangeCheck = abs(linDepth - sampleDepth) < radius ? 1.0 : 0.0;
-			occlusion += (sampleDepth >= linDepth ? 0.0 : 1.0) * rangeCheck;
-
-			//float rangeCheck = abs(linDepth - sampleDepth) < uRadius ? 1.0 : 0.0;
-			//occlusion += (sampleDepth <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
-			
-			//float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(linDepth - sampleDepth));
-			//occlusion += (step(sampleDepth, samplePos.z)); // * rangeCheck);
+			float rangeCheck = abs(linDepth - sampleDepth) < depthRadius ? 1.0 : 0.0;
+			//float rangeCheck = smoothstep(0.0, 1.0, depthRadius / abs(linDepth - sampleDepth));
+			occlusion += step(sampleDepth, linDepth) * rangeCheck; // (sampleDepth >= linDepth ? 0.0 : 1.0)
 		}
-		occlusion = 1.0 - (occlusion / uKernelSize);
-		occlusion = pow(occlusion, uOcclusionExp);
-
+		occlusion = pow(1.0 - (occlusion / uKernelSize), uOcclusionPower);
+		
 		occlusionOut = vec4(occlusion, 0.0, 0.0, 1.0);
 	}
 )";
@@ -142,18 +133,21 @@ static vector<vec3> generateKernel(size_t kernelSize) noexcept
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr1{-1.0f, 1.0f};
-	std::uniform_real_distribution<float> distr2{0.0f, 1.0f};
+	std::uniform_real_distribution<float> distr2{0.1f, 1.0f};
 
 	vector<vec3> kernel{kernelSize};
 	for (size_t i = 0; i < kernelSize; i++) {
 		// Random vector in z+ hemisphere.
-		kernel[i] = sfz::normalize(vec3{distr1(gen), distr1(gen), distr2(gen)});
+		kernel[i] = normalize(vec3{distr1(gen), distr1(gen), distr2(gen)});
 		// Scale it so it has length between 0 and 1.
 		//kernel[i] *= distr2(gen); // Naive solution
-		// More points closer to base, see: http://john-chapman-graphics.blogspot.se/2013/01/ssao-tutorial.html
+		// More points closer to base
 		float scale = (float)i / (float)kernelSize;
 		scale = sfz::lerp(0.1f, 1.0f, scale*scale);
 		kernel[i] *= scale;
+
+		//std::uniform_real_distribution<float> tmpDistr{0.2f, std::max(float(i)/float(kernelSize), 0.3f)};
+		//kernel[i] *= tmpDistr(gen);
 	}
 
 	/*std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
@@ -178,7 +172,7 @@ static vector<vec3> generateNoiseTexture() noexcept
 
 	vector<vec3> noise{(size_t)NUM_NOISE_VALUES};
 	for (int32_t i = 0; i < NUM_NOISE_VALUES; ++i) {
-		noise[i] = vec3{distr(gen), distr(gen), 0.0f};
+		noise[i] = normalize(vec3{distr(gen), distr(gen), 0.0f});
 	}
 
 	/*std::cout << "Generated SSAO noise texture (width = " << noiseTexWidth << ") with values: \n";
@@ -193,7 +187,7 @@ static vector<vec3> generateNoiseTexture() noexcept
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp) noexcept
+SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionPower) noexcept
 :
 	mDim{dimensions},
 	mSSAOProgram{Program::postProcessFromSource(SSAO_FRAGMENT_SHADER)},
@@ -203,7 +197,7 @@ SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp
 	mKernel(std::move(generateKernel(MAX_KERNEL_SIZE))),
 	mNoise{generateNoiseTexture()},
 	mRadius{radius},
-	mOcclusionExp{occlusionExp}
+	mOcclusionPower{occlusionPower}
 {
 	resizeFramebuffers();
 }
@@ -236,7 +230,7 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 	gl::setUniform(mSSAOProgram, "uInvProjMatrix", inverse(projMatrix));
 	gl::setUniform(mSSAOProgram, "uFarPlaneDist", farPlaneDist);
 
-	gl::setUniform(mSSAOProgram, "uProjectionMatrix", projMatrix);
+	gl::setUniform(mSSAOProgram, "uProjMatrix", projMatrix);
 
 	gl::setUniform(mSSAOProgram, "uKernelSize", (int32_t)mKernelSize);
 	gl::setUniform(mSSAOProgram, "uKernel", mKernel.data(), mKernelSize);
@@ -247,7 +241,7 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 
 	//gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale", vec2{(float)mDim.x, (float)mDim.y} / 4.0f);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
-	gl::setUniform(mSSAOProgram, "uOcclusionExp", mOcclusionExp);
+	gl::setUniform(mSSAOProgram, "uOcclusionPower", mOcclusionPower);
 
 	mPostProcessQuad.render();
 
@@ -314,10 +308,10 @@ void SSAO::radius(float radius) noexcept
 	mRadius = radius;
 }
 
-void SSAO::occlusionExp(float occlusionExp) noexcept
+void SSAO::occlusionPower(float occlusionPower) noexcept
 {
-	sfz_assert_debug(occlusionExp > 0.0f);
-	mOcclusionExp = occlusionExp;
+	sfz_assert_debug(occlusionPower > 0.0f);
+	mOcclusionPower = occlusionPower;
 }
 
 // SSAO: Private methods

@@ -33,7 +33,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionExp) noexcept;
+	SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionPower) noexcept;
 
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -49,7 +49,7 @@ public:
 	inline int32_t height() const noexcept { return mDim.y; }
 	inline size_t numSamples() const noexcept { return mKernelSize; }
 	inline float radius() const noexcept { return mRadius; }
-	inline float occlusionExp() const noexcept { return mOcclusionExp; }
+	inline float occlusionPower() const noexcept { return mOcclusionPower; }
 
 	// Setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -58,7 +58,7 @@ public:
 	void dimensions(int width, int height) noexcept;
 	void numSamples(size_t numSamples) noexcept;
 	void radius(float radius) noexcept;
-	void occlusionExp(float occlusionExp) noexcept;
+	void occlusionPower(float occlusionPower) noexcept;
 
 private:
 	// Private methods
@@ -81,7 +81,7 @@ private:
 
 	vector<vec3> mNoise;
 
-	float mRadius, mOcclusionExp;
+	float mRadius, mOcclusionPower;
 };
 
 } // namespace gl

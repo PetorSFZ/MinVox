@@ -94,7 +94,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mWindow{window},
 	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.horizontalRange, mCfg.verticalRange},
 		
-	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 16, 2.0f, 1.1f},
+	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 16, 0.8f, 1.0f},
 
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
@@ -132,28 +132,28 @@ UpdateOp GameScreen::update(UpdateState& state)
 				mCfg.printFrametimes = !mCfg.printFrametimes;
 				break;
 			case 'r':
-				mSSAO.radius(mSSAO.radius() - 0.1f);
-				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				mSSAO.radius(std::max(mSSAO.radius() - 0.1f, 0.1f));
+				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			case 't':
-				mSSAO.radius(mSSAO.radius() + 0.1f);
-				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				mSSAO.radius(std::min(mSSAO.radius() + 0.1f, 100.0f));
+				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			case 'f':
-				mSSAO.occlusionExp(mSSAO.occlusionExp() - 0.1f);
-				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				mSSAO.occlusionPower(std::max(mSSAO.occlusionPower() - 0.1f, 0.1f));
+				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			case 'g':
-				mSSAO.occlusionExp(mSSAO.occlusionExp() + 0.1f);
-				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				mSSAO.occlusionPower(std::min(mSSAO.occlusionPower() + 0.1f, 5.0f));
+				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			case 'v':
-				mSSAO.numSamples(mSSAO.numSamples() - 8);
-				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				mSSAO.numSamples(std::max(mSSAO.numSamples() - 8, size_t(8)));
+				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			case 'b':
-				mSSAO.numSamples(mSSAO.numSamples() + 8);
-				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Exp=" << mSSAO.occlusionExp() << std::endl;
+				mSSAO.numSamples(std::min(mSSAO.numSamples() + 8, size_t(256)));
+				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			
 			case ',':
@@ -554,7 +554,7 @@ void GameScreen::render(UpdateState& state)
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_LINEAR_DEPTH),
 	                               mGBuffer.texture(GBUFFER_NORMAL),
-	                               projMatrix, mCam.far(), false);
+	                               projMatrix, mCam.far(), true);
 
 	// Global shading
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -734,10 +734,10 @@ void GameScreen::updateResolutions(vec2 drawableDim) noexcept
 
 	mGBuffer = gl::FramebufferBuilder{internalRes}
 	          .addDepthBuffer(gl::FBDepthFormat::F32)
-	          .addTexture(GBUFFER_LINEAR_DEPTH, gl::FBTextureFormat::R_F32, gl::FBTextureFiltering::LINEAR)
-	          .addTexture(GBUFFER_NORMAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
-	          .addTexture(GBUFFER_DIFFUSE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
-	          .addTexture(GBUFFER_MATERIAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::LINEAR)
+	          .addTexture(GBUFFER_LINEAR_DEPTH, gl::FBTextureFormat::R_F32, gl::FBTextureFiltering::NEAREST)
+	          .addTexture(GBUFFER_NORMAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::NEAREST)
+	          .addTexture(GBUFFER_DIFFUSE, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::NEAREST)
+	          .addTexture(GBUFFER_MATERIAL, gl::FBTextureFormat::RGB_F32, gl::FBTextureFiltering::NEAREST)
 	          .build();
 
 	mSpotlightShadingFB = gl::FramebufferBuilder{spotlightRes}
