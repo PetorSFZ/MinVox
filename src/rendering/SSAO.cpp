@@ -133,7 +133,7 @@ static vector<vec3> generateKernel(size_t kernelSize) noexcept
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr1{-1.0f, 1.0f};
-	std::uniform_real_distribution<float> distr2{0.1f, 1.0f};
+	std::uniform_real_distribution<float> distr2{0.0f, 1.0f};
 
 	vector<vec3> kernel{kernelSize};
 	for (size_t i = 0; i < kernelSize; i++) {
@@ -150,32 +150,32 @@ static vector<vec3> generateKernel(size_t kernelSize) noexcept
 		//kernel[i] *= tmpDistr(gen);
 	}
 
-	/*std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
+	std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
 	for (auto& val : kernel) {
 		std::cout << val << "\n";
 	}
-	std::cout << std::endl;*/
+	std::cout << std::endl;
 
 	return std::move(kernel);
 }
 
 static vector<vec3> generateNoiseTexture() noexcept
 {
-	const int32_t NOISE_SIZE = 4;
-	const int32_t NUM_NOISE_VALUES = NOISE_SIZE * NOISE_SIZE;
-
 	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
+	const size_t NOISE_SIZE = 4;
+	const size_t NUM_NOISE_VALUES = NOISE_SIZE * NOISE_SIZE;
 
+	
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr{-1.0f, 1.0f};
 
-	vector<vec3> noise{(size_t)NUM_NOISE_VALUES};
-	for (int32_t i = 0; i < NUM_NOISE_VALUES; ++i) {
+	vector<vec3> noise{NUM_NOISE_VALUES};
+	for (size_t i = 0; i < NUM_NOISE_VALUES; ++i) {
 		noise[i] = normalize(vec3{distr(gen), distr(gen), 0.0f});
 	}
 
-	/*std::cout << "Generated SSAO noise texture (width = " << noiseTexWidth << ") with values: \n";
+	/*std::cout << "Generated SSAO noise with values: \n";
 	for (auto& val : noise) {
 		std::cout << val << "\n";
 	}
@@ -194,7 +194,7 @@ SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionPow
 	mHorizontalBlurProgram{Program::postProcessFromSource(HORIZONTAL_BLUR_4_SHADER)},
 	mVerticalBlurProgram{Program::postProcessFromSource(VERTICAL_BLUR_4_SHADER)},
 	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
-	mKernel(std::move(generateKernel(MAX_KERNEL_SIZE))),
+	mKernel(std::move(generateKernel(mKernelSize))),
 	mNoise{generateNoiseTexture()},
 	mRadius{radius},
 	mOcclusionPower{occlusionPower}
@@ -300,6 +300,7 @@ void SSAO::numSamples(size_t numSamples) noexcept
 {
 	sfz_assert_debug(numSamples <= MAX_KERNEL_SIZE);
 	mKernelSize = numSamples;
+	mKernel = std::move(generateKernel(mKernelSize));
 }
 
 void SSAO::radius(float radius) noexcept

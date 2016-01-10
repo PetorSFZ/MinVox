@@ -67,8 +67,8 @@ static void drawLight(int modelMatrixLoc, const vec3& lightPos) noexcept
 static void drawSkyCube(int modelMatrixLoc, const ViewFrustum& cam) noexcept
 {
 	static SkyCubeObject skyCubeObj;
-	static const vec3 halfSkyCubeSize{400.0f, 400.0f, 400.0f};
-	mat4 transform = sfz::scalingMatrix4(800.0f, 800.0f, 800.0f);
+	static const vec3 halfSkyCubeSize{250.0f, 250.0f, 250.0f};
+	mat4 transform = sfz::scalingMatrix4(500.0f, 500.0f, 500.0f);
 
 	// Render skycube
 	sfz::translation(transform, cam.pos() - halfSkyCubeSize);
@@ -97,7 +97,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 16, 0.8f, 1.0f},
 
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
-	     (float)window.width()/(float)window.height(), 0.55f, 1000.0f},
+	     (float)window.width()/(float)window.height(), 2.0f, 450.0f},
 
 	mWorldRenderer{mWorld},
 
