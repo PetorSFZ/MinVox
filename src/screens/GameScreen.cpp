@@ -94,7 +94,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mWindow{window},
 	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.horizontalRange, mCfg.verticalRange},
 		
-	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 16, 0.8f, 1.0f},
+	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 32, 1.3f, 0.001f, 1.0f},
 
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 2.0f, 450.0f},
@@ -152,7 +152,7 @@ UpdateOp GameScreen::update(UpdateState& state)
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			case 'b':
-				mSSAO.numSamples(std::min(mSSAO.numSamples() + 8, size_t(256)));
+				mSSAO.numSamples(std::min(mSSAO.numSamples() + 8, size_t(128)));
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
 				break;
 			

@@ -33,7 +33,7 @@ public:
 	SSAO(const SSAO&) = delete;
 	SSAO& operator= (const SSAO&) = delete;
 	
-	SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionPower) noexcept;
+	SSAO(vec2i dimensions, size_t numSamples, float radius, float minRadius, float occlusionPower) noexcept;
 
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -49,6 +49,7 @@ public:
 	inline int32_t height() const noexcept { return mDim.y; }
 	inline size_t numSamples() const noexcept { return mKernelSize; }
 	inline float radius() const noexcept { return mRadius; }
+	inline float minRadius() const noexcept { return mMinRadius; }
 	inline float occlusionPower() const noexcept { return mOcclusionPower; }
 
 	// Setters
@@ -58,6 +59,7 @@ public:
 	void dimensions(int width, int height) noexcept;
 	void numSamples(size_t numSamples) noexcept;
 	void radius(float radius) noexcept;
+	void minRadius(float minRadius) noexcept;
 	void occlusionPower(float occlusionPower) noexcept;
 
 private:
@@ -75,13 +77,13 @@ private:
 	PostProcessQuad mPostProcessQuad;
 	Framebuffer mOcclusionFBO, mTempFBO;
 
-	static const size_t MAX_KERNEL_SIZE = 256;
+	static const size_t MAX_KERNEL_SIZE = 128;
 	size_t mKernelSize;
 	vector<vec3> mKernel;
 
 	vector<vec3> mNoise;
 
-	float mRadius, mOcclusionPower;
+	float mRadius, mMinRadius, mOcclusionPower;
 };
 
 } // namespace gl

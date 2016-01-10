@@ -25,28 +25,29 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 	out vec4 occlusionOut;
 
 	// Constants
-	const int MAX_KERNEL_SIZE = 256;
+	const int MAX_KERNEL_SIZE = 128;
 
 	// Uniforms
 	uniform float uFarPlaneDist;
 	uniform sampler2D uLinearDepthTexture;
 	uniform sampler2D uNormalTexture;
-		
+	
 	uniform int uKernelSize;
 	uniform vec3 uKernel[MAX_KERNEL_SIZE];
 	uniform mat4 uProjMatrix;
 
 	uniform vec3 uNoise[16];
 	uniform vec2 uDimensions;
-	
+
 	uniform float uRadius;
+	uniform float uMinRadius;
 	uniform float uOcclusionPower;
 
 	float sampleLinearDepth(vec3 vsPos)
 	{
 		vec4 offset = uProjMatrix * vec4(vsPos, 1.0);
 		offset.xy /= offset.w;
-		offset.xy = offset.xy * 0.5 + 0.5;
+		offset.xy = offset.xy * 0.5 + vec2(0.5);
 		return texture(uLinearDepthTexture, offset.xy).r;
 	}
 
@@ -65,6 +66,7 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 		vec3 bitangent = cross(normal, tangent);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
 
+		float minDepthRadius = uMinRadius / uFarPlaneDist;
 		float depthRadius = uRadius / uFarPlaneDist;
 
 		float occlusion = 0.0;
@@ -72,13 +74,14 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 			vec3 samplePos = vsPos + uRadius * (kernelRot * uKernel[i]);
 			float sampleDepth = sampleLinearDepth(samplePos);
 
-			float rangeCheck = abs(linDepth - sampleDepth) < depthRadius ? 1.0 : 0.0;
+			float dist = abs(linDepth - sampleDepth);
+			float rangeCheck = (minDepthRadius < dist && dist < depthRadius) ? 1.0 : 0.0;
 			//float rangeCheck = smoothstep(0.0, 1.0, depthRadius / abs(linDepth - sampleDepth));
-			occlusion += step(sampleDepth, linDepth) * rangeCheck; // (sampleDepth >= linDepth ? 0.0 : 1.0)
+			occlusion += (sampleDepth < linDepth ? 1.0 : 0.0) * rangeCheck; 
 		}
 		occlusion = pow(1.0 - (occlusion / uKernelSize), uOcclusionPower);
-		
-		occlusionOut = vec4(occlusion, 0.0, 0.0, 1.0);
+
+		occlusionOut = vec4(vec3(occlusion), 1.0);
 	}
 )";
 
@@ -150,11 +153,11 @@ static vector<vec3> generateKernel(size_t kernelSize) noexcept
 		//kernel[i] *= tmpDistr(gen);
 	}
 
-	std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
+	/*std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
 	for (auto& val : kernel) {
 		std::cout << val << "\n";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 	return std::move(kernel);
 }
@@ -187,7 +190,7 @@ static vector<vec3> generateNoiseTexture() noexcept
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionPower) noexcept
+SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float minRadius, float occlusionPower) noexcept
 :
 	mDim{dimensions},
 	mSSAOProgram{Program::postProcessFromSource(SSAO_FRAGMENT_SHADER)},
@@ -197,6 +200,7 @@ SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float occlusionPow
 	mKernel(std::move(generateKernel(mKernelSize))),
 	mNoise{generateNoiseTexture()},
 	mRadius{radius},
+	mMinRadius{minRadius},
 	mOcclusionPower{occlusionPower}
 {
 	resizeFramebuffers();
@@ -241,6 +245,7 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 
 	//gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale", vec2{(float)mDim.x, (float)mDim.y} / 4.0f);
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
+	gl::setUniform(mSSAOProgram, "uMinRadius", mMinRadius);
 	gl::setUniform(mSSAOProgram, "uOcclusionPower", mOcclusionPower);
 
 	mPostProcessQuad.render();
@@ -307,6 +312,12 @@ void SSAO::radius(float radius) noexcept
 {
 	sfz_assert_debug(radius > 0.0f);
 	mRadius = radius;
+}
+
+void SSAO::minRadius(float minRadius) noexcept
+{
+	sfz_assert_debug(minRadius >= 0.0f);
+	mMinRadius = minRadius;
 }
 
 void SSAO::occlusionPower(float occlusionPower) noexcept
