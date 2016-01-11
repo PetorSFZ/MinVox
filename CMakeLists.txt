@@ -72,8 +72,6 @@ set(SOURCE_RENDERING_FILES
 	${SRC_DIR}/rendering/CubeObject.cpp
 	${SRC_DIR}/rendering/SkyCubeObject.hpp
 	${SRC_DIR}/rendering/SkyCubeObject.cpp
-	${SRC_DIR}/rendering/SSAO.hpp
-	${SRC_DIR}/rendering/SSAO.cpp
 	${SRC_DIR}/rendering/WorldRenderer.hpp
 	${SRC_DIR}/rendering/WorldRenderer.cpp)
 source_group(vox_rendering FILES ${SOURCE_RENDERING_FILES})
