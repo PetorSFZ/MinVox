@@ -1,6 +1,7 @@
 #include "rendering/SSAO.hpp"
 
 #include <random>
+#include <new>
 
 #include <sfz/Assert.hpp>
 #include <sfz/gl/OpenGL.hpp>
@@ -11,7 +12,7 @@ namespace gl {
 // Statics
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-static const char* SSAO_FRAGMENT_SHADER = R"(
+static const char* SSAO_SHADER = R"(
 	#version 330
 
 	// SSAO implementation using normal oriented hemisphere, inspired by this tutorial:
@@ -24,24 +25,20 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 	// Output
 	out vec4 occlusionOut;
 
-	// Constants
-	const int MAX_KERNEL_SIZE = 128;
-
 	// Uniforms
-	uniform float uFarPlaneDist;
 	uniform sampler2D uLinearDepthTexture;
 	uniform sampler2D uNormalTexture;
-	
-	uniform int uKernelSize;
-	uniform vec3 uKernel[MAX_KERNEL_SIZE];
 	uniform mat4 uProjMatrix;
+	uniform float uFarPlaneDist;
 
-	uniform vec3 uNoise[16];
 	uniform vec2 uDimensions;
-
 	uniform float uRadius;
-	uniform float uMinRadius;
+	uniform float uMinDepthBias;
 	uniform float uOcclusionPower;
+
+	uniform int uKernelSize;
+	uniform vec3 uKernel[128];
+	uniform vec3 uNoise[16];
 
 	float sampleLinearDepth(vec3 vsPos)
 	{
@@ -66,18 +63,20 @@ static const char* SSAO_FRAGMENT_SHADER = R"(
 		vec3 bitangent = cross(normal, tangent);
 		mat3 kernelRot = mat3(tangent, bitangent, normal);
 
-		float minDepthRadius = uMinRadius / uFarPlaneDist;
-		float depthRadius = uRadius / uFarPlaneDist;
+		// Calculates the minimum and maximum depth values for a sample to count as an occluder
+		float sampleMinDepth = linDepth - (uRadius / uFarPlaneDist);
+		float sampleMaxDepth = linDepth - (uMinDepthBias / uFarPlaneDist);
 
+		// Samples points and calculates occlusion 
 		float occlusion = 0.0;
 		for (int i = 0; i < uKernelSize; i++) {
 			vec3 samplePos = vsPos + uRadius * (kernelRot * uKernel[i]);
 			float sampleDepth = sampleLinearDepth(samplePos);
 
-			float dist = abs(linDepth - sampleDepth);
-			float rangeCheck = (minDepthRadius < dist && dist < depthRadius) ? 1.0 : 0.0;
-			//float rangeCheck = smoothstep(0.0, 1.0, depthRadius / abs(linDepth - sampleDepth));
-			occlusion += (sampleDepth < linDepth ? 1.0 : 0.0) * rangeCheck; 
+			// Add occlusion (+1) if sample's depth value is within precalculated range
+			if (sampleMinDepth < sampleDepth && sampleDepth < sampleMaxDepth) {
+				occlusion += 1.0;
+			}
 		}
 		occlusion = pow(1.0 - (occlusion / uKernelSize), uOcclusionPower);
 
@@ -131,90 +130,86 @@ static const char* VERTICAL_BLUR_4_SHADER = R"(
 	}
 )";
 
-static vector<vec3> generateKernel(size_t kernelSize) noexcept
+static void resizeFramebuffers(Framebuffer& occlusionFBO, Framebuffer& tempFBO, vec2i dimensions) noexcept
+{
+	occlusionFBO = FramebufferBuilder{dimensions}
+	              .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	              .build();
+	tempFBO = FramebufferBuilder{dimensions}
+	         .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
+	         .build();
+}
+
+static void generateKernel(vec3* kernelPtr, size_t kernelSize) noexcept
 {
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr1{-1.0f, 1.0f};
 	std::uniform_real_distribution<float> distr2{0.0f, 1.0f};
 
-	vector<vec3> kernel{kernelSize};
 	for (size_t i = 0; i < kernelSize; i++) {
 		// Random vector in z+ hemisphere.
-		kernel[i] = normalize(vec3{distr1(gen), distr1(gen), distr2(gen)});
+		kernelPtr[i] = normalize(vec3{distr1(gen), distr1(gen), distr2(gen)});
+		
 		// Scale it so it has length between 0 and 1.
-		//kernel[i] *= distr2(gen); // Naive solution
+		//kernelPtr[i] *= distr2(gen); // Naive solution
+		
 		// More points closer to base
 		float scale = (float)i / (float)kernelSize;
 		scale = sfz::lerp(0.1f, 1.0f, scale*scale);
-		kernel[i] *= scale;
-
-		//std::uniform_real_distribution<float> tmpDistr{0.2f, std::max(float(i)/float(kernelSize), 0.3f)};
-		//kernel[i] *= tmpDistr(gen);
+		kernelPtr[i] *= scale;
 	}
-
-	/*std::cout << "Generated SSAO sample kernel (size = " << kernelSize << ") with values: \n";
-	for (auto& val : kernel) {
-		std::cout << val << "\n";
-	}
-	std::cout << std::endl;*/
-
-	return std::move(kernel);
 }
 
-static vector<vec3> generateNoiseTexture() noexcept
+static void generateNoise(vec3* noisePtr) noexcept
 {
-	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
-	const size_t NOISE_SIZE = 4;
-	const size_t NUM_NOISE_VALUES = NOISE_SIZE * NOISE_SIZE;
-
-	
 	std::random_device rd;
 	std::mt19937_64 gen{rd()};
 	std::uniform_real_distribution<float> distr{-1.0f, 1.0f};
 
-	vector<vec3> noise{NUM_NOISE_VALUES};
-	for (size_t i = 0; i < NUM_NOISE_VALUES; ++i) {
-		noise[i] = normalize(vec3{distr(gen), distr(gen), 0.0f});
+	for (size_t i = 0; i < 16; ++i) {
+		noisePtr[i] = normalize(vec3{distr(gen), distr(gen), 0.0f});
 	}
-
-	/*std::cout << "Generated SSAO noise with values: \n";
-	for (auto& val : noise) {
-		std::cout << val << "\n";
-	}
-	std::cout << std::endl;*/
-
-	return noise;
 }
 
 // SSAO: Constructors & destructors
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float minRadius, float occlusionPower) noexcept
+SSAO::SSAO(vec2i dimensions, size_t numSamples, float radius, float minDepthBias,
+           float occlusionPower, bool blurOcclusion) noexcept
 :
-	mDim{dimensions},
-	mSSAOProgram{Program::postProcessFromSource(SSAO_FRAGMENT_SHADER)},
+	mSSAOProgram{Program::postProcessFromSource(SSAO_SHADER)},
 	mHorizontalBlurProgram{Program::postProcessFromSource(HORIZONTAL_BLUR_4_SHADER)},
 	mVerticalBlurProgram{Program::postProcessFromSource(VERTICAL_BLUR_4_SHADER)},
-	mKernelSize{numSamples > MAX_KERNEL_SIZE ? MAX_KERNEL_SIZE : numSamples},
-	mKernel(std::move(generateKernel(mKernelSize))),
-	mNoise{generateNoiseTexture()},
+
+	mDimensions{dimensions},
 	mRadius{radius},
-	mMinRadius{minRadius},
-	mOcclusionPower{occlusionPower}
+	mMinDepthBias{minDepthBias},
+	mOcclusionPower{occlusionPower},
+	mBlurOcclusion{blurOcclusion},
+	
+	mKernelSize{numSamples},
+	mKernel{new (std::nothrow) vec3[128]},
+	mNoise{new (std::nothrow) vec3[16]}
 {
-	resizeFramebuffers();
+	static_assert(sizeof(vec3) == sizeof(float)*3, "vec3 is padded");
+	sfz_assert_debug(numSamples <= 128);
+	sfz_assert_debug(0 <= minDepthBias);
+	sfz_assert_debug(minDepthBias < radius);
+	sfz_assert_debug(0 < occlusionPower);
+	
+	resizeFramebuffers(mOcclusionFBO, mTempFBO, mDimensions);
+	generateKernel(mKernel.get(), mKernelSize);
+	generateNoise(mNoise.get());
 }
 
 // SSAO: Public methods
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4& projMatrix,
-                         float farPlaneDist, bool blur) noexcept
+                         float farPlaneDist) noexcept
 {
-	// Render occlusion texture
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
+	// Occlusion pass
 	glUseProgram(mSSAOProgram.handle());
 	glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.fbo());
 	glViewport(0, 0, mOcclusionFBO.width(), mOcclusionFBO.height());
@@ -231,27 +226,23 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 	gl::setUniform(mSSAOProgram, "uNormalTexture", 1);
 
 	// Other uniforms
+	gl::setUniform(mSSAOProgram, "uProjMatrix", projMatrix);
 	gl::setUniform(mSSAOProgram, "uInvProjMatrix", inverse(projMatrix));
 	gl::setUniform(mSSAOProgram, "uFarPlaneDist", farPlaneDist);
 
-	gl::setUniform(mSSAOProgram, "uProjMatrix", projMatrix);
-
-	gl::setUniform(mSSAOProgram, "uKernelSize", (int32_t)mKernelSize);
-	gl::setUniform(mSSAOProgram, "uKernel", mKernel.data(), mKernelSize);
-
-	gl::setUniform(mSSAOProgram, "uNoise", mNoise.data(), 16);
-	gl::setUniform(mSSAOProgram, "uDimensions", vec2{(float)mDim.x, (float)mDim.y});
-	
-
-	//gl::setUniform(mSSAOProgram, "uNoiseTexCoordScale", vec2{(float)mDim.x, (float)mDim.y} / 4.0f);
+	gl::setUniform(mSSAOProgram, "uDimensions", vec2{(float)mDimensions.x, (float)mDimensions.y});
 	gl::setUniform(mSSAOProgram, "uRadius", mRadius);
-	gl::setUniform(mSSAOProgram, "uMinRadius", mMinRadius);
+	gl::setUniform(mSSAOProgram, "uMinDepthBias", mMinDepthBias);
 	gl::setUniform(mSSAOProgram, "uOcclusionPower", mOcclusionPower);
 
+	gl::setUniform(mSSAOProgram, "uKernelSize", (int32_t)mKernelSize);
+	gl::setUniform(mSSAOProgram, "uKernel", mKernel.get(), mKernelSize);
+	gl::setUniform(mSSAOProgram, "uNoise", mNoise.get(), 16);
+	
 	mPostProcessQuad.render();
 
-	if (blur) {
-		// Horizontal blur
+	if (mBlurOcclusion) {
+		// Horizontal blur pass
 		glUseProgram(mHorizontalBlurProgram.handle());
 		glBindFramebuffer(GL_FRAMEBUFFER, mTempFBO.fbo());
 		glViewport(0, 0, mTempFBO.width(), mTempFBO.height());
@@ -262,11 +253,11 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mOcclusionFBO.texture(0));
 		gl::setUniform(mHorizontalBlurProgram, "uTexture", 0);
-		gl::setUniform(mHorizontalBlurProgram, "uTexelWidth", 1.0f / mDim.x);
+		gl::setUniform(mHorizontalBlurProgram, "uTexelWidth", 1.0f / mDimensions.x);
 
 		mPostProcessQuad.render();
 
-		// Vertical blur
+		// Vertical blur pass
 		glUseProgram(mVerticalBlurProgram.handle());
 		glBindFramebuffer(GL_FRAMEBUFFER, mOcclusionFBO.fbo());
 		glViewport(0, 0, mOcclusionFBO.width(), mOcclusionFBO.height());
@@ -277,7 +268,7 @@ uint32_t SSAO::calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mTempFBO.texture(0));
 		gl::setUniform(mVerticalBlurProgram, "uTexture", 0);
-		gl::setUniform(mVerticalBlurProgram, "uTexelHeight", 1.0f / mDim.y);
+		gl::setUniform(mVerticalBlurProgram, "uTexelHeight", 1.0f / mDimensions.y);
 
 		mPostProcessQuad.render();
 	}
@@ -292,8 +283,8 @@ void SSAO::dimensions(vec2i dim) noexcept
 {
 	sfz_assert_debug(dim.x > 0);
 	sfz_assert_debug(dim.y > 0);
-	mDim = dim;
-	resizeFramebuffers();
+	mDimensions = dim;
+	resizeFramebuffers(mOcclusionFBO, mTempFBO, mDimensions);
 }
 
 void SSAO::dimensions(int width, int height) noexcept
@@ -303,40 +294,32 @@ void SSAO::dimensions(int width, int height) noexcept
 
 void SSAO::numSamples(size_t numSamples) noexcept
 {
-	sfz_assert_debug(numSamples <= MAX_KERNEL_SIZE);
+	sfz_assert_debug(numSamples <= 128);
 	mKernelSize = numSamples;
-	mKernel = std::move(generateKernel(mKernelSize));
+	generateKernel(mKernel.get(), mKernelSize);
 }
 
 void SSAO::radius(float radius) noexcept
 {
-	sfz_assert_debug(radius > 0.0f);
+	sfz_assert_debug(0.0f < radius);
 	mRadius = radius;
 }
 
-void SSAO::minRadius(float minRadius) noexcept
+void SSAO::minDepthBias(float minDepthBias) noexcept
 {
-	sfz_assert_debug(minRadius >= 0.0f);
-	mMinRadius = minRadius;
+	sfz_assert_debug(0.0f <= minDepthBias);
+	mMinDepthBias = minDepthBias;
 }
 
 void SSAO::occlusionPower(float occlusionPower) noexcept
 {
-	sfz_assert_debug(occlusionPower > 0.0f);
+	sfz_assert_debug(0.0f < occlusionPower);
 	mOcclusionPower = occlusionPower;
 }
 
-// SSAO: Private methods
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-void SSAO::resizeFramebuffers() noexcept
+void SSAO::blurOcclusion(bool blurOcclusion) noexcept
 {
-	mOcclusionFBO = FramebufferBuilder{mDim}
-	               .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	               .build();
-	mTempFBO = FramebufferBuilder{mDim}
-	          .addTexture(0, FBTextureFormat::R_F32, FBTextureFiltering::LINEAR)
-	          .build();
+	mBlurOcclusion = blurOcclusion;
 }
 
 } // namespace gl

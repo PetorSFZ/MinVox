@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <vector>
 
 #include <sfz/gl/Framebuffer.hpp>
 #include <sfz/gl/PostProcessQuad.hpp>
@@ -22,35 +21,58 @@ using sfz::mat4;
 using std::int32_t;
 using std::size_t;
 using std::uint32_t;
-using std::vector;
+using std::unique_ptr;
 
+/**
+ * @brief Class used for calculating screen space ambient occlusion
+ */
 class SSAO final {
 public:
 	// Constructors & destructors
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	SSAO() = delete;
-	SSAO(const SSAO&) = delete;
+	SSAO(const SSAO&) noexcept = default; // Default constructor will not create a usable instance
 	SSAO& operator= (const SSAO&) = delete;
+	SSAO(SSAO&&) noexcept = default;
+	SSAO& operator= (SSAO&&) noexcept = default;
 	
-	SSAO(vec2i dimensions, size_t numSamples, float radius, float minRadius, float occlusionPower) noexcept;
-
+	/**
+	 * @brief Creates a new SSAO instance
+	 * @param dimensions the size of the SSAO texture
+	 * @param numSamples the amount of SSAO samples to take, max 128
+	 * @param radius the radius to sample around each point
+	 * @param minDepthBias the minimum depth difference needed for an occluder to register
+	 * @param occlusionPower a factor to scale the strength of the ssao
+	 * @param blurOcclusion whether to blur the ssao or not 
+	 */
+	SSAO(vec2i dimensions, size_t numSamples, float radius, float minDepthBias = 0.001f,
+	     float occlusionPower = 1.0f, bool blurOcclusion = true) noexcept;
+	
 	// Public methods
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	uint32_t calculate(uint32_t linearDepthTex, uint32_t normalTex, const mat4& projMatrix,
-	                   float farPlaneDist, bool blur = false) noexcept;
+	/**
+	 * @brief Calculates SSAO
+	 * @param linearDepthTex the linear depth texture (i.e. depth = -vsPos.z / uFarPlaneDist)
+	 * @param normalTex the normal texture
+	 * @param projMatrix the projection matrix
+	 * @param farPlaneDist the distance to the far plane
+	 * @return texture handle to the internal texture holding the result
+	 */
+	uint32_t calculate(uint32_t linearDepthTex, uint32_t normalTex,
+	                   const mat4& projMatrix, float farPlaneDist) noexcept;
 
 	// Getters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	inline vec2i dimensions() const noexcept { return mDim; }
-	inline int32_t width() const noexcept { return mDim.x; }
-	inline int32_t height() const noexcept { return mDim.y; }
+	inline vec2i dimensions() const noexcept { return mDimensions; }
+	inline int32_t width() const noexcept { return mDimensions.x; }
+	inline int32_t height() const noexcept { return mDimensions.y; }
 	inline size_t numSamples() const noexcept { return mKernelSize; }
 	inline float radius() const noexcept { return mRadius; }
-	inline float minRadius() const noexcept { return mMinRadius; }
+	inline float minDepthBias() const noexcept { return mMinDepthBias; }
 	inline float occlusionPower() const noexcept { return mOcclusionPower; }
+	inline bool blurOcclusion() const noexcept { return mBlurOcclusion; }
 
 	// Setters
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -59,31 +81,24 @@ public:
 	void dimensions(int width, int height) noexcept;
 	void numSamples(size_t numSamples) noexcept;
 	void radius(float radius) noexcept;
-	void minRadius(float minRadius) noexcept;
+	void minDepthBias(float minDepthBias) noexcept;
 	void occlusionPower(float occlusionPower) noexcept;
+	void blurOcclusion(bool blurOcclusion) noexcept;
 
 private:
-	// Private methods
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	void resizeFramebuffers() noexcept;
-
 	// Private members
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-	vec2i mDim;
 
 	Program mSSAOProgram, mHorizontalBlurProgram, mVerticalBlurProgram;
 	PostProcessQuad mPostProcessQuad;
 	Framebuffer mOcclusionFBO, mTempFBO;
 
-	static const size_t MAX_KERNEL_SIZE = 128;
+	vec2i mDimensions;
+	float mRadius, mMinDepthBias, mOcclusionPower;
+	bool mBlurOcclusion;
 	size_t mKernelSize;
-	vector<vec3> mKernel;
-
-	vector<vec3> mNoise;
-
-	float mRadius, mMinRadius, mOcclusionPower;
+	unique_ptr<vec3[]> mKernel;
+	unique_ptr<vec3[]> mNoise;
 };
 
 } // namespace gl

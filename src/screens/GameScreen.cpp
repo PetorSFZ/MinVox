@@ -94,7 +94,7 @@ GameScreen::GameScreen(sdl::Window& window, const std::string& worldName)
 	mWindow{window},
 	mWorld{worldName, vec3{-3.0f, 1.2f, 0.2f}, mCfg.horizontalRange, mCfg.verticalRange},
 		
-	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 32, 1.3f, 0.001f, 1.0f},
+	mSSAO{vec2i{window.drawableWidth(), window.drawableHeight()}, 32, 1.3f},
 
 	mCam{vec3{-3.0f, 2.5f, 0.2f}, vec3{1.0f, 0.0f, 0.0f}, vec3{0.0f, 1.0f, 0.0f}, 75.0f,
 	     (float)window.width()/(float)window.height(), 2.0f, 450.0f},
@@ -554,7 +554,7 @@ void GameScreen::render(UpdateState& state)
 
 	GLuint aoTex = mSSAO.calculate(mGBuffer.texture(GBUFFER_LINEAR_DEPTH),
 	                               mGBuffer.texture(GBUFFER_NORMAL),
-	                               projMatrix, mCam.far(), true);
+	                               projMatrix, mCam.far());
 
 	// Global shading
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
