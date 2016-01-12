@@ -157,7 +157,7 @@ UpdateOp GameScreen::update(UpdateState& state)
 				break;
 			
 			case ',':
-				mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov(), mCam.verticalFov() * 0.95f, 40.0f);
+				mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov() * 0.75f, mCam.verticalFov() * 0.6f, 40.0f);
 				break;
 
 			case '.':
@@ -312,7 +312,7 @@ UpdateOp GameScreen::update(UpdateState& state)
 
 		// Face buttons
 		if (ctrl.y == sdl::ButtonState::UP) {
-			mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov(), mCam.verticalFov() * 0.95f, 40.0f);
+			mSpotlights.emplace_back(mCam.pos(), mCam.dir(), mCam.verticalFov() * 0.75f, mCam.verticalFov() * 0.6f, 40.0f);
 		}
 		if (ctrl.x == sdl::ButtonState::UP) {
 			if (!mSpotlights.empty()) {
