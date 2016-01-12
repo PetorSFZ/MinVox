@@ -290,7 +290,7 @@ void main()
 	}
 	factor /= float(NUM_SAMPLES);
 
-	float weight = factor * (isect.t2 - isect.t1) / FULL_VISIBILITY_DIST;
+	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
 	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
 #endif
 
@@ -326,7 +326,7 @@ void main()
 	}
 	factor /= float(NUM_SAMPLES);
 
-	float weight = factor * (isect.t2 - isect.t1) / FULL_VISIBILITY_DIST;
+	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
 	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
 #endif
 
@@ -381,7 +381,7 @@ void main()
 	}
 	factor /= float(NUM_SAMPLES);
 
-	float weight = factor * (isect.t2 - isect.t1) / FULL_VISIBILITY_DIST;
+	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
 	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
 #endif
 
@@ -440,7 +440,7 @@ void main()
 	}
 	factor /= float(NUM_SAMPLES);
 
-	float weight = factor * (isect.t2 - isect.t1) / FULL_VISIBILITY_DIST;
+	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
 	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
 #endif
 
@@ -500,7 +500,7 @@ void main()
 	}
 	factor /= float(numSamples);
 
-	float weight = factor * (isect.t2 - isect.t1) / FULL_VISIBILITY_DIST;
+	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
 	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
 #endif
 
@@ -564,7 +564,7 @@ void main()
 	}
 	factor /= float(numSamples);
 
-	float weight = factor * (isect.t2 - isect.t1) / FULL_VISIBILITY_DIST;
+	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
 	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
 #endif
 }
