@@ -17,7 +17,7 @@ uniform sampler2D uAOTexture;
 uniform sampler2D uSpotlightTexture;
 uniform sampler2D uLightShaftsTexture;
 
-uniform vec3 uAmbientLight = vec3(0.25);
+uniform vec3 uAmbientLight;
 uniform int uOutputSelect = 1;
 
 void main()

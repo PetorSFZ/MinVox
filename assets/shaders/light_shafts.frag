@@ -183,9 +183,9 @@ void main()
 	const float MAX_DIST = 25.0;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
-	vec3 sampleStep = (min(length(vsPos), MAX_DIST) / float(NUM_SAMPLES - 1)) * camDir;
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
+	vec3 sampleStep = (min(distToPos, MAX_DIST) / float(NUM_SAMPLES - 1)) * camDir;
 
 	float factor = 0.0;
 	for (int i = 0; i < NUM_SAMPLES; ++i) {
@@ -204,9 +204,9 @@ void main()
 	const float MAX_DIST = 35.0;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
-	vec3 sampleStep = (min(length(vsPos), MAX_DIST) / float(NUM_SAMPLES - 1)) * camDir;
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
+	vec3 sampleStep = (min(distToPos, MAX_DIST) / float(NUM_SAMPLES - 1)) * camDir;
 
 	float factor = 0.0;
 	for (int i = 0; i < NUM_SAMPLES; ++i) {
@@ -234,8 +234,8 @@ void main()
 	const float FULL_VISIBILITY_DIST = 25;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
 
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
@@ -243,7 +243,7 @@ void main()
 		discard;
 	}
 
-	float endT = min(isect.t2, length(vsPos));
+	float endT = min(isect.t2, distToPos);
 	float startT = min(isect.t1, endT);
 
 	float weight = (endT - startT) / FULL_VISIBILITY_DIST;
@@ -257,8 +257,8 @@ void main()
 	const float FULL_VISIBILITY_DIST = 25.0;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
 
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
@@ -266,7 +266,7 @@ void main()
 		discard;
 	}
 
-	float endT = min(min(isect.t2, length(vsPos)), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), MAX_DIST);
 	float startT = min(isect.t1, endT);
 	vec3 start = camDir * startT;
 	vec3 end = camDir * endT;
@@ -301,8 +301,8 @@ void main()
 	const float FULL_VISIBILITY_DIST = 25;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
 
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
@@ -310,7 +310,7 @@ void main()
 		discard;
 	}
 
-	float endT = min(min(isect.t2, length(vsPos)), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), MAX_DIST);
 	float startT = min(isect.t1, endT);
 	vec4 start = uSpotlight.lightMatrix * vec4(camDir * startT, 1.0);
 	vec4 end = uSpotlight.lightMatrix * vec4(camDir * endT, 1.0);
@@ -337,8 +337,8 @@ void main()
 	const float FULL_VISIBILITY_DIST = 25.0;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
 
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
@@ -347,7 +347,7 @@ void main()
 	}
 
 	// Compute march range
-	float endT = min(min(isect.t2, length(vsPos)), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), MAX_DIST);
 	float startT = min(isect.t1, endT);
 	vec3 start = camDir * startT;
 	vec3 end = camDir * endT;
@@ -392,8 +392,8 @@ void main()
 	const float FULL_VISIBILITY_DIST = 25.0;
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
 
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
@@ -402,7 +402,7 @@ void main()
 	}
 
 	// Compute march range
-	float endT = min(min(isect.t2, length(vsPos)), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), MAX_DIST);
 	float startT = min(isect.t1, endT);
 	vec3 start = camDir * startT;
 	vec3 end = camDir * endT;
@@ -452,8 +452,8 @@ void main()
 	const vec2 SHADOW_MAP_DIMENSIONS = vec2(256);
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
 
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
@@ -462,7 +462,7 @@ void main()
 	}
 
 	// Compute march range
-	float endT = min(min(isect.t2, length(vsPos)), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), MAX_DIST);
 	float startT = min(isect.t1, endT);
 	vec3 start = camDir * startT;
 	vec3 end = camDir * endT;
@@ -512,9 +512,9 @@ void main()
 	const vec2 SHADOW_MAP_DIMENSIONS = vec2(256);
 
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
-	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
-	vec3 camDir = normalize(vsPos);
-
+	float distToPos = length(uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z));
+	vec3 camDir = normalize(nonNormRayDir);
+	
 	// Ray vs Cone intersection test
 	Intersection isect = rayVsFiniteCone(vec3(0), camDir, uSpotlight.vsPos, uSpotlight.vsDir, uSpotlight.softAngleCos, uSpotlight.range);
 	if (!isect.hit) {
@@ -522,7 +522,7 @@ void main()
 	}
 
 	// Compute march range
-	float endT = min(min(isect.t2, length(vsPos)), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), MAX_DIST);
 	float startT = min(isect.t1, endT);
 	vec3 start = camDir * startT;
 	vec3 end = camDir * endT;

@@ -602,7 +602,7 @@ void GameScreen::render(UpdateState& state)
 
 	gl::setUniform(mGlobalShadingProgram, "uInvProjMatrix", invProjMatrix);
 	gl::setUniform(mGlobalShadingProgram, "uFarPlaneDist", mCam.far());
-	gl::setUniform(mGlobalShadingProgram, "uAmbientLight", vec3{0.25f});
+	gl::setUniform(mGlobalShadingProgram, "uAmbientLight", vec3{0.15f});
 	gl::setUniform(mGlobalShadingProgram, "uOutputSelect", mOutputSelect);
 
 	mPostProcessQuad.render();
