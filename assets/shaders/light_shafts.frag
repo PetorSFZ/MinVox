@@ -507,7 +507,7 @@ void main()
 
 #ifdef OPTIMIZED_DYNAMIC_SAMPLING_WITH_ATTENUATION
 	const int MAX_NUM_SAMPLES = 128;
-	const float MAX_DIST = 35.0;
+	const float MAX_DIST = 25.0;
 	const float FULL_VISIBILITY_DIST = 25.0;
 	const vec2 SHADOW_MAP_DIMENSIONS = vec2(256);
 
@@ -545,6 +545,13 @@ void main()
 	numSamples = clamp(numSamples, 2, MAX_NUM_SAMPLES);
 	float interpStep = 1.0 / float(numSamples - 1);
 
+
+	// Eye distance weight function
+	float m = 2.0 / MAX_DIST;
+	float k = -2.0 / (MAX_DIST * MAX_DIST);
+	float startWeight = m + k * startT;
+	float endWeight = m + k * endT;
+
 	float factor = 0.0;
 	for (int i = 0; i < numSamples; ++i) {
 		float interp = interpStep * float(i);
@@ -560,11 +567,14 @@ void main()
 		// Dist scaling
 		float distScale = mix(startDistScale, endDistScale, interp);
 
-		factor += sample * distScale * attenuation;
+		// Eye distance weight
+		float weight = mix(startWeight, endWeight, interp);
+
+		factor += sample * distScale * attenuation * weight;
 	}
 	factor /= float(numSamples);
 
-	float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
-	outFragColor = vec4(vec3(weight * uSpotlight.color), 1.0);
+	//float weight = factor * (endT - startT) / FULL_VISIBILITY_DIST;
+	outFragColor = vec4(vec3(5.0 * factor * uSpotlight.color), 1.0);
 #endif
 }
