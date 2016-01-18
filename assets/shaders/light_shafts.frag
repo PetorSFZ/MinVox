@@ -203,9 +203,9 @@ void main()
 #endif
 
 	// Configurable factors
-	const int NUM_SAMPLES = 256;
-	const float MAX_DIST = 40.0;
-	const float SCALE_FACTOR = 1.0;
+	const int NUM_SAMPLES = 128;
+	const float MAX_DIST = 60.0;
+	const float SCALE_FACTOR = 0.5;
 
 	// Ray information
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
@@ -255,9 +255,9 @@ void main()
 	vec3 endPos = rayDir * endT;
 
 #ifdef INTERSECTION_TEST_NO_SAMPLING
-	float sampleStep = (endT - startT) / 7.0;
+	float sampleStep = (endT - startT) / 15.0;
 	float factor = 0.0;
-	for (int i = 0; i < 8; ++i) {
+	for (int i = 0; i < 16; ++i) {
 		float sampleT = startT + float(i) * sampleStep;
 		vec3 samplePos = sampleT * rayDir;
 
@@ -332,7 +332,7 @@ void main()
 	vec2 shadowMapSize = vec2(textureSize(uShadowMap, 0));
 	vec2 diff = abs((endShadowCoord.xy / endShadowCoord.w) - (startShadowCoord.xy / startShadowCoord.w));
 	vec2 texelDiff = diff * shadowMapSize;
-	int numSamples = clamp(int(max(texelDiff.x, texelDiff.y)), 2, NUM_SAMPLES);
+	int numSamples = clamp(int(max(texelDiff.x, texelDiff.y)), 16, NUM_SAMPLES);
 
 	float sampleStep = (endT - startT) / float(numSamples - 1);
 	float interpStep = 1.0 / float(numSamples - 1);
