@@ -31,6 +31,10 @@ uniform sampler2D uLinearDepthTexture;
 uniform sampler2DShadow uShadowMap;
 uniform Spotlight uSpotlight;
 
+uniform int uNumSamples = 128;
+uniform float uMaxDist = 45.0;
+uniform float uScaleFactor = 1.0;
+
 // Helper functions
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -202,11 +206,6 @@ void main()
 	return;
 #endif
 
-	// Configurable factors
-	const int NUM_SAMPLES = 128;
-	const float MAX_DIST = 60.0;
-	const float SCALE_FACTOR = 0.5;
-
 	// Ray information
 	float linDepth = texture(uLinearDepthTexture, uvCoord).r;
 	vec3 vsPos = uFarPlaneDist * linDepth * nonNormRayDir / abs(nonNormRayDir.z);
@@ -215,15 +214,15 @@ void main()
 
 	// Eye distance weight function
 	// f(x) = m + k * x
-	// m = 2 / MAX_DIST, k = -2 / MAX_DIST²
-	// f(MAX_DIST) = 0, integral f(x) under [0, MAX_DIST] = 1
-	float eyeWeightM = 2.0 / MAX_DIST;
-	float eyeWeightK = -2.0 / (MAX_DIST * MAX_DIST);
+	// m = 2 / uMaxDist, k = -2 / uMaxDist²
+	// f(uMaxDist) = 0, integral f(x) under [0, uMaxDist] = 1
+	float eyeWeightM = 2.0 / uMaxDist;
+	float eyeWeightK = -2.0 / (uMaxDist * uMaxDist);
 
 #ifdef NAIVE_MARCHING
-	float sampleStep = (min(distToPos, MAX_DIST) / float(NUM_SAMPLES - 1));
+	float sampleStep = (min(distToPos, uMaxDist) / float(uNumSamples - 1));
 	float factor = 0.0;
-	for (int i = 0; i < NUM_SAMPLES; ++i) {
+	for (int i = 0; i < uNumSamples; ++i) {
 		float sampleT = float(i) * sampleStep;
 		vec3 samplePos = sampleT * rayDir;
 
@@ -235,7 +234,7 @@ void main()
 		factor += shadowSample * dissipation * attenuation * eyeDistWeight * sampleStep;
 	}
 
-	outFragColor = vec4(SCALE_FACTOR * factor * uSpotlight.color, 1.0);
+	outFragColor = vec4(uScaleFactor * factor * uSpotlight.color, 1.0);
 	return;
 #endif
 
@@ -245,7 +244,7 @@ void main()
 		discard;
 		return;
 	}
-	float endT = min(min(isect.t2, distToPos), MAX_DIST);
+	float endT = min(min(isect.t2, distToPos), uMaxDist);
 	float startT = min(isect.t1, endT);
 	if (endT == startT) {
 		discard;
@@ -270,9 +269,9 @@ void main()
 #endif
 
 #ifdef INTERSECTION_TEST_NAIVE_MARCHING
-	float sampleStep = (endT - startT) / float(NUM_SAMPLES - 1);
+	float sampleStep = (endT - startT) / float(uNumSamples - 1);
 	float factor = 0.0;
-	for (int i = 0; i < NUM_SAMPLES; ++i) {
+	for (int i = 0; i < uNumSamples; ++i) {
 		float sampleT = startT + float(i) * sampleStep;
 		vec3 samplePos = sampleT * rayDir;
 
@@ -286,8 +285,8 @@ void main()
 #endif
 
 #ifdef INTERSECTION_TEST_OPTIMIZED_FIXED_SAMPLING
-	float sampleStep = (endT - startT) / float(NUM_SAMPLES - 1);
-	float interpStep = 1.0 / float(NUM_SAMPLES - 1);
+	float sampleStep = (endT - startT) / float(uNumSamples - 1);
+	float interpStep = 1.0 / float(uNumSamples - 1);
 
 	// Precompute shadow coord
 	vec4 startShadowCoord = uSpotlight.lightMatrix * vec4(startPos, 1.0);
@@ -303,7 +302,7 @@ void main()
 	float endWeight = (eyeWeightM + eyeWeightK * endT) * sampleStep;
 
 	float factor = 0.0;
-	for (int i = 0; i < NUM_SAMPLES; ++i) {
+	for (int i = 0; i < uNumSamples; ++i) {
 
 		float interp = interpStep * float(i);
 
@@ -332,7 +331,7 @@ void main()
 	vec2 shadowMapSize = vec2(textureSize(uShadowMap, 0));
 	vec2 diff = abs((endShadowCoord.xy / endShadowCoord.w) - (startShadowCoord.xy / startShadowCoord.w));
 	vec2 texelDiff = diff * shadowMapSize;
-	int numSamples = clamp(int(max(texelDiff.x, texelDiff.y)), 16, NUM_SAMPLES);
+	int numSamples = clamp(int(max(texelDiff.x, texelDiff.y)), 16, uNumSamples);
 
 	float sampleStep = (endT - startT) / float(numSamples - 1);
 	float interpStep = 1.0 / float(numSamples - 1);
@@ -366,5 +365,7 @@ void main()
 	}
 #endif
 
-	outFragColor = vec4(SCALE_FACTOR * factor * uSpotlight.color, 1.0);
+#ifndef BASELINE
+	outFragColor = vec4(uScaleFactor * factor * uSpotlight.color, 1.0);
+#endif
 }
