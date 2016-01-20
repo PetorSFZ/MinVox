@@ -3,12 +3,11 @@
 
 #include <sfz/GL.hpp>
 #include <sfz/SDL.hpp>
-#undef main
 
 #include "Screens.hpp"
 #include "GlobalConfig.hpp"
 
-int main()
+int main(int argc, char* argv[])
 {
 	using namespace sdl;
 	using std::string;
