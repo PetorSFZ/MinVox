@@ -198,7 +198,7 @@ Intersection rayVsFiniteCone(vec3 rayPos, vec3 rayDir, vec3 conePos, vec3 coneDi
 //#define INTERSECTION_TEST_NAIVE_MARCHING
 //#define INTERSECTION_TEST_OPTIMIZED_FIXED_SAMPLING
 //#define INTERSECTION_TEST_OPTIMIZED_DYNAMIC_SAMPLING
-#define NEW_THING
+#define INTERSECTION_TEST_EQUAL_WEIGHT_SAMPLING
 
 void main()
 {
@@ -304,20 +304,23 @@ void main()
 
 	float factor = 0.0;
 	for (int i = 0; i < uNumSamples; ++i) {
-
+		// Interpolation factor
 		float interp = interpStep * float(i);
 
+		// Shadow map coord and sample
 		vec4 sampleShadowCoord = mix(startShadowCoord, endShadowCoord, interp);
 		float shadowSample = textureProj(uShadowMap, sampleShadowCoord);
 
+		// Light dissipation
 		vec3 lightToSample = mix(startLightToSample, endLightToSample, interp);
 		float dissipation = 1.0 - dot(lightToSample, lightToSample) * invSquaredLightRange;
 
+		// Light attenuation
 		vec3 lightToSampleDir = normalize(lightToSample);
 		float attenuation = smoothstep(uSpotlight.softAngleCos, uSpotlight.sharpAngleCos, dot(lightToSampleDir, uSpotlight.vsDir));
 
+		// Calculate weight and update factor
 		float weight = mix(startWeight, endWeight, interp);
-
 		factor += shadowSample * dissipation * attenuation * weight;
 	}
 #endif
@@ -348,26 +351,29 @@ void main()
 
 	float factor = 0.0;
 	for (int i = 0; i < numSamples; ++i) {
-
+		// Interpolation factor
 		float interp = interpStep * float(i);
 
+		// Shadow map coord and sample
 		vec4 sampleShadowCoord = mix(startShadowCoord, endShadowCoord, interp);
 		float shadowSample = textureProj(uShadowMap, sampleShadowCoord);
 
+		// Light dissipation
 		vec3 lightToSample = mix(startLightToSample, endLightToSample, interp);
 		float dissipation = 1.0 - dot(lightToSample, lightToSample) * invSquaredLightRange;
 
+		// Light attenuation
 		vec3 lightToSampleDir = normalize(lightToSample);
 		float attenuation = smoothstep(uSpotlight.softAngleCos, uSpotlight.sharpAngleCos, dot(lightToSampleDir, uSpotlight.vsDir));
 
+		// Calculate weight and update factor
 		float weight = mix(startWeight, endWeight, interp);
-
 		factor += shadowSample * dissipation * attenuation * weight;
 	}
 #endif
 
 
-#ifdef NEW_THING
+#ifdef INTERSECTION_TEST_EQUAL_WEIGHT_SAMPLING
 	
 	// Precompute shadow coord
 	vec4 startShadowCoord = uSpotlight.lightMatrix * vec4(startPos, 1.0);
@@ -378,28 +384,33 @@ void main()
 	vec3 endLightToSample = endPos - uSpotlight.vsPos;
 	float invSquaredLightRange = 1.0 / (uSpotlight.range * uSpotlight.range);
 
+	float toNextScale = uMaxDist * uMaxDist / (2.0 * float(uNumSamples));
 	float intervalLength = endT - startT;
-
 	float factor = 0.0;
 	float currT = startT;
 	while (currT < endT) {
-		float eyeDistWeight = eyeWeightM + eyeWeightK * currT;
-		vec3 samplePos = currT * rayDir;
+		// Interpolation factor
 		float interp = (currT - startT) / intervalLength;
 
+		// Shadow map coord and sample
 		vec4 sampleShadowCoord = mix(startShadowCoord, endShadowCoord, interp);
 		float shadowSample = textureProj(uShadowMap, sampleShadowCoord);
 
+		// Light dissipation
 		vec3 lightToSample = mix(startLightToSample, endLightToSample, interp);
 		float dissipation = 1.0 - dot(lightToSample, lightToSample) * invSquaredLightRange;
 
-		float attenuation = calcLightAttenuation(samplePos);
+		// Light attenuation
+		vec3 lightToSampleDir = normalize(lightToSample);
+		float attenuation = smoothstep(uSpotlight.softAngleCos, uSpotlight.sharpAngleCos, dot(lightToSampleDir, uSpotlight.vsDir));
 
-		float sampleStep = 1.0 / (float(uNumSamples) * eyeDistWeight);
-		currT += sampleStep;
-
-		factor += shadowSample * dissipation * attenuation * eyeDistWeight * sampleStep;
+		// Calculate next sample position and update factor
+		currT += toNextScale / (uMaxDist - currT);
+		factor += shadowSample * dissipation * attenuation;
 	}
+
+	// Scale factor by weight (weight = 1 / numSamples)
+	factor /= float(uNumSamples);
 #endif
 
 #ifndef BASELINE
