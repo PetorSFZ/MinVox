@@ -245,10 +245,80 @@ static const char SMAA_EDGE_DETECTION_FRAGMENT_SRC[] = R"(
 		return edges;
 	}
 
+	/**
+	 * Color Edge Detection
+	 *
+	 * IMPORTANT NOTICE: color edge detection requires gamma-corrected colors, and
+	 * thus 'colorTex' should be a non-sRGB texture.
+	 */
+	float2 SMAAColorEdgeDetectionPS(float2 texcoord,
+									float4 offset[3],
+									SMAATexture2D(colorTex)
+									#if SMAA_PREDICATION
+									, SMAATexture2D(predicationTex)
+									#endif
+									) {
+		// Calculate the threshold:
+		#if SMAA_PREDICATION
+		float2 threshold = SMAACalculatePredicatedThreshold(texcoord, offset, predicationTex);
+		#else
+		float2 threshold = float2(SMAA_THRESHOLD, SMAA_THRESHOLD);
+		#endif
+
+		// Calculate color deltas:
+		float4 delta;
+		float3 C = SMAASamplePoint(colorTex, texcoord).rgb;
+
+		float3 Cleft = SMAASamplePoint(colorTex, offset[0].xy).rgb;
+		float3 t = abs(C - Cleft);
+		delta.x = max(max(t.r, t.g), t.b);
+
+		float3 Ctop  = SMAASamplePoint(colorTex, offset[0].zw).rgb;
+		t = abs(C - Ctop);
+		delta.y = max(max(t.r, t.g), t.b);
+
+		// We do the usual threshold:
+		float2 edges = step(threshold, delta.xy);
+
+		// Then discard if there is no edge:
+		if (dot(edges, float2(1.0, 1.0)) == 0.0)
+			discard;
+
+		// Calculate right and bottom deltas:
+		float3 Cright = SMAASamplePoint(colorTex, offset[1].xy).rgb;
+		t = abs(C - Cright);
+		delta.z = max(max(t.r, t.g), t.b);
+
+		float3 Cbottom  = SMAASamplePoint(colorTex, offset[1].zw).rgb;
+		t = abs(C - Cbottom);
+		delta.w = max(max(t.r, t.g), t.b);
+
+		// Calculate the maximum delta in the direct neighborhood:
+		float2 maxDelta = max(delta.xy, delta.zw);
+
+		// Calculate left-left and top-top deltas:
+		float3 Cleftleft  = SMAASamplePoint(colorTex, offset[2].xy).rgb;
+		t = abs(C - Cleftleft);
+		delta.z = max(max(t.r, t.g), t.b);
+
+		float3 Ctoptop = SMAASamplePoint(colorTex, offset[2].zw).rgb;
+		t = abs(C - Ctoptop);
+		delta.w = max(max(t.r, t.g), t.b);
+
+		// Calculate the final maximum delta:
+		maxDelta = max(maxDelta.xy, delta.zw);
+		float finalDelta = max(maxDelta.x, maxDelta.y);
+
+		// Local contrast adaptation:
+		edges.xy *= step(finalDelta, SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR * delta.xy);
+
+		return edges;
+	}
 
 	void main()
 	{
-		vec2 res = SMAALumaEdgeDetectionPS(uvCoord, offset, uInputTexture);
+		//vec2 res = SMAALumaEdgeDetectionPS(uvCoord, offset, uInputTexture);
+		vec2 res = SMAAColorEdgeDetectionPS(uvCoord, offset, uInputTexture);
 		outFragColor = vec4(res, 0.0, 1.0);
 	}
 )";
