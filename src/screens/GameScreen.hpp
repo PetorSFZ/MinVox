@@ -17,6 +17,8 @@
 #include "Rendering.hpp"
 #include "GlobalConfig.hpp"
 
+#include "sfz/gl/Scaler.hpp"
+
 namespace vox {
 
 using gl::Framebuffer;
@@ -77,7 +79,8 @@ private:
 	        mLightShaftsProgram, mGlobalShadingProgram;
 	
 	gl::SSAO mSSAO;
-	Framebuffer mGBuffer, mSpotlightShadingFB, mLightShaftsFB;
+	gl::Scaler mScaler;
+	Framebuffer mGBuffer, mSpotlightShadingFB, mLightShaftsFB, mFinalFB;
 	Framebuffer mShadowMapHighRes, mShadowMapLowRes;
 	
 	ViewFrustum mCam;

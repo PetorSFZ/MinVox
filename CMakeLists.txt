@@ -81,12 +81,20 @@ set(SOURCE_SCREENS_FILES
 	${SRC_DIR}/screens/GameScreen.cpp)
 source_group(vox_screens FILES ${SOURCE_SCREENS_FILES})
 
+set(SOURCE_SFZ_GL_TEMP_FILES
+	${SRC_DIR}/sfz/gl/Scaler.hpp
+	${SRC_DIR}/sfz/gl/Scaler.cpp
+	${SRC_DIR}/sfz/gl/SMAA.hpp
+	${SRC_DIR}/sfz/gl/SMAA.cpp)
+source_group(sfz_gl FILES ${SOURCE_SFZ_GL_TEMP_FILES})
+
 set(SOURCE_ALL_FILES
 	${SOURCE_BASE_FILES}
 	${SOURCE_IO_FILES}
 	${SOURCE_MODEL_FILES}
 	${SOURCE_RENDERING_FILES}
-	${SOURCE_SCREENS_FILES})
+	${SOURCE_SCREENS_FILES}
+	${SOURCE_SFZ_GL_TEMP_FILES})
 
 # Main executable
 add_executable(MinVox ${SRC_DIR}/Main.cpp ${SOURCE_ALL_FILES})

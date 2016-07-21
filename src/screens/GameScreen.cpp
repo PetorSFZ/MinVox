@@ -564,8 +564,8 @@ void GameScreen::render(UpdateState& state)
 	glEnable(GL_CULL_FACE);
 
 	glUseProgram(mGlobalShadingProgram.handle());
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, mWindow.drawableWidth(), mWindow.drawableHeight());
+	glBindFramebuffer(GL_FRAMEBUFFER, mFinalFB.fbo());
+	glViewport(0, 0, mFinalFB.width(), mFinalFB.height());
 
 	// Binding input textures
 	gl::setUniform(mGlobalShadingProgram, "uLinearDepthTexture", 0);
@@ -606,6 +606,18 @@ void GameScreen::render(UpdateState& state)
 	gl::setUniform(mGlobalShadingProgram, "uOutputSelect", mOutputSelect);
 
 	mPostProcessQuad.render();
+
+	// Scaling to screen
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+	uint32_t scalingSrcTex = mFinalFB.texture(0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, mWindow.width(), mWindow.height());
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	mScaler.scale(0, mWindow.drawableDimensions(), scalingSrcTex, mGBuffer.dimensionsFloat());
 
 	// Rendering GUI
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -715,6 +727,8 @@ void GameScreen::updatePrograms() noexcept
 	mLightShaftsProgram = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/light_shafts.frag").c_str());
 	
 	mGlobalShadingProgram = Program::postProcessFromFile((sfz::basePath() + "assets/shaders/global_shading.frag").c_str());
+
+	mScaler = gl::Scaler(gl::ScalingAlgorithm::BILINEAR);
 }
 
 void GameScreen::updateResolutions(vec2 drawableDim) noexcept
@@ -749,6 +763,10 @@ void GameScreen::updateResolutions(vec2 drawableDim) noexcept
 	                 .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
 	                 .addStencilBuffer()
 	                 .build();
+	
+	mFinalFB = gl::FramebufferBuilder{internalRes}
+	          .addTexture(0, gl::FBTextureFormat::RGB_U8, gl::FBTextureFiltering::LINEAR)
+	          .build();
 
 	mSSAO.dimensions(ssaoRes);
 }
