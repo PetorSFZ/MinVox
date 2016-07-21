@@ -33,6 +33,7 @@ private:
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	vec2i mDimensions;
+	PostProcessQuad mPostProcessQuad;
 	Program mSMAAEdgeDetection, mSMAAWeightCalculation, mSMAABlending;
 	Framebuffer mEdgesFB, mWeightsFB, mResultFB;
 };

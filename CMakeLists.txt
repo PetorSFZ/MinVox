@@ -85,7 +85,9 @@ set(SOURCE_SFZ_GL_TEMP_FILES
 	${SRC_DIR}/sfz/gl/Scaler.hpp
 	${SRC_DIR}/sfz/gl/Scaler.cpp
 	${SRC_DIR}/sfz/gl/SMAA.hpp
-	${SRC_DIR}/sfz/gl/SMAA.cpp)
+	${SRC_DIR}/sfz/gl/SMAA.cpp
+	${SRC_DIR}/sfz/gl/AreaTex.h
+	${SRC_DIR}/sfz/gl/SearchTex.h)
 source_group(sfz_gl FILES ${SOURCE_SFZ_GL_TEMP_FILES})
 
 set(SOURCE_ALL_FILES
