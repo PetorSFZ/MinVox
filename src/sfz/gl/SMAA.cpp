@@ -787,19 +787,225 @@ static const char SMAA_WEIGHT_CALCULATION_FRAGMENT_SRC[] = R"(
 
 static const char SMAA_BLENDING_VERTEX_SRC[] = R"(
 	#version 410
+	
+	// Input
+	in vec3 inPosition;
+	in vec3 inNormal;
+	in vec2 inUV;
+	in int inMaterialID;
+
+	// Output
+	out vec2 uvCoord;
+	out vec4 offset;
+	
+	// Uniform
+	uniform vec2 uPixelDim;
+
+	#define SMAA_GLSL_4
+	vec4 SMAA_RT_METRICS = vec4(uPixelDim, 1.0 / uPixelDim);
+	#define SMAA_PRESET_ULTRA
+
+	#if defined(SMAA_GLSL_3) || defined(SMAA_GLSL_4)
+	#define API_V_DIR(v) -(v)
+	#define API_V_COORD(v) (1.0 - v)
+	#define API_V_BELOW(v1, v2)	v1 < v2
+	#define API_V_ABOVE(v1, v2)	v1 > v2
+	#define SMAATexture2D(tex) sampler2D tex
+	#define SMAATexturePass2D(tex) tex
+	#define SMAASampleLevelZero(tex, coord) textureLod(tex, coord, 0.0)
+	#define SMAASampleLevelZeroPoint(tex, coord) textureLod(tex, coord, 0.0)
+	#define SMAASampleLevelZeroOffset(tex, coord, offset) textureLodOffset(tex, coord, 0.0, offset)
+	#define SMAASample(tex, coord) texture2D(tex, coord)
+	#define SMAASamplePoint(tex, coord) texture2D(tex, coord)
+	#define SMAASampleOffset(tex, coord, offset) texture(tex, coord, offset)
+	#define SMAA_FLATTEN
+	#define SMAA_BRANCH
+	#define lerp(a, b, t) mix(a, b, t)
+	#define saturate(a) clamp(a, 0.0, 1.0)
+	#if defined(SMAA_GLSL_4)
+	#define mad(a, b, c) fma(a, b, c)
+	#define SMAAGather(tex, coord) textureGather(tex, coord)
+	#else
+	#define mad(a, b, c) (a * b + c)
+	#endif
+	#define float2 vec2
+	#define float3 vec3
+	#define float4 vec4
+	#define int2 ivec2
+	#define int3 ivec3
+	#define int4 ivec4
+	#define bool2 bvec2
+	#define bool3 bvec3
+	#define bool4 bvec4
+	#endif
+
+	/**
+	 * Neighborhood Blending Vertex Shader
+	 */
+	void SMAANeighborhoodBlendingVS(float2 texcoord,
+									out float4 offset) {
+		offset = mad(SMAA_RT_METRICS.xyxy, float4( 1.0, 0.0, 0.0, API_V_DIR(1.0)), texcoord.xyxy);
+	}
 
 	void main()
 	{
+		gl_Position = vec4(inPosition, 1.0);
+		uvCoord = inUV;
 
+		SMAANeighborhoodBlendingVS(uvCoord, offset);
 	}
 )";
 
 static const char SMAA_BLENDING_FRAGMENT_SRC[] = R"(
 	#version 410
 
+	// Input
+	in vec2 uvCoord;
+	in vec4 offset;
+
+	// Output
+	out vec4 outFragColor;
+
+	// Uniforms
+	uniform vec2 uPixelDim;
+	uniform sampler2D uInputTexture;
+	uniform sampler2D uWeightsTexture;
+
+	#define SMAA_GLSL_4
+	vec4 SMAA_RT_METRICS = vec4(uPixelDim, 1.0 / uPixelDim);
+	#define SMAA_PRESET_ULTRA
+
+	#if defined(SMAA_PRESET_LOW)
+	#define SMAA_THRESHOLD 0.15
+	#define SMAA_MAX_SEARCH_STEPS 4
+	#define SMAA_DISABLE_DIAG_DETECTION
+	#define SMAA_DISABLE_CORNER_DETECTION
+	#elif defined(SMAA_PRESET_MEDIUM)
+	#define SMAA_THRESHOLD 0.1
+	#define SMAA_MAX_SEARCH_STEPS 8
+	#define SMAA_DISABLE_DIAG_DETECTION
+	#define SMAA_DISABLE_CORNER_DETECTION
+	#elif defined(SMAA_PRESET_HIGH)
+	#define SMAA_THRESHOLD 0.1
+	#define SMAA_MAX_SEARCH_STEPS 16
+	#define SMAA_MAX_SEARCH_STEPS_DIAG 8
+	#define SMAA_CORNER_ROUNDING 25
+	#elif defined(SMAA_PRESET_ULTRA)
+	#define SMAA_THRESHOLD 0.05
+	#define SMAA_MAX_SEARCH_STEPS 32
+	#define SMAA_MAX_SEARCH_STEPS_DIAG 16
+	#define SMAA_CORNER_ROUNDING 25
+	#endif
+
+	#if defined(SMAA_GLSL_3) || defined(SMAA_GLSL_4)
+	#define API_V_DIR(v) -(v)
+	#define API_V_COORD(v) (1.0 - v)
+	#define API_V_BELOW(v1, v2)	v1 < v2
+	#define API_V_ABOVE(v1, v2)	v1 > v2
+	#define SMAATexture2D(tex) sampler2D tex
+	#define SMAATexturePass2D(tex) tex
+	#define SMAASampleLevelZero(tex, coord) textureLod(tex, coord, 0.0)
+	#define SMAASampleLevelZeroPoint(tex, coord) textureLod(tex, coord, 0.0)
+	#define SMAASampleLevelZeroOffset(tex, coord, offset) textureLodOffset(tex, coord, 0.0, offset)
+	#define SMAASample(tex, coord) texture2D(tex, coord)
+	#define SMAASamplePoint(tex, coord) texture2D(tex, coord)
+	#define SMAASampleOffset(tex, coord, offset) texture(tex, coord, offset)
+	#define SMAA_FLATTEN
+	#define SMAA_BRANCH
+	#define lerp(a, b, t) mix(a, b, t)
+	#define saturate(a) clamp(a, 0.0, 1.0)
+	#if defined(SMAA_GLSL_4)
+	#define mad(a, b, c) fma(a, b, c)
+	#define SMAAGather(tex, coord) textureGather(tex, coord)
+	#else
+	#define mad(a, b, c) (a * b + c)
+	#endif
+	#define float2 vec2
+	#define float3 vec3
+	#define float4 vec4
+	#define int2 ivec2
+	#define int3 ivec3
+	#define int4 ivec4
+	#define bool2 bvec2
+	#define bool3 bvec3
+	#define bool4 bvec4
+	#endif
+
+	void SMAAMovc(bool2 cond, inout float2 variable, float2 value) {
+		SMAA_FLATTEN if (cond.x) variable.x = value.x;
+		SMAA_FLATTEN if (cond.y) variable.y = value.y;
+	}
+
+	void SMAAMovc(bool4 cond, inout float4 variable, float4 value) {
+		SMAAMovc(cond.xy, variable.xy, value.xy);
+		SMAAMovc(cond.zw, variable.zw, value.zw);
+	}
+
+	//-----------------------------------------------------------------------------
+	// Neighborhood Blending Pixel Shader (Third Pass)
+
+	float4 SMAANeighborhoodBlendingPS(float2 texcoord,
+									  float4 offset,
+									  SMAATexture2D(colorTex),
+									  SMAATexture2D(blendTex)
+									  #if SMAA_REPROJECTION
+									  , SMAATexture2D(velocityTex)
+									  #endif
+									  ) {
+		// Fetch the blending weights for current pixel:
+		float4 a;
+		a.x = SMAASample(blendTex, offset.xy).a; // Right
+		a.y = SMAASample(blendTex, offset.zw).g; // Top
+		a.wz = SMAASample(blendTex, texcoord).xz; // Bottom / Left
+
+		// Is there any blending weight with a value greater than 0.0?
+		SMAA_BRANCH
+		if (dot(a, float4(1.0, 1.0, 1.0, 1.0)) < 1e-5) {
+			float4 color = SMAASampleLevelZero(colorTex, texcoord);
+
+			#if SMAA_REPROJECTION
+			float2 velocity = SMAA_DECODE_VELOCITY(SMAASampleLevelZero(velocityTex, texcoord));
+
+			// Pack velocity into the alpha channel:
+			color.a = sqrt(5.0 * length(velocity));
+			#endif
+
+			return color;
+		} else {
+			bool h = max(a.x, a.z) > max(a.y, a.w); // max(horizontal) > max(vertical)
+
+			// Calculate the blending offsets:
+			float4 blendingOffset = float4(0.0, API_V_DIR(a.y), 0.0, API_V_DIR(a.w));
+			float2 blendingWeight = a.yw;
+			SMAAMovc(bool4(h, h, h, h), blendingOffset, float4(a.x, 0.0, a.z, 0.0));
+			SMAAMovc(bool2(h, h), blendingWeight, a.xz);
+			blendingWeight /= dot(blendingWeight, float2(1.0, 1.0));
+
+			// Calculate the texture coordinates:
+			float4 blendingCoord = mad(blendingOffset, float4(SMAA_RT_METRICS.xy, -SMAA_RT_METRICS.xy), texcoord.xyxy);
+
+			// We exploit bilinear filtering to mix current pixel with the chosen
+			// neighbor:
+			float4 color = blendingWeight.x * SMAASampleLevelZero(colorTex, blendingCoord.xy);
+			color += blendingWeight.y * SMAASampleLevelZero(colorTex, blendingCoord.zw);
+
+			#if SMAA_REPROJECTION
+			// Antialias velocity for proper reprojection in a later stage:
+			float2 velocity = blendingWeight.x * SMAA_DECODE_VELOCITY(SMAASampleLevelZero(velocityTex, blendingCoord.xy));
+			velocity += blendingWeight.y * SMAA_DECODE_VELOCITY(SMAASampleLevelZero(velocityTex, blendingCoord.zw));
+
+			// Pack velocity into the alpha channel:
+			color.a = sqrt(5.0 * length(velocity));
+			#endif
+
+			return color;
+		}
+	}
+
 	void main()
 	{
-
+		vec4 res = SMAANeighborhoodBlendingPS(uvCoord, offset, uInputTexture, uWeightsTexture);
+		outFragColor = res;
 	}
 )";
 
@@ -953,7 +1159,27 @@ uint32_t SMAA::apply(uint32_t tex) noexcept
 	mPostProcessQuad.render();
 
 
-	return mWeightsFB.texture(0);
+	// Neighborhood blending
+	glUseProgram(mSMAABlending.handle());
+	glBindFramebuffer(GL_FRAMEBUFFER, mResultFB.fbo());
+	glViewport(0, 0, mResultFB.width(), mResultFB.height());
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	gl::setUniform(mSMAABlending, "uPixelDim", vec2(1.0) / mResultFB.dimensionsFloat());
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	gl::setUniform(mSMAABlending, "uInputTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mWeightsFB.texture(0));
+	gl::setUniform(mSMAABlending, "uWeightsTexture", 1);
+
+	mPostProcessQuad.render();
+
+
+	return mResultFB.texture(0);
 }
 
 } // namespace gl

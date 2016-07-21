@@ -131,6 +131,9 @@ UpdateOp GameScreen::update(UpdateState& state)
 			case SDLK_F1:
 				mCfg.printFrametimes = !mCfg.printFrametimes;
 				break;
+			case SDLK_F2:
+				mSMAAActive = !mSMAAActive;
+				break;
 			case 'r':
 				mSSAO.radius(std::max(mSSAO.radius() - 0.1f, 0.1f));
 				std::cout << "SSAO: Samples=" << mSSAO.numSamples() << ", Radius=" << mSSAO.radius() << ", Power=" << mSSAO.occlusionPower() << std::endl;
@@ -610,7 +613,12 @@ void GameScreen::render(UpdateState& state)
 	// SMAA
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	uint32_t scalingSrcTex = mSMAA.apply(mFinalFB.texture(0));
+	uint32_t scalingSrcTex;
+	if (mSMAAActive) {
+		scalingSrcTex = mSMAA.apply(mFinalFB.texture(0));
+	} else {
+		scalingSrcTex = mFinalFB.texture(0);
+	}
 
 	// Scaling to screen
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

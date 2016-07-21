@@ -96,6 +96,8 @@ private:
 	Voxel mCurrentVoxel; // TODO: Move this to CreationGameScreen
 
 	sfz::FrametimeStats mShortTermPerfStats, mLongerTermPerfStats, mLongestTermPerfStats;
+
+	bool mSMAAActive = true;
 };
 
 } // namespace vox
