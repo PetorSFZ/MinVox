@@ -17,10 +17,10 @@ public:
 	SMAA() = default;
 	SMAA(const SMAA&) = delete;
 	SMAA& operator= (const SMAA&) = delete;
-	SMAA(SMAA&& other) noexcept = default;
-	SMAA& operator= (SMAA&& other) noexcept = default;
-
+	
 	SMAA(vec2i dimensions) noexcept;
+	SMAA(SMAA&& other) noexcept;
+	SMAA& operator= (SMAA&& other);
 	~SMAA() noexcept;
 
 	// Public method
@@ -36,6 +36,9 @@ private:
 	PostProcessQuad mPostProcessQuad;
 	Program mSMAAEdgeDetection, mSMAAWeightCalculation, mSMAABlending;
 	Framebuffer mEdgesFB, mWeightsFB, mResultFB;
+
+	uint32_t mAreaTex = 0;
+	uint32_t mSearchTex = 0;
 };
 
 } // namespace gl
