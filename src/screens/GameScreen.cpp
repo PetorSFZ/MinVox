@@ -607,10 +607,13 @@ void GameScreen::render(UpdateState& state)
 
 	mPostProcessQuad.render();
 
-	// Scaling to screen
+	// SMAA
 	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-	uint32_t scalingSrcTex = mFinalFB.texture(0);
+	uint32_t scalingSrcTex = mSMAA.apply(mFinalFB.texture(0));
+
+	// Scaling to screen
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, mWindow.width(), mWindow.height());
@@ -769,6 +772,8 @@ void GameScreen::updateResolutions(vec2 drawableDim) noexcept
 	          .build();
 
 	mSSAO.dimensions(ssaoRes);
+
+	mSMAA = gl::SMAA(internalRes);
 }
 
 } // namespace vox

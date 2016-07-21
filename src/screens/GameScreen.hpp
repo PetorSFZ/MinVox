@@ -18,6 +18,7 @@
 #include "GlobalConfig.hpp"
 
 #include "sfz/gl/Scaler.hpp"
+#include "sfz/gl/SMAA.hpp"
 
 namespace vox {
 
@@ -79,6 +80,7 @@ private:
 	        mLightShaftsProgram, mGlobalShadingProgram;
 	
 	gl::SSAO mSSAO;
+	gl::SMAA mSMAA;
 	gl::Scaler mScaler;
 	Framebuffer mGBuffer, mSpotlightShadingFB, mLightShaftsFB, mFinalFB;
 	Framebuffer mShadowMapHighRes, mShadowMapLowRes;
